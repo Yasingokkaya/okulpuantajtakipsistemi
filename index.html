@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OYS - Okul Yönetim Sistemi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        :root {
+            --theme-primary: #192a56; --theme-accent: #f39c12; --sidebar-bg: var(--theme-primary);
+            --sidebar-text: #e0e0e0; --sidebar-hover-bg: #2c3e50; --sidebar-active-bg: var(--theme-accent);
+            --light-gray-color: #f4f7f9; --dark-text-color: #2c3e50; --border-color: #dee2e6;
+            --white-color: #ffffff; --success-color: #28a745; --danger-color: #dc3545; --info-color: #17a2b8;
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--light-gray-color); overflow: hidden; }
+        .app-container { display: flex; height: 100vh; }
+        .sidebar {
+    width: 230px;
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    flex-shrink: 0;
+    display: flex; /* Bu satır eksikti */
+    flex-direction: column; /* Bu satır eksikti */
+}
+        .sidebar-header { padding: 20px; font-size: 1.5em; font-weight: bold; text-align: center; border-bottom: 1px solid var(--sidebar-hover-bg); color: var(--white-color); }
+        .sidebar-nav { list-style: none; padding: 0; margin: 20px 0; }
+        .sidebar-nav li a { display: flex; align-items: center; gap: 10px; padding: 15px 20px; color: var(--sidebar-text); text-decoration: none; transition: background-color 0.2s, color 0.2s; border-left: 4px solid transparent; cursor: pointer; }
+        .sidebar-nav li a:hover { background-color: var(--sidebar-hover-bg); color: var(--white-color); }
+        .sidebar-nav li a.active { background-color: var(--sidebar-active-bg); color: var(--theme-primary); font-weight: bold; }
+        .menu-item-group .accordion-trigger { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .menu-item-group .accordion-trigger::after { content: '▶'; font-size: 0.7em; transition: transform 0.2s; }
+        .menu-item-group.open > .accordion-trigger::after { transform: rotate(90deg); }
+        .sub-menu { list-style: none; padding-left: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; background-color: rgba(0,0,0,0.2); }
+.sidebar-footer {
+    margin-top: auto; /* Bu sihirli satır, elemanı en alta iter */
+    padding: 10px 0;
+    border-top: 1px solid var(--sidebar-hover-bg);
+}
+.sidebar-footer a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+.sidebar-footer a:hover {
+    background-color: var(--danger-color);
+    color: var(--white-color);
+}
+        .menu-item-group.open .sub-menu { max-height: 500px; }
+        .sub-menu li a { padding-left: 45px; font-size: 0.95em; }
+        .sub-menu li a.active { color: var(--white-color); background-color: transparent; border-left-color: var(--theme-accent); }
+.sidebar-footer {
+    margin-top: auto; /* Bu sihirli satır, elemanı en alta iter */
+    padding-top: 10px;
+    border-top: 1px solid var(--sidebar-hover-bg);
+}
+.sidebar-footer a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+.sidebar-footer a:hover {
+    background-color: var(--danger-color);
+    color: var(--white-color);
+}
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 25px; }
+        .module { display: none; }
+        .module.active { display: block; }
+        .panel { background-color: var(--white-color); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .panel-header { padding: 18px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .panel-header h3 { margin: 0; font-size: 1.2em; color: var(--dark-text-color); }
+        .panel-body { padding: 25px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(44, 62, 80, 0.7); justify-content: center; align-items: center; }
+        .modal.open { display: flex; }
+        .modal-content { background-color: var(--light-gray-color); border-radius: 10px; width: 90%; max-width: 900px; max-height: 95vh; display: flex; flex-direction: column; animation: fadeIn 0.3s ease-out; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 18px 25px; border-bottom: 1px solid var(--border-color); background-color: var(--white-color); border-top-left-radius: 10px; border-top-right-radius: 10px; }
+        .modal-header h3 { margin: 0; font-size: 1.2em; color: var(--theme-primary); }
+        .close-modal { font-size: 1.8rem; font-weight: bold; color: #aaa; background: none; border: none; cursor: pointer; }
+        .modal-body { padding: 25px; overflow-y: auto; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 25px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .full-width { grid-column: 1 / -1; }
+        .button-group { text-align: right; margin-top: 15px; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--white-color); }
+        td.actions-cell { width: auto; min-width: 160px; display: flex; gap: 8px; align-items: center; }
+        .actions-cell .btn { flex: 1; }
+        .btn-edit { background-color: var(--info-color); }
+        .btn-delete { background-color: var(--danger-color); }
+        .btn-save { padding: 12px 30px; background-color: var(--theme-accent); }
+        .btn-header-add { background-color: var(--theme-accent); color: var(--white-color); font-weight: bold; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; transition: opacity 0.2s; }
+        table.staff-table { width: 100%; border-collapse: collapse; }
+        table.staff-table th, table.staff-table td { padding: 12px 15px; border: 1px solid var(--border-color); text-align: left; vertical-align: middle; }
+        table.staff-table th { background-color: var(--light-gray-color); font-weight: 600; color: var(--dark-text-color); }
+        .radio-group { display: flex; align-items: center; gap: 25px; padding-top: 5px; }
+        .radio-group div { display: flex; align-items: center; gap: 8px; }
+        .radio-group label { font-weight: normal; margin-bottom: 0; }
+        .radio-group input { width: auto; margin-right: 0; }
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 15px 20px; color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateX(100%); animation: slideIn 0.3s forwards; }
+        .toast.success { background-color: var(--success-color); } .toast.error { background-color: var(--danger-color); }
+        @keyframes slideIn { to { opacity: 1; transform: translateX(0); } } @keyframes slideOut { to { opacity: 0; transform: translateX(100%); } }
+        .settings-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .settings-tab-button { padding: 10px 20px; cursor: pointer; border: none; background-color: transparent; font-size: 16px; border-bottom: 3px solid transparent; }
+        .settings-tab-button.active { color: var(--theme-primary); border-bottom-color: var(--theme-primary); font-weight: 600; }
+        .settings-tab-content { display: none; }
+        .settings-tab-content.active { display: block; animation: fadeIn 0.5s; }
+        .settings-list { list-style: none; padding: 0; margin-top: 20px; max-height: 250px; overflow-y: auto; }
+        .settings-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px; }
+        .settings-list .btn-delete-setting { background-color: var(--danger-color); font-size: 12px; padding: 5px 10px; }
+        .add-setting-form { display: flex; gap: 10px; align-items: flex-end; }
+        .add-setting-form input, .add-setting-form select { margin-bottom: 0; }
+        .add-setting-form button { flex-shrink: 0; height: 46px; background-color: var(--success-color); }
+        .tab-container { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab-link { padding: 12px 25px; cursor: pointer; border: none; background-color: transparent; font-size: 18px; font-weight: 500; color: #606770; border-bottom: 3px solid transparent; }
+        .tab-link.active { color: #1877f2; border-bottom: 3px solid #1877f2; }
+        .form-container { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin-bottom: 30px; padding: 20px; background-color: #f7f8fa; border: 1px solid #ddd; border-radius: 8px; flex-wrap: wrap; }
+        #ekleBtn { padding: 10px 20px; background-color: #42b72a; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; height: 46px; }
+        .schedule-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .schedule-table th, .schedule-table td { border: 1px solid #e9ebee; padding: 6px; text-align: center; height: 75px; vertical-align: top; }
+        .ders-karti { background-color: #1877f2; color: white; padding: 6px; border-radius: 6px; font-size: 13px; height: calc(100% - 12px); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .detail-entry { display: grid; grid-template-columns: 1fr 1fr 100px auto; gap: 15px; align-items: flex-end; margin-top: 15px; }
+        #g-detay-ekle-btn { background-color: #28a745; }
+        #gecici-detay-listesi { list-style: none; padding: 0; margin-top: 15px; }
+        #gecici-detay-listesi li { display: flex; justify-content: space-between; align-items: center; background: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 8px; }
+        .delete-temp-btn { background: none; border: none; color: var(--danger-color); cursor: pointer; font-weight: bold; }
+        .table-container { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 20px;}
+        .gorevlendirme-table { width: 100%; border-collapse: collapse; }
+        .gorevlendirme-table thead th { background-color: #343a40; color: white; font-weight: 600; padding: 12px; text-align: left; }
+        .gorevlendirme-table tbody td { border-top: 1px solid var(--border-color); padding: 12px; vertical-align: middle; }
+        .gorevlendirme-table tbody tr:hover { background-color: #f1f9ff; }
+        .gorevlendirme-table .ders-detaylari { list-style-type: square; margin: 0; padding-left: 20px; }
+        #nobet-rapor-tbody .btn-delete-nobet, #izin-kayitlari-tbody .btn-delete-izin { background-color: var(--danger-color); padding: 5px 10px; font-size: 12px; }
+        .puantaj .controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; }
+        .puantaj .controls-left, .puantaj .controls-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .puantaj .controls button, .puantaj .export-buttons button { padding: 10px 15px; border-radius: 6px; border: 1px solid #ced4da; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
+        #btn-generate { background-color: #0056b3; color: white; }
+        .puantaj .export-buttons button { background-color: #6c757d; color: white; }
+        .puantaj .export-buttons button:hover, #btn-generate:hover { opacity: 0.85; }
+        .puantaj-table { width: 100%; border-collapse: collapse; table-layout: auto; }
+        .puantaj-table th, .puantaj-table td { border: 1px solid #dee2e6; padding: 8px; text-align: center; font-size: 12px; vertical-align: middle; min-width: 40px; }
+        .puantaj-table thead th { background-color: #343a40; color: white; font-weight: 600; padding: 10px 8px; position: sticky; top: 0; z-index: 2; font-size: 13px; }
+        .puantaj-table tbody tr:hover > td { background-color: #f1f9ff; }
+        .header-main-title { background-color: #495057 !important; }
+        .col-personel { min-width: 200px; text-align: left; padding-left: 10px; position: sticky; left: 0; background-color: #fff; z-index: 1; }
+        .puantaj-table tbody tr:hover .col-personel { background-color: #f1f9ff; }
+        .col-unvan { min-width: 120px; } .col-day { min-width: 45px; } .col-summary, .col-social, .col-imza { min-width: 80px; }
+        .summary-yellow { background-color: #FFECB3; font-weight: bold; }
+        .summary-green { background-color: #C8E6C9; color: #1B5E20; font-weight: bold; }
+        .summary-nobet { background-color: #FFE0B2; color: #AF6000; font-weight: bold;}
+        .summary-rehberlik { background-color: #C5CAE9; color: #1A237E; font-weight: bold;}
+        .social-section { background-color: #f8f9fa; }
+        .hour-cell { font-size: 12px; color: #495057; height: 32px; }
+        .person-row-hours { border-bottom: 3px solid #adb5bd; }
+        .status-cell { cursor: pointer; font-weight: bold; height: 32px; }
+        .status-N { background-color: #E6F7E9; } .status-HT { background-color: #EEEEEE; color: #616161; }
+        .status-RT { background-color: #D1EAFE; color: #0D47A1; } .status-I { background-color: #FFF4CC; color: #B26A00; }
+        .status-R { background-color: #FFEBEE; color: #B71C1C; } .status-UI { background-color: #E4E7EB; color: #37474f; }
+        .puantaj-legend { margin-top: 25px; padding-top: 15px; border-top: 1px solid #dee2e6; display: flex; flex-wrap: wrap; gap: 15px 25px; }
+        .legend-item { display: flex; align-items: center; font-size: 13px; }
+        .legend-color-box { width: 16px; height: 16px; border: 1px solid #bdbdbd; margin-right: 8px; display: inline-block; }
+        .bottom-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; display: flex; justify-content: space-between; flex-wrap: wrap; }
+        .summary-totals, .approval-section { width: 100%; max-width: 48%; }
+        .summary-totals h3, .approval-section h3 { margin-top: 0; color: #495057; }
+        .total-line { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #f1f1f1; font-size: 15px; }
+        .total-line .label { font-weight: 500; } .total-line .value { font-weight: 700; }
+        .approval-section { text-align: center; } .approval-section .name { margin-top: 40px; font-weight: 600; }
+        #edit-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 10; display: none; }
+        #edit-modal-overlay .modal-content { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 10px; z-index: 11; width: 350px; }
+        #edit-modal-overlay .modal-buttons { text-align: right; margin-top: 20px; }
+        #edit-modal-overlay .modal-buttons button { padding: 8px 16px; border-radius: 5px; border: none; cursor: pointer; margin-left: 10px; }
+        #modal-save { background-color: #198754; color: white; }
+        #modal-cancel { background-color: #6c757d; color: white; }
+        @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } body { background-color: #fff; } #puantaj .panel, .sidebar, .sidebar-header, .panel-header { box-shadow: none; border: none; padding: 0; } #puantaj .controls, #puantaj .puantaj-legend, #puantaj .bottom-section, .modal-overlay, #add-staff-modal { display: none !important; } #puantaj-table-container { overflow: visible; border: none; } .puantaj-table { font-size: 9px; width: 100%; table-layout: fixed; } }
+    </style>
+</head>
+<body>
+<div id="login-panel" style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--light-gray-color);">
+    <div style="width: 100%; max-width: 400px; padding: 40px; background: var(--white-color); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <h2 style="text-align: center; color: var(--theme-primary); margin-bottom: 30px;">OYS Giriş Paneli</h2>
+        <div class="form-group">
+            <label for="login-email">E-posta Adresi</label>
+            <input type="email" id="login-email" placeholder="ornek@mail.com">
+        </div>
+        <div class="form-group">
+            <label for="login-password">Şifre</label>
+            <input type="password" id="login-password">
+        </div>
+        <p id="login-error" style="color: var(--danger-color); text-align: center; display: none;"></p>
+        <button id="login-btn" class="btn btn-save" style="width: 100%; padding: 15px; font-size: 16px;">Giriş Yap</button>
+    </div>
+</div>
+    <div id="toast-container"></div>
+    <div class="app-container">
+
+
+        <aside class="sidebar">
+            <div class="sidebar-header">OYS</div>
+            <nav>
+<div class="sidebar-footer">
+    <a id="logout-btn" style="cursor: pointer;">🚪 <span>Çıkış Yap</span></a>
+</div>
+
+                <ul class="sidebar-nav">
+                    <li><a class="nav-link active" data-target="dashboard">🏠 <span>Ana Sayfa</span></a></li>
+                    <li class="menu-item-group">
+                        <a class="accordion-trigger">👥 <span>Personel Yönetimi</span></a>
+                        <ul class="sub-menu">
+                            <li><a id="open-add-staff-modal"><span>Yeni Personel Ekle</span></a></li>
+                            <li><a class="nav-link" data-target="staff-list"><span>Personel Listesi</span></a></li>
+                        </ul>
+                    </li>
+                    <li><a class="nav-link" data-target="ders-programi">📅 <span>Ders Programı</span></a></li>
+                    <li><a class="nav-link" data-target="gorevlendirme">📝 <span>Görevlendirmeler</span></a></li>
+                    <li><a class="nav-link" data-target="nobet-takip">🛡️ <span>Nöbet Takip</span></a></li>
+                    <li><a class="nav-link" data-target="izin-takip">✈️ <span>İzin Takip</span></a></li>
+                    <li><a class="nav-link" data-target="puantaj">📊 <span>Puantaj Cetveli</span></a></li>
+                    <li><a class="nav-link" data-target="settings">⚙️ <span>Ayarlar</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div id="dashboard" class="module active"><div class="panel"><div class="panel-body"><h3>Hoş Geldiniz!</h3><p>Veri tanımlamaları için "Ayarlar" menüsünü kullanarak başlayabilirsiniz.</p></div></div></div>
+            <div id="staff-list" class="module"><div class="panel"><div class="panel-header"><h3>Personel Listesi</h3><button id="add-staff-from-list-btn" class="btn-header-add">Yeni Personel Ekle</button></div><div class="panel-body"><p>Personel listesi yükleniyor...</p></div></div></div>
+            <div id="ders-programi" class="module"><div class="panel"><div class="panel-header"><h3>Sınıf Bazlı Ders Programı</h3></div><div class="panel-body"><div id="tab-container"></div><div class="form-container"><div class="form-group"><label>Saat</label><select id="saat"></select></div><div class="form-group"><label>Gün</label><select id="gun"><option value="Pazartesi">Pazartesi</option><option value="Sali">Salı</option><option value="Carsamba">Çarşamba</option><option value="Persembe">Perşembe</option><option value="Cuma">Cuma</option></select></div><div class="form-group"><label>Öğretmen</label><select id="ogretmen"><option value="">Öğretmen Seçin...</option></select></div><div class="form-group"><label>Ders (Branş)</label><select id="dersAdi"><option value="">Ders Seçin...</option></select></div><button id="ekleBtn" class="btn">Ders Ekle</button></div><div id="schedule-display-area"></div></div></div></div>
+            <div id="gorevlendirme" class="module"><div class="panel"><div class="panel-header"><h3>Detaylı Ders Görevlendirme</h3></div><div class="panel-body"><div class="form-container"><h3>Ana Bilgiler</h3><div class="form-grid"><div class="form-group"><label for="g-tarih">Tarih</label><input type="date" id="g-tarih"></div><div class="form-group"><label for="g-asil-ogretmen">Asıl Öğretmen</label><select id="g-asil-ogretmen"></select></div><div class="form-group"><label for="g-gorevli-ogretmen">Görevli Öğretmen</label><select id="g-gorevli-ogretmen"></select></div><div class="form-group" style="grid-column: 1 / -1;"><label for="g-aciklama">Genel Açıklama</label><input type="text" id="g-aciklama" placeholder="Örn: Öğretmenin raporlu olması"></div></div><h3 style="margin-top: 30px;">Ders Dağılımı Detayları</h3><div class="detail-entry"><div class="form-group"><label for="d-sinif">Sınıf</label><input type="text" id="d-sinif" placeholder="7-A"></div><div class="form-group"><label for="d-brans">Branş</label><input type="text" id="d-brans" placeholder="Matematik"></div><div class="form-group"><label for="d-saat">Saat</label><input type="number" id="d-saat" min="1"></div><button id="g-detay-ekle-btn" class="btn">Ekle</button></div><ul id="gecici-detay-listesi"></ul><button id="g-kaydet-btn" class="btn btn-save">Tüm Görevlendirmeyi Kaydet</button></div><h2 style="margin-top: 40px;">Mevcut Görevlendirmeler</h2><div class="table-container"><table class="gorevlendirme-table"><thead><tr><th>Tarih</th><th>Asıl Öğretmen</th><th>Görevli Öğretmen</th><th>Toplam Saat</th><th>Ders Detayları</th><th>Açıklama</th></tr></thead><tbody id="gorevlendirme-tbody"></tbody></table></div></div></div></div>
+            <div id="nobet-takip" class="module"><div class="panel"><div class="panel-header"><h3>Nöbet Takip ve Raporlama</h3></div><div class="panel-body"><div class="form-container" style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 25px; border-radius: 8px; margin-bottom: 30px;"><h3 style="margin-top:0; border-bottom: 2px solid #e9ecef; padding-bottom: 10px;">Yeni Nöbet Girişi</h3><div class="form-grid" style="grid-template-columns: 1fr 2fr 2fr 120px; align-items: flex-end;"><div class="form-group"><label for="nobet-tarih">Tarih</label><input type="date" id="nobet-tarih"></div><div class="form-group"><label for="nobet-personel">Nöbetçi Personel</label><select id="nobet-personel"><option value="">Personel Seçiniz...</option></select></div><div class="form-group"><label for="nobet-yeri">Nöbet Yeri</label><select id="nobet-yeri"><option value="">Nöbet Yeri Seçiniz...</option></select></div><button id="nobet-ekle-btn" class="btn" style="background-color: #0056b3; height: 46px;">Nöbet Ekle</button></div></div><h3 style="margin-top: 40px;">Aylık Nöbet Raporu</h3><div class="controls" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;"><div class="controls-left" style="display: flex; align-items: center; gap: 10px;"><select id="rapor-ay-sec"></select><input type="number" id="rapor-yil-gir" min="2020" max="2050"></div></div><div class="table-container"><table class="gorevlendirme-table"><thead><tr><th>Tarih</th><th>Gün</th><th>Nöbetçi Personel</th><th>Nöbet Yeri</th><th>İşlemler</th></tr></thead><tbody id="nobet-rapor-tbody"></tbody></table></div></div></div></div>
+            <div id="izin-takip" class="module"><div class="panel"><div class="panel-header"><h3>İzin Takip ve Yönetim Modülü</h3></div><div class="panel-body"><div class="form-container" style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 25px; border-radius: 8px; margin-bottom: 40px;"><h3 style="margin-top:0; border-bottom: 2px solid #e9ecef; padding-bottom: 10px;">Yeni İzin Girişi</h3><div class="form-grid" style="grid-template-columns: 2fr 1.5fr 1fr 1fr; align-items: flex-end;"><div class="form-group"><label for="izin-personel">Personel</label><select id="izin-personel"><option value="">Personel Seçiniz...</option></select></div><div class="form-group"><label for="izin-tipi">İzin Tipi</label><select id="izin-tipi"><option value="">İzin Tipi Seçiniz...</option></select></div><div class="form-group"><label for="izin-baslangic">Başlangıç Tarihi</label><input type="date" id="izin-baslangic"></div><div class="form-group"><label for="izin-bitis">Bitiş Tarihi</label><input type="date" id="izin-bitis"></div><div class="form-group" style="grid-column: 1 / -1;"><label for="izin-aciklama">Açıklama / Not</label><input type="text" id="izin-aciklama" placeholder="İzinle ilgili kısa bir not..."></div></div><div class="button-group"><button id="izin-kaydet-btn" class="btn btn-save">İzin Kaydını Oluştur</button></div></div><h3>Kayıtlı İzinler</h3><div class="table-container"><table class="gorevlendirme-table"><thead><tr><th>Personel Adı</th><th>İzin Tipi</th><th>Başlangıç</th><th>Bitiş</th><th>Süre (Gün)</th><th>Açıklama</th><th style="width: 200px;">İşlemler</th></tr></thead><tbody id="izin-kayitlari-tbody"></tbody></table></div></div></div></div>
+            <div id="puantaj" class="module"><div class="panel"><div class="panel-header"><h3>Puantaj Cetveli</h3></div><div class="panel-body"><div class="controls puantaj"><div class="controls-left"><select id="select-month"></select> <input type="number" id="input-year" min="2020" max="2050"><button id="btn-generate">Puantajı Oluştur / Göster</button></div><div class="controls-right export-buttons"><button id="btn-print">Yazdır</button><button id="btn-pdf">PDF İndir</button><button id="btn-excel">Excel İndir</button></div></div><div id="puantaj-table-container" class="table-container"></div><div id="puantaj-legend" class="puantaj-legend"></div><div id="bottom-section" class="bottom-section"><div class="summary-totals"><h3>Aylık Genel Toplamlar</h3><div class="total-line"><span class="label">Ek Ders Saati Toplamı:</span><span id="total-ekders" class="value">0</span></div><div class="total-line"><span class="label">Nöbet Toplamı:</span><span id="total-nobet" class="value">0</span></div><div class="total-line"><span class="label">Rehberlik Toplamı:</span><span id="total-rehberlik" class="value">0</span></div></div><div class="approval-section"><h3>Onay</h3><div class="name">Adı Soyadı</div><div>Okul Müdürü</div></div></div></div></div></div>
+            <div id="settings" class="module"><div class="panel"><div class="panel-header"><h3>Uygulama Ayarları</h3></div><div class="panel-body">
+                <div class="settings-tabs">
+                    <button class="settings-tab-button active" data-tab="nevi">Personel Nevileri</button>
+                    <button class="settings-tab-button" data-tab="gorev">Görevler/Branşlar</button>
+                    <button class="settings-tab-button" data-tab="ders">Dersler</button>
+                    <button class="settings-tab-button" data-tab="sinif">Sınıflar</button>
+                    <button class="settings-tab-button" data-tab="nobet-yeri">Nöbet Yerleri</button>
+                    <button class="settings-tab-button" data-tab="izin-tipi">İzin Tipleri</button>
+                    <button class="settings-tab-button" data-tab="zaman-cizelgesi">Zaman Çizelgesi</button>
+                </div>
+                <div id="nevi-tab" class="settings-tab-content active"><h3>Personel Nevi Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-nevi-input" placeholder="Yeni personel nevi adı..."><button id="add-nevi-btn" class="btn">Ekle</button></div><ul id="nevi-list" class="settings-list"></ul></div>
+                <div id="gorev-tab" class="settings-tab-content"><h3>Görev/Branş Yönetimi</h3><div class="add-setting-form"><select id="gorev-nevi-select"><option value="">Önce Personel Nevi Seçin</option></select><input type="text" id="add-gorev-input" placeholder="Yeni görev/branş adı..."><button id="add-gorev-btn" class="btn">Ekle</button></div><ul id="gorev-list" class="settings-list"></ul></div>
+                <div id="ders-tab" class="settings-tab-content"><h3>Ders Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-ders-input" placeholder="Yeni ders adı..."><button id="add-ders-btn" class="btn">Ekle</button></div><ul id="ders-list" class="settings-list"></ul></div>
+                <div id="sinif-tab" class="settings-tab-content"><h3>Sınıf Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-sinif-input" placeholder="Yeni sınıf adı..."><button id="add-sinif-btn" class="btn">Ekle</button></div><ul id="sinif-list" class="settings-list"></ul></div>
+                <div id="nobet-yeri-tab" class="settings-tab-content"><h3>Nöbet Yeri Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-nobet-yeri-input" placeholder="Yeni nöbet yeri adı..."><button id="add-nobet-yeri-btn" class="btn">Ekle</button></div><ul id="nobet-yeri-list" class="settings-list"></ul></div>
+                <div id="izin-tipi-tab" class="settings-tab-content"><h3>İzin Tipi Yönetimi</h3><div class="add-setting-form" style="grid-template-columns: 2fr 1fr auto; display: grid;"><input type="text" id="add-izin-tipi-ad-input" placeholder="Yeni izin tipi adı (Örn: Yıllık İzin)"><input type="text" id="add-izin-tipi-kod-input" placeholder="Puantaj Kodu (Örn: I)"><button id="add-izin-tipi-btn" class="btn">Ekle</button></div><ul id="izin-tipi-list" class="settings-list"></ul></div>
+<div id="zaman-cizelgesi-tab" class="settings-tab-content">
+    <h3>Zaman Çizelgesi Ayarları</h3>
+    <p>Ders programı modülü, buradaki ayarlara göre otomatik olarak şekillenecektir.</p>
+    <div class="form-grid">
+        <div class="form-group"><label for="setting-dersBaslangic">Ders Başlama Saati</label><input type="time" id="setting-dersBaslangic"></div>
+        <div class="form-group"><label for="setting-toplamDers">Günlük Toplam Ders Sayısı</label><input type="number" id="setting-toplamDers" min="1"></div>
+        <div class="form-group"><label for="setting-dersSuresi">Ders Süresi (Dakika)</label><input type="number" id="setting-dersSuresi" min="1"></div>
+        <div class="form-group"><label for="setting-teneffusSuresi">Teneffüs Süresi (Dakika)</label><input type="number" id="setting-teneffusSuresi" min="0"></div>
+        <div class="form-group"><label for="setting-ogleArasiDersNo">Öğle Arası Kaçıncı Dersten Sonra?</label><input type="number" id="setting-ogleArasiDersNo" min="0"></div>
+        <div class="form-group"><label for="setting-ogleArasiSuresi">Öğle Arası Süresi (Dakika)</label><input type="number" id="setting-ogleArasiSuresi" min="0"></div>
+    </div>
+    <div class="button-group">
+        <button id="zaman-cizelgesi-kaydet-btn" class="btn btn-save">Çizelge Ayarlarını Kaydet</button>
+    </div>
+</div>
+            </div></div></div>
+        </main>
+<div id="edit-setting-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 id="edit-setting-modal-title">Ayar Adını Düzenle</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="edit-setting-input">Yeni Ad</label>
+                <input type="text" id="edit-setting-input">
+            </div>
+            <div class="button-group">
+                <button id="edit-setting-save-btn" class="btn btn-save">Değişiklikleri Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+
+    <div id="add-staff-modal" class="modal"><div class="modal-content"><div class="modal-header"><h3 id="modal-title">Yeni Personel Ekle</h3><button class="close-modal">&times;</button></div><div class="modal-body"><form id="personelForm"></form></div></div></div>
+    <div id="edit-modal-overlay" class="modal-overlay"><div class="modal-content"><h3 id="p-modal-title">Puantaj Günü Düzenle</h3><div class="form-group"><label for="modal-status">Durum</label><select id="modal-status"></select></div><div class="form-group"><label for="modal-hours">Çalışılan Ders Saati</label><input type="number" id="modal-hours" min="0" max="12"></div><div class="form-group"><label for="modal-notes">Açıklama</label><input type="text" id="modal-notes" placeholder="Opsiyonel not..."></div><div class="modal-buttons"><button id="modal-cancel" class="btn">İptal</button><button id="modal-save" class="btn">Kaydet</button></div></div></div>
+    
+    <template id="personel-form-template">
+        <div class="form-grid">
+            <div class="form-group"><label for="ad_soyad">Adı Soyadı:</label><input type="text" id="ad_soyad" name="ad_soyad" required></div>
+            <div class="form-group"><label for="personel_nevisi">Personel Nevisi:</label><select id="personel_nevisi" name="personel_nevisi" required><option value="" disabled selected>Seçim yapınız...</option></select></div>
+            <div class="form-group"><label for="gorevi_bransi">Görevi / Branşı:</label><select id="gorevi_bransi" name="gorevi_bransi" required><option value="" disabled selected>Önce Personel Nevisi seçin</option></select></div>
+            <div class="form-group"><label>Eş Durumu:</label><div class="radio-group"><div><input type="radio" id="es_calismiyor" name="es_durumu" value="calismiyor" checked><label for="es_calismiyor">Çalışmıyor</label></div><div><input type="radio" id="es_calisiyor" name="es_durumu" value="calisiyor"><label for="es_calisiyor">Çalışıyor</label></div></div></div>
+            <div class="form-group"><label for="cocuk_0_6">Çocuk Sayısı (0-6 Yaş):</label><input type="number" id="cocuk_0_6" name="cocuk_0_6" min="0" value="0"></div>
+            <div class="form-group"><label for="cocuk_6_ustu">Çocuk Sayısı (6-18 Yaş):</label><input type="number" id="cocuk_6_ustu" name="cocuk_6_ustu" min="0" value="0"></div>
+            <div class="form-group"><label for="ise_giris">İşe Giriş Tarihi:</label><input type="date" id="ise_giris" name="ise_giris" required></div>
+            <div class="form-group"><label for="isten_ayrilis">İşten Ayrılış Tarihi:</label><input type="date" id="isten_ayrilis" name="isten_ayrilis"></div>
+            <div class="form-group"><label for="aciklama">Açıklama:</label><textarea id="aciklama" name="aciklama" rows="3"></textarea></div>
+            <div class="form-group"><label for="maas_karsiligi">Maaş Karşılığı Ders Saati:</label><input type="number" id="maas_karsiligi" name="maas_karsiligi" min="0" value="20"></div>
+            <div class="form-group"><label for="rehberlik_saati">Rehberlik/Sosyal Kulüp Saati:</label><input type="number" id="rehberlik_saati" name="rehberlik_saati" min="0" value="0"></div>
+            <div class="form-group full-width button-group"><button type="submit" class="btn btn-save">Personeli Kaydet</button></div>
+        </div>
+    </template>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        const firebaseConfig = {
+    apiKey: "AIzaSyBoSgNHT05FNKeswV0KCaKY4-Pz7jpwbXM",
+    authDomain: "puantaj-fe3df.firebaseapp.com",
+    projectId: "puantaj-fe3df",
+    storageBucket: "puantaj-fe3df.appspot.com", // <-- DOĞRU ADRES
+    messagingSenderId: "110213592906",
+    appId: "1:110213592906:web:02a14675741fc63e15b3b3",
+    measurementId: "G-JC71J8VRJW"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+// YENİ EKLENECEK DEĞİŞKENLER
+const auth = getAuth(app);
+const loginPanel = document.getElementById('login-panel');
+const appContainer = document.querySelector('.app-container');
+const loginBtn = document.getElementById('login-btn');
+const logoutBtn = document.getElementById('logout-btn');
+const loginEmailInput = document.getElementById('login-email');
+const loginPasswordInput = document.getElementById('login-password');
+const loginError = document.getElementById('login-error');
+// --- TÜRKİYE RESMİ TATİLLER VERİ BANKASI (2024-2028) ---
+const resmiTatiller = {
+    "sabit": [
+        { ay: 0, gun: 1, ad: "Yılbaşı" },
+        { ay: 3, gun: 23, ad: "Ulusal Egemenlik ve Çocuk Bayramı" },
+        { ay: 4, gun: 1, ad: "Emek ve Dayanışma Günü" },
+        { ay: 4, gun: 19, ad: "Atatürk'ü Anma, Gençlik ve Spor Bayramı" },
+        { ay: 6, gun: 15, ad: "Demokrasi ve Milli Birlik Günü" },
+        { ay: 7, gun: 30, ad: "Zafer Bayramı" },
+        { ay: 9, gun: 29, ad: "Cumhuriyet Bayramı" }
+    ],
+    "degisken": {
+        "2024": [
+            { ay: 3, gun: 9, ad: "Ramazan Bayramı Arifesi" }, { ay: 3, gun: 10, ad: "Ramazan Bayramı 1. Gün" }, { ay: 3, gun: 11, ad: "Ramazan Bayramı 2. Gün" }, { ay: 3, gun: 12, ad: "Ramazan Bayramı 3. Gün" },
+            { ay: 5, gun: 15, ad: "Kurban Bayramı Arifesi" }, { ay: 5, gun: 16, ad: "Kurban Bayramı 1. Gün" }, { ay: 5, gun: 17, ad: "Kurban Bayramı 2. Gün" }, { ay: 5, gun: 18, ad: "Kurban Bayramı 3. Gün" }, { ay: 5, gun: 19, ad: "Kurban Bayramı 4. Gün" }
+        ],
+        "2025": [
+            { ay: 2, gun: 29, ad: "Ramazan Bayramı Arifesi" }, { ay: 2, gun: 30, ad: "Ramazan Bayramı 1. Gün" }, { ay: 2, gun: 31, ad: "Ramazan Bayramı 2. Gün" }, { ay: 3, gun: 1, ad: "Ramazan Bayramı 3. Gün" },
+            { ay: 5, gun: 5, ad: "Kurban Bayramı Arifesi" }, { ay: 5, gun: 6, ad: "Kurban Bayramı 1. Gün" }, { ay: 5, gun: 7, ad: "Kurban Bayramı 2. Gün" }, { ay: 5, gun: 8, ad: "Kurban Bayramı 3. Gün" }, { ay: 5, gun: 9, ad: "Kurban Bayramı 4. Gün" }
+        ],
+        "2026": [
+            { ay: 2, gun: 18, ad: "Ramazan Bayramı Arifesi" }, { ay: 2, gun: 19, ad: "Ramazan Bayramı 1. Gün" }, { ay: 2, gun: 20, ad: "Ramazan Bayramı 2. Gün" }, { ay: 2, gun: 21, ad: "Ramazan Bayramı 3. Gün" },
+            { ay: 4, gun: 25, ad: "Kurban Bayramı Arifesi" }, { ay: 4, gun: 26, ad: "Kurban Bayramı 1. Gün" }, { ay: 4, gun: 27, ad: "Kurban Bayramı 2. Gün" }, { ay: 4, gun: 28, ad: "Kurban Bayramı 3. Gün" }, { ay: 4, gun: 29, ad: "Kurban Bayramı 4. Gün" }
+        ],
+        "2027": [
+            { ay: 2, gun: 8, ad: "Ramazan Bayramı Arifesi" }, { ay: 2, gun: 9, ad: "Ramazan Bayramı 1. Gün" }, { ay: 2, gun: 10, ad: "Ramazan Bayramı 2. Gün" }, { ay: 2, gun: 11, ad: "Ramazan Bayramı 3. Gün" },
+            { ay: 4, gun: 15, ad: "Kurban Bayramı Arifesi" }, { ay: 4, gun: 16, ad: "Kurban Bayramı 1. Gün" }, { ay: 4, gun: 17, ad: "Kurban Bayramı 2. Gün" }, { ay: 4, gun: 18, ad: "Kurban Bayramı 3. Gün" }, { ay: 4, gun: 19, ad: "Kurban Bayramı 4. Gün" }
+        ],
+        "2028": [
+            { ay: 1, gun: 27, ad: "Ramazan Bayramı Arifesi" }, { ay: 1, gun: 28, ad: "Ramazan Bayramı 1. Gün" }, { ay: 1, gun: 29, ad: "Ramazan Bayramı 2. Gün" }, { ay: 1, gun: 30, ad: "Ramazan Bayramı 3. Gün" },
+            { ay: 4, gun: 3, ad: "Kurban Bayramı Arifesi" }, { ay: 4, gun: 4, ad: "Kurban Bayramı 1. Gün" }, { ay: 4, gun: 5, ad: "Kurban Bayramı 2. Gün" }, { ay: 4, gun: 6, ad: "Kurban Bayramı 3. Gün" }, { ay: 4, gun: 7, ad: "Kurban Bayramı 4. Gün" }
+        ]
+    }
+};
+
+// Belirtilen bir tarihin resmi tatil olup olmadığını kontrol eden yardımcı fonksiyon
+function isResmiTatil(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    // Sabit tatilleri kontrol et
+    if (resmiTatiller.sabit.some(t => t.ay === month && t.gun === day)) {
+        return true;
+    }
+
+    // Değişken (dini) tatilleri kontrol et
+    const yilinTatilleri = resmiTatiller.degisken[year];
+    if (yilinTatilleri && yilinTatilleri.some(t => t.ay === month && t.gun === day)) {
+        return true;
+    }
+
+    return false;
+}
+
+        // --- GENEL FONKSİYONLAR ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.animation = 'slideOut 0.3s forwards'; toast.addEventListener('animationend', () => toast.remove()); }, 3000);
+        }
+
+        // --- AYARLAR VERİTABANI İŞLEMLERİ ---
+        const getSettings = async (collectionName) => getDocs(query(collection(db, collectionName), orderBy("name")));
+        const addSetting = (collectionName, data) => addDoc(collection(db, collectionName), data);
+        const deleteSetting = (collectionName, id) => deleteDoc(doc(db, collectionName, id));
+
+        // --- AYARLAR MODÜLÜ YÖNETİMİ ---
+        async function renderSettingsList(collectionName, listElementId, relatedData) {
+            const listElement = document.getElementById(listElementId);
+            if (!listElement) return;
+            listElement.innerHTML = '<li>Yükleniyor...</li>';
+            try {
+                const snapshot = await getSettings(collectionName);
+                if (snapshot.empty) { listElement.innerHTML = '<li>Henüz veri eklenmemiş.</li>'; return; }
+                listElement.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const item = doc.data(); const li = document.createElement('li'); let displayText = item.name;
+                    if (collectionName === 'ayarlar_gorevler' && relatedData) {
+                        const nevi = relatedData.find(n => n.id === item.neviId);
+                        displayText = `${item.name} <small style="color: #555;">(${nevi ? nevi.name : 'Bilinmeyen'})</small>`;
+                    }
+                    if (collectionName === 'ayarlar_izin_tipleri') {
+                        displayText = `${item.name} <strong style="color: var(--theme-accent);"> (Kod: ${item.kod})</strong>`;
+                    }
+                    li.innerHTML = `
+    <span>${displayText}</span>
+    <div class="actions-cell" style="width: auto; min-width: 120px;">
+        <button class="btn btn-edit btn-edit-setting" data-id="${doc.id}" data-collection="${collectionName}" data-name="${item.name}">Düzenle</button>
+        <button class="btn btn-delete btn-delete-setting" data-id="${doc.id}" data-collection="${collectionName}">Sil</button>
+    </div>
+`;
+                    listElement.appendChild(li);
+                });
+            } catch (e) { listElement.innerHTML = '<li>Veri yüklenemedi.</li>'; console.error("Error rendering settings:", e); }
+        }
+        
+        async function initializeSettings() {
+            const tabsContainer = document.querySelector('.settings-tabs');
+            if (tabsContainer.dataset.initialized) return;
+            tabsContainer.dataset.initialized = 'true';
+            const neviSnapshot = await getSettings('ayarlar_personel_nevileri');
+            const personelNevileri = neviSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+            const renderAll = () => Promise.all([ renderSettingsList('ayarlar_personel_nevileri', 'nevi-list'), renderSettingsList('ayarlar_gorevler', 'gorev-list', personelNevileri), renderSettingsList('ayarlar_dersler', 'ders-list'), renderSettingsList('ayarlar_siniflar', 'sinif-list'), renderSettingsList('ayarlar_nobet_yerleri', 'nobet-yeri-list'), renderSettingsList('ayarlar_izin_tipleri', 'izin-tipi-list') ]);
+            const populateGorevNeviSelect = () => { const select = document.getElementById('gorev-nevi-select'); select.innerHTML = '<option value="">Personel Nevi Seçin</option>'; personelNevileri.forEach(nevi => select.add(new Option(nevi.name, nevi.id))); };
+            await renderAll();
+            populateGorevNeviSelect();
+            document.getElementById('add-nevi-btn').addEventListener('click', async () => { const input = document.getElementById('add-nevi-input'); if(input.value.trim()) { await addSetting('ayarlar_personel_nevileri', { name: input.value.trim() }); location.reload(); } });
+            document.getElementById('add-gorev-btn').addEventListener('click', async () => { const input = document.getElementById('add-gorev-input'); const neviSelect = document.getElementById('gorev-nevi-select'); if(input.value.trim() && neviSelect.value) { await addSetting('ayarlar_gorevler', { name: input.value.trim(), neviId: neviSelect.value }); input.value = ''; await renderSettingsList('ayarlar_gorevler', 'gorev-list', personelNevileri); } });
+            document.getElementById('add-ders-btn').addEventListener('click', async () => { const input = document.getElementById('add-ders-input'); if(input.value.trim()) { await addSetting('ayarlar_dersler', { name: input.value.trim() }); input.value = ''; await renderSettingsList('ayarlar_dersler', 'ders-list'); } });
+            document.getElementById('add-sinif-btn').addEventListener('click', async () => { const input = document.getElementById('add-sinif-input'); if(input.value.trim()) { await addSetting('ayarlar_siniflar', { name: input.value.trim() }); input.value = ''; await renderSettingsList('ayarlar_siniflar', 'sinif-list'); } });
+            document.getElementById('add-nobet-yeri-btn').addEventListener('click', async () => { const input = document.getElementById('add-nobet-yeri-input'); if(input.value.trim()) { await addSetting('ayarlar_nobet_yerleri', { name: input.value.trim() }); input.value = ''; await renderSettingsList('ayarlar_nobet_yerleri', 'nobet-yeri-list'); } });
+            document.getElementById('add-izin-tipi-btn').addEventListener('click', async () => {
+                const adInput = document.getElementById('add-izin-tipi-ad-input'); const kodInput = document.getElementById('add-izin-tipi-kod-input');
+                const ad = adInput.value.trim(); const kod = kodInput.value.trim().toUpperCase();
+                if(ad && kod) { await addSetting('ayarlar_izin_tipleri', { name: ad, kod: kod }); adInput.value = ''; kodInput.value = ''; await renderSettingsList('ayarlar_izin_tipleri', 'izin-tipi-list'); } 
+                else { showToast('İzin Adı ve Puantaj Kodu alanları zorunludur.', 'error'); }
+            });
+            document.querySelector('#settings .panel-body').addEventListener('click', async (e) => {
+    const target = e.target;
+
+    // Silme İşlemi
+    if (target.classList.contains('btn-delete-setting')) {
+        const { id, collection } = target.dataset;
+        if (confirm('Bu öğeyi silmek istediğinizden emin misiniz?')) {
+            await deleteSetting(collection, id);
+            showToast('Ayar başarıyla silindi.');
+            if (collection === 'ayarlar_personel_nevileri') {
+                location.reload();
+            } else {
+                await renderAll();
+            }
+        }
+    }
+
+    // Düzenleme İşlemi
+    if (target.classList.contains('btn-edit-setting')) {
+        const { id, collection, name } = target.dataset;
+        const modal = document.getElementById('edit-setting-modal');
+        const input = document.getElementById('edit-setting-input');
+        const saveBtn = document.getElementById('edit-setting-save-btn');
+
+        input.value = name;
+        modal.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
+
+        saveBtn.onclick = async () => {
+            const newName = input.value.trim();
+            if (newName && newName !== name) {
+                await setDoc(doc(db, collection, id), { name: newName }, { merge: true });
+                showToast('Ayar başarıyla güncellendi.');
+                modal.style.display = 'none';
+                if (collection === 'ayarlar_personel_nevileri') {
+                    location.reload();
+                } else {
+                    await renderAll();
+                }
+            } else {
+                modal.style.display = 'none';
+            }
+        };
+
+        modal.style.display = 'flex';
+    }
+});
+// YENİ EKLENECEK SATIRLAR
+await loadZamanCizelgesiAyarlari();
+document.getElementById('zaman-cizelgesi-kaydet-btn').addEventListener('click', saveZamanCizelgesiAyarlari);
+// YENİ EKLENECEK generateTimeSlots FONKSİYONU
+async function generateTimeSlots() {
+    dersSaatleri.length = 0;
+    try {
+        const docSnap = await getDoc(doc(db, "genel_ayarlar", "zamanCizelgesi"));
+        const ayarlar = docSnap.exists() ? docSnap.data() : {};
+        const DERS_BASLANGIC_STR = ayarlar.dersBaslangic || '08:30';
+        const TOPLAM_DERS_SAYISI = parseInt(ayarlar.toplamDers) || 8;
+        const DERS_SURESI_DK = parseInt(ayarlar.dersSuresi) || 40;
+        const TENEFUS_SURESI_DK = parseInt(ayarlar.teneffusSuresi) || 10;
+        const OGLE_ARASI_DERS_NO = parseInt(ayarlar.ogleArasiDersNo) || 4;
+        const OGLE_ARASI_SURESI_DK = parseInt(ayarlar.ogleArasiSuresi) || 45;
+        const [saat, dakika] = DERS_BASLANGIC_STR.split(':').map(Number);
+        let suankiZaman = new Date();
+        suankiZaman.setHours(saat, dakika, 0, 0);
+        for (let i = 1; i <= TOPLAM_DERS_SAYISI; i++) {
+            const baslangic = new Date(suankiZaman);
+            suankiZaman.setMinutes(suankiZaman.getMinutes() + DERS_SURESI_DK);
+            const bitis = new Date(suankiZaman);
+            dersSaatleri.push({ dersNo: i, baslangic: baslangic.toTimeString().substring(0, 5), bitis: bitis.toTimeString().substring(0, 5) });
+            if (i === OGLE_ARASI_DERS_NO) {
+                suankiZaman.setMinutes(suankiZaman.getMinutes() + OGLE_ARASI_SURESI_DK);
+            } else if (i < TOPLAM_DERS_SAYISI) {
+                suankiZaman.setMinutes(suankiZaman.getMinutes() + TENEFUS_SURESI_DK);
+            }
+        }
+    } catch(e) {
+        console.error("Zaman aralıkları oluşturulurken hata:", e);
+        showToast('Zaman aralıkları ayarları okunamadı!', 'error');
+    }
+    const saatSelect = document.getElementById('saat');
+    if (saatSelect) {
+        saatSelect.innerHTML = '';
+        dersSaatleri.forEach(slot => saatSelect.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.baslangic)));
+    }
+}
+            tabsContainer.addEventListener('click', e => { if (e.target.matches('.settings-tab-button')) { document.querySelectorAll('.settings-tab-button, .settings-tab-content').forEach(el => el.classList.remove('active')); e.target.classList.add('active'); document.getElementById(`${e.target.dataset.tab}-tab`).classList.add('active'); 
+        } 
+    });
+}
+// YENİ EKLENECEK FONKSİYONLAR
+async function saveZamanCizelgesiAyarlari() {
+    const ayarlar = {
+        dersBaslangic: document.getElementById('setting-dersBaslangic').value,
+        toplamDers: document.getElementById('setting-toplamDers').value,
+        dersSuresi: document.getElementById('setting-dersSuresi').value,
+        teneffusSuresi: document.getElementById('setting-teneffusSuresi').value,
+        ogleArasiDersNo: document.getElementById('setting-ogleArasiDersNo').value,
+        ogleArasiSuresi: document.getElementById('setting-ogleArasiSuresi').value
+    };
+    try {
+        await setDoc(doc(db, "genel_ayarlar", "zamanCizelgesi"), ayarlar);
+        showToast('Zaman çizelgesi ayarları başarıyla kaydedildi.');
+    } catch (e) {
+        console.error("Zaman çizelgesi kaydedilirken hata:", e);
+        showToast('Ayarlar kaydedilirken bir hata oluştu.', 'error');
+    }
+}
+
+async function loadZamanCizelgesiAyarlari() {
+    try {
+        const docSnap = await getDoc(doc(db, "genel_ayarlar", "zamanCizelgesi"));
+        if (docSnap.exists()) {
+            const ayarlar = docSnap.data();
+            document.getElementById('setting-dersBaslangic').value = ayarlar.dersBaslangic || '08:30';
+            document.getElementById('setting-toplamDers').value = ayarlar.toplamDers || '8';
+            document.getElementById('setting-dersSuresi').value = ayarlar.dersSuresi || '40';
+            document.getElementById('setting-teneffusSuresi').value = ayarlar.teneffusSuresi || '10';
+            document.getElementById('setting-ogleArasiDersNo').value = ayarlar.ogleArasiDersNo || '4';
+            document.getElementById('setting-ogleArasiSuresi').value = ayarlar.ogleArasiSuresi || '45';
+        } else {
+            // Varsayılan değerleri ayarla
+            document.getElementById('setting-dersBaslangic').value = '08:30';
+            document.getElementById('setting-toplamDers').value = '8';
+            document.getElementById('setting-dersSuresi').value = '40';
+            document.getElementById('setting-teneffusSuresi').value = '10';
+            document.getElementById('setting-ogleArasiDersNo').value = '4';
+            document.getElementById('setting-ogleArasiSuresi').value = '45';
+        }
+    } catch (e) {
+        console.error("Zaman çizelgesi yüklenirken hata:", e);
+    }
+}
+        
+        async function fetchStaff() {
+            const listContainer = document.querySelector('#staff-list .panel-body');
+            listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
+            try {
+                const [staffSnap, neviSnap, gorevSnap] = await Promise.all([ getDocs(collection(db, "personel")), getSettings('ayarlar_personel_nevileri'), getSettings('ayarlar_gorevler') ]);
+                const neviMap = Object.fromEntries(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
+                const gorevMap = Object.fromEntries(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
+                if (staffSnap.empty) { listContainer.innerHTML = '<p>Henüz kayıtlı personel bulunmamaktadır.</p>'; return; }
+                let tableHTML = `<table class="staff-table"><thead><tr><th>Adı Soyadı</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>`;
+                staffSnap.forEach(doc => { const s = doc.data(); tableHTML += `<tr><td>${s.ad_soyad || ''}</td><td>${neviMap[s.personel_nevisi] || 'Bilinmiyor'}</td><td>${gorevMap[s.gorevi_bransi] || 'Bilinmiyor'}</td><td>${s.ise_giris || '---'}</td><td>${s.isten_ayrilis || '---'}</td><td class="actions-cell"><button class="btn btn-edit" data-id="${doc.id}">Düzenle</button><button class="btn btn-delete" data-id="${doc.id}">Sil</button></td></tr>`; });
+                listContainer.innerHTML = tableHTML + `</tbody></table>`;
+            } catch (e) { listContainer.innerHTML = '<p style="color:red;">Personel listesi yüklenemedi.</p>'; console.error(e); }
+        }
+
+        async function loadPersonelForm(staffId = null, staffData = null) {
+    const template = document.getElementById('personel-form-template');
+    const formContainer = document.getElementById('personelForm');
+    formContainer.innerHTML = '';
+    formContainer.appendChild(template.content.cloneNode(true));
+    formContainer.dataset.editingId = staffId || '';
+    document.getElementById('modal-title').textContent = staffId ? 'Personel Bilgilerini Düzenle' : 'Yeni Personel Ekle';
+    const neviSelect = document.getElementById('personel_nevisi');
+    const gorevSelect = document.getElementById('gorevi_bransi');
+    const neviSnapshot = await getSettings('ayarlar_personel_nevileri');
+    neviSnapshot.forEach(doc => neviSelect.add(new Option(doc.data().name, doc.id)));
+    neviSelect.addEventListener('change', async (e) => {
+        const neviId = e.target.value;
+        gorevSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+        if (!neviId) {
+            gorevSelect.innerHTML = '<option value="">Önce Personel Nevi Seçin</option>';
+            return;
+        }
+        // DÜZELTME: Sorgudan "orderBy" kaldırıldı.
+        const q = query(collection(db, 'ayarlar_gorevler'), where('neviId', '==', neviId));
+        try {
+            const gorevSnapshot = await getDocs(q);
+            gorevSelect.innerHTML = '<option value="">Seçim yapınız...</option>';
+            if (!gorevSnapshot.empty) {
+                const gorevler = [];
+                gorevSnapshot.forEach(doc => gorevler.push({ id: doc.id, ...doc.data() }));
+                gorevler.sort((a, b) => a.name.localeCompare(b.name, 'tr')); // Sıralama kod içinde yapılıyor.
+                gorevler.forEach(gorev => gorevSelect.add(new Option(gorev.name, gorev.id)));
+            } else {
+                gorevSelect.innerHTML = '<option value="">Bu nevi için görev tanımı yok</option>';
+            }
+        } catch (error) {
+            console.error("Görevler yüklenirken hata:", error);
+            showToast('Görevler yüklenemedi.', 'error');
+            gorevSelect.innerHTML = '<option value="">Yüklenemedi</option>';
+        }
+    });
+    if (staffId && staffData) {
+        document.getElementById('ad_soyad').value = staffData.ad_soyad || '';
+        neviSelect.value = staffData.personel_nevisi || '';
+        await neviSelect.dispatchEvent(new Event('change'));
+        document.getElementById('gorevi_bransi').value = staffData.gorevi_bransi || '';
+        document.querySelector(`input[name="es_durumu"][value="${staffData.es_durumu || 'calismiyor'}"]`).checked = true;
+        document.getElementById('cocuk_0_6').value = staffData.cocuk_0_6 || '0';
+        document.getElementById('cocuk_6_ustu').value = staffData.cocuk_6_ustu || '0';
+        document.getElementById('ise_giris').value = staffData.ise_giris || '';
+        document.getElementById('isten_ayrilis').value = staffData.isten_ayrilis || '';
+        document.getElementById('aciklama').value = staffData.aciklama || '';
+        document.getElementById('maas_karsiligi').value = staffData.maas_karsiligi || '20';
+        document.getElementById('rehberlik_saati').value = staffData.rehberlik_saati || '0';
+    } else {
+        document.getElementById('ise_giris').valueAsDate = new Date();
+    }
+}
+        
+        let scheduleInitialized = false;
+async function initializeSchedule() {
+    if (scheduleInitialized) return;
+
+    try {
+        const [siniflarSnap, derslerSnap, personelSnap, neviSnap, gorevSnap] = await Promise.all([
+            getSettings('ayarlar_siniflar'),
+            getSettings('ayarlar_dersler'),
+            getDocs(query(collection(db, 'personel'))),
+            getSettings('ayarlar_personel_nevileri'), // Personel türlerini çek
+            getSettings('ayarlar_gorevler')           // Görevleri çek
+        ]);
+
+        // Ayarlar'dan "Eğitim Personeli" ve "Rehber Öğretmen" ID'lerini bul
+        const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.includes('Eğitim Personeli'));
+        const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
+
+        const rehberOgretmenGorev = gorevSnap.docs.find(doc => doc.data().name.includes('Rehber Öğretmen'));
+        const rehberOgretmenGorevId = rehberOgretmenGorev ? rehberOgretmenGorev.id : null;
+
+        const siniflar = siniflarSnap.docs.map(d => d.data().name);
+        const dersler = derslerSnap.docs.map(d => d.data().name);
+
+        // Personelleri filtrele
+        const personeller = personelSnap.docs
+            .map(doc => ({ id: doc.id, ...doc.data() })) // Önce tüm veriyi al
+            .filter(p => {
+                // Sadece "Eğitim Personeli" olanları al
+                const isEgitimPersoneli = p.personel_nevisi === egitimPersoneliNeviId;
+                // "Rehber Öğretmen" olanları dışarıda bırak
+                const isRehberOgretmen = p.gorevi_bransi === rehberOgretmenGorevId;
+
+                return isEgitimPersoneli && !isRehberOgretmen;
+            })
+            .map(p => p.ad_soyad); // Sadece ad soyadlarını listeye ekle
+
+        const dersSelect = document.getElementById('dersAdi');
+        dersSelect.innerHTML = '<option value="">Ders Seçin...</option>';
+        dersler.forEach(ders => dersSelect.add(new Option(ders, ders)));
+
+        const ogretmenSelect = document.getElementById('ogretmen');
+        ogretmenSelect.innerHTML = '<option value="">Öğretmen Seçin...</option>';
+        personeller.forEach(p => ogretmenSelect.add(new Option(p, p)));
+
+        if (siniflar.length === 0) {
+            document.getElementById('schedule-display-area').innerHTML = '<p>Lütfen "Ayarlar" menüsünden en az bir sınıf ekleyin.</p>';
+            return;
+        }
+
+        window.aktifSinif = siniflar[0];
+        window.tumProgramlar = {};
+        siniflar.forEach(s => { window.tumProgramlar[s] = []; });
+
+        await generateTimeSlots();
+        createTabs(siniflar);
+        renderSchedule();
+        scheduleInitialized = true;
+
+    } catch (error) {
+        console.error("Ders programı başlatılırken hata:", error);
+        showToast('Ders programı yüklenemedi. Ayarlarınızı kontrol edin.', 'error');
+    }
+}
+        const dersSaatleri = [];
+        function generateTimeSlots() {
+            dersSaatleri.length = 0; let suankiZaman = new Date(); suankiZaman.setHours(9, 30, 0, 0);
+            for (let i = 1; i <= 8; i++) {
+                let baslangic = new Date(suankiZaman); suankiZaman.setMinutes(suankiZaman.getMinutes() + 40); let bitis = new Date(suankiZaman);
+                dersSaatleri.push({ dersNo: i, baslangic: baslangic.toTimeString().substring(0, 5), bitis: bitis.toTimeString().substring(0, 5) });
+                if (i === 4) suankiZaman.setMinutes(suankiZaman.getMinutes() + 60);
+                else if (i < 8) suankiZaman.setMinutes(suankiZaman.getMinutes() + 10);
+            }
+            const saatSelect = document.getElementById('saat'); saatSelect.innerHTML = '';
+            dersSaatleri.forEach(slot => saatSelect.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.baslangic)));
+        }
+        function createTabs(siniflar) {
+            const tabContainer = document.getElementById('tab-container'); tabContainer.innerHTML = '';
+            siniflar.forEach(sinif => {
+                const tab = document.createElement('button'); tab.className = 'tab-link'; if(sinif === window.aktifSinif) tab.classList.add('active');
+                tab.textContent = sinif;
+                tab.addEventListener('click', () => { window.aktifSinif = sinif; document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active')); tab.classList.add('active'); renderSchedule(); });
+                tabContainer.appendChild(tab);
+            });
+        }
+        function renderSchedule() {
+            const displayArea = document.getElementById('schedule-display-area'); const gunler = ["Pazartesi", "Sali", "Carsamba", "Persembe", "Cuma"];
+            let tableHTML = '<table class="schedule-table"><thead><tr><th>Saatler</th>'; gunler.forEach(gun => tableHTML += `<th>${gun}</th>`);
+            tableHTML += '</tr></thead><tbody>'; const mevcutProgram = window.tumProgramlar[window.aktifSinif];
+            dersSaatleri.forEach((slot) => {
+                tableHTML += `<tr><th>${slot.dersNo}. Ders<br>${slot.baslangic}-${slot.bitis}</th>`;
+                gunler.forEach(gun => { const dersData = mevcutProgram[gun]?.[slot.baslangic]; tableHTML += `<td data-gun="${gun}" data-saat="${slot.baslangic}">${dersData ? `<div class="ders-karti"><strong>${dersData.ogretmen}</strong><span>${dersData.dersAdi}</span></div>` : ''}</td>`; });
+                tableHTML += '</tr>'; if (slot.dersNo === 4) { tableHTML += '<tr><td colspan="6" style="background:#e9ecef;font-weight:bold;">ÖĞLE ARASI</td></tr>'; }
+            });
+            displayArea.innerHTML = tableHTML + `</tbody></table>`;
+        }
+        function addLesson() {
+            const gun = document.getElementById('gun').value; const saat = document.getElementById('saat').value; const ogretmen = document.getElementById('ogretmen').value; const dersAdi = document.getElementById('dersAdi').value;
+            if (!ogretmen || !dersAdi) return alert('Lütfen Öğretmen ve Ders seçin.');
+            if (!window.tumProgramlar[window.aktifSinif][gun]) { window.tumProgramlar[window.aktifSinif][gun] = {}; }
+            window.tumProgramlar[window.aktifSinif][gun][saat] = { ogretmen, dersAdi }; renderSchedule();
+        }
+
+        let geciciDetaylar = []; let gorevlendirmeInitialized = false;
+        async function initializeGorevlendirme() {
+            if (gorevlendirmeInitialized) return;
+            const gDetayEkleBtn = document.getElementById('g-detay-ekle-btn'); const gKaydetBtn = document.getElementById('g-kaydet-btn'); const geciciListeUL = document.getElementById('gecici-detay-listesi');
+            await populateOgretmenSelectsForGorevlendirme(); await renderGorevlendirmeTable();
+            gDetayEkleBtn.addEventListener('click', addDetay); gKaydetBtn.addEventListener('click', addGorevlendirme);
+            geciciListeUL.addEventListener('click', (e) => { if (e.target.classList.contains('delete-temp-btn')) { const index = parseInt(e.target.dataset.index); geciciDetaylar.splice(index, 1); renderGeciciDetayListesi(); } });
+            gorevlendirmeInitialized = true;
+        }
+        async function populateOgretmenSelectsForGorevlendirme() {
+    const gAsilOgretmen = document.getElementById('g-asil-ogretmen');
+    const gGorevliOgretmen = document.getElementById('g-gorevli-ogretmen');
+    gAsilOgretmen.innerHTML = '<option value="">Yükleniyor...</option>';
+    gGorevliOgretmen.innerHTML = '<option value="">Yükleniyor...</option>';
+
+    try {
+        // Gerekli tüm verileri aynı anda çek
+        const [personelSnap, neviSnap, gorevSnap] = await Promise.all([
+            getDocs(collection(db, 'personel')),
+            getSettings('ayarlar_personel_nevileri'),
+            getSettings('ayarlar_gorevler')
+        ]);
+
+        // Ayarlar'dan "Eğitim Personeli" ve diğer idari görevlerin ID'lerini bul
+        const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.includes('Eğitim Personeli'));
+        const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
+
+        const idariGorevler = new Set();
+        gorevSnap.forEach(doc => {
+            const gorevAdi = doc.data().name.toLowerCase();
+            if (gorevAdi.includes('müdür') || gorevAdi.includes('rehber öğretmen')) {
+                idariGorevler.add(doc.id);
+            }
+        });
+
+        // Personelleri filtrele
+        const gosterilecekPersoneller = [];
+        personelSnap.forEach(doc => {
+            const personel = { id: doc.id, ...doc.data() };
+
+            // Koşul 1: Personel nevisi "Eğitim Personeli" mi?
+            const isEgitimPersoneli = personel.personel_nevisi === egitimPersoneliNeviId;
+
+            // Koşul 2: Görevi/Branşı Müdür, Müdür Yrd. veya Rehber Öğretmen mi?
+            const isIdariGorevli = idariGorevler.has(personel.gorevi_bransi);
+
+            if (isEgitimPersoneli || isIdariGorevli) {
+                gosterilecekPersoneller.push(personel);
+            }
+        });
+
+        // Listeleri temizle ve doldur
+        gAsilOgretmen.innerHTML = '<option value="">Seçiniz...</option>';
+        gGorevliOgretmen.innerHTML = '<option value="">Seçiniz...</option>';
+        gosterilecekPersoneller.forEach(p => {
+            gAsilOgretmen.add(new Option(p.ad_soyad, p.id));
+            gGorevliOgretmen.add(new Option(p.ad_soyad, p.id));
+        });
+
+    } catch(e) {
+        console.error("Görevlendirilecek öğretmenler yüklenemedi:", e);
+        showToast('Öğretmen listesi yüklenemedi.', 'error');
+    }
+}
+        function renderGeciciDetayListesi() {
+            const geciciListeUL = document.getElementById('gecici-detay-listesi'); geciciListeUL.innerHTML = '';
+            geciciDetaylar.forEach((detay, index) => { const li = document.createElement('li'); li.innerHTML = `<span><b>${detay.sinif} / ${detay.brans}</b> - ${detay.saat} Saat</span> <button class="delete-temp-btn" data-index="${index}">Sil</button>`; geciciListeUL.appendChild(li); });
+        }
+        async function renderGorevlendirmeTable() {
+            const gTbody = document.getElementById('gorevlendirme-tbody'); gTbody.innerHTML = '<tr><td colspan="6">Görevlendirmeler yükleniyor...</td></tr>';
+            try {
+                const [gorevlendirmeSnap, personelSnap] = await Promise.all([ getDocs(query(collection(db, 'ders_gorevlendirmeleri'), orderBy("tarih", "desc"))), getDocs(collection(db, 'personel')) ]);
+                const personelMap = new Map(); personelSnap.forEach(doc => personelMap.set(doc.id, doc.data().ad_soyad));
+                if(gorevlendirmeSnap.empty) { gTbody.innerHTML = '<tr><td colspan="6">Kayıtlı görevlendirme bulunamadı.</td></tr>'; return; }
+                gTbody.innerHTML = '';
+                gorevlendirmeSnap.forEach(doc => {
+                    const g = doc.data(); const asil = personelMap.get(g.asilId) || 'Bilinmiyor'; const gorevli = personelMap.get(g.gorevliId) || 'Bilinmiyor';
+                    let detaylarHTML = '<ul class="ders-detaylari">'; g.detaylar.forEach(d => { detaylarHTML += `<li>${d.sinif} / ${d.brans} (${d.saat} Saat)</li>`; }); detaylarHTML += '</ul>';
+                    const row = gTbody.insertRow(); row.innerHTML = `<td>${new Date(g.tarih).toLocaleDateString('tr-TR')}</td><td>${asil}</td><td>${gorevli}</td><td><b>${g.toplamSaat}</b></td><td>${detaylarHTML}</td><td>${g.aciklama}</td>`;
+                });
+            } catch(e) { console.error("Görevlendirmeler yüklenemedi:", e); showToast('Görevlendirmeler yüklenemedi.', 'error'); gTbody.innerHTML = '<tr><td colspan="6" style="color:red;">Veri yüklenirken bir hata oluştu.</td></tr>'; }
+        }
+        function addDetay() {
+            const dSinif = document.getElementById('d-sinif'), dBrans = document.getElementById('d-brans'), dSaat = document.getElementById('d-saat');
+            const sinif = dSinif.value.trim(), brans = dBrans.value.trim(), saat = parseInt(dSaat.value);
+            if (!sinif || !brans || !saat || saat <= 0) { alert('Lütfen Sınıf, Branş ve geçerli bir Saat değeri girin.'); return; }
+            geciciDetaylar.push({ sinif, brans, saat }); renderGeciciDetayListesi();
+            dSinif.value = ''; dBrans.value = ''; dSaat.value = ''; dSinif.focus();
+        }
+        async function addGorevlendirme() {
+            const gTarih = document.getElementById('g-tarih'), gAsilOgretmen = document.getElementById('g-asil-ogretmen'), gGorevliOgretmen = document.getElementById('g-gorevli-ogretmen'), gAciklama = document.getElementById('g-aciklama');
+            const tarih = gTarih.value, asilId = gAsilOgretmen.value, gorevliId = gGorevliOgretmen.value, aciklama = gAciklama.value.trim();
+            if (!tarih || !asilId || !gorevliId) { alert('Lütfen ana bilgilerdeki tüm zorunlu alanları doldurun.'); return; }
+            if (geciciDetaylar.length === 0) { alert('Lütfen en az bir ders dağılımı detayı ekleyin.'); return; }
+            const toplamSaat = geciciDetaylar.reduce((sum, item) => sum + item.saat, 0);
+            const yeniGorevlendirme = { tarih, asilId, gorevliId, toplamSaat, aciklama, detaylar: geciciDetaylar, kayitTarihi: new Date().toISOString() };
+            try {
+                await addDoc(collection(db, 'ders_gorevlendirmeleri'), yeniGorevlendirme);
+                showToast('Görevlendirme başarıyla kaydedildi.');
+                geciciDetaylar = []; renderGeciciDetayListesi();
+                gTarih.value = ''; gAsilOgretmen.value = ''; gGorevliOgretmen.value = ''; gAciklama.value = '';
+                await renderGorevlendirmeTable();
+            } catch(e) { console.error("Görevlendirme kaydedilemedi:", e); showToast('Görevlendirme kaydedilirken bir hata oluştu.', 'error'); }
+        }
+let nobetTakipInitialized = false;
+async function initializeNobetTakip() {
+    if (nobetTakipInitialized) return;
+    nobetTakipInitialized = true;
+
+    const aySec = document.getElementById('rapor-ay-sec');
+    const yilGir = document.getElementById('rapor-yil-gir');
+    const personelSelect = document.getElementById('nobet-personel');
+    const yerSelect = document.getElementById('nobet-yeri');
+
+    const now = new Date();
+    const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+    aySec.innerHTML = '';
+    aylar.forEach((ay, index) => aySec.add(new Option(ay, index)));
+    aySec.value = now.getMonth();
+    yilGir.value = now.getFullYear();
+
+    const personelSnap = await getDocs(collection(db, 'personel'));
+    personelSelect.innerHTML = '<option value="">Personel Seçiniz...</option>';
+    personelSnap.forEach(doc => personelSelect.add(new Option(doc.data().ad_soyad, doc.id)));
+
+    const nobetYeriSnap = await getSettings('ayarlar_nobet_yerleri');
+    yerSelect.innerHTML = '<option value="">Nöbet Yeri Seçiniz...</option>';
+    nobetYeriSnap.forEach(doc => yerSelect.add(new Option(doc.data().name, doc.id)));
+
+    const renderRapor = () => renderNobetRaporu(parseInt(yilGir.value), parseInt(aySec.value));
+    renderRapor();
+
+    aySec.addEventListener('change', renderRapor);
+    yilGir.addEventListener('change', renderRapor);
+
+    document.getElementById('nobet-ekle-btn').addEventListener('click', async () => {
+        const tarih = document.getElementById('nobet-tarih').value;
+        const personelId = document.getElementById('nobet-personel').value;
+        const nobetYeriId = document.getElementById('nobet-yeri').value;
+        if (!tarih || !personelId || !nobetYeriId) { return showToast('Lütfen tüm alanları doldurun.', 'error'); }
+        await addDoc(collection(db, 'nobetler'), { tarih, personelId, nobetYeriId });
+        showToast('Nöbet başarıyla eklendi.');
+        renderRapor();
+        document.getElementById('nobet-tarih').value = '';
+        document.getElementById('nobet-personel').value = '';
+        document.getElementById('nobet-yeri').value = '';
+    });
+
+     document.getElementById('nobet-rapor-tbody').addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-delete-nobet')) {
+            if (confirm('Bu nöbet kaydını silmek istediğinizden emin misiniz?')) {
+                await deleteDoc(doc(db, 'nobetler', e.target.dataset.id));
+                showToast('Nöbet kaydı silindi.');
+                const year = parseInt(document.getElementById('rapor-yil-gir').value);
+                const month = parseInt(document.getElementById('rapor-ay-sec').value);
+                renderNobetRaporu(year, month);
+            }
+        }
+    });
+}
+
+async function renderNobetRaporu(year, month) {
+    const tbody = document.getElementById('nobet-rapor-tbody');
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Rapor oluşturuluyor...</td></tr>`;
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 1);
+    const q = query(collection(db, 'nobetler'), where('tarih', '>=', startDate.toISOString().split('T')[0]), where('tarih', '<', endDate.toISOString().split('T')[0]), orderBy('tarih'));
+
+    const [nobetSnap, personelSnap, yerSnap] = await Promise.all([
+        getDocs(q),
+        getDocs(collection(db, 'personel')),
+        getSettings('ayarlar_nobet_yerleri')
+    ]);
+
+    const personelMap = new Map(personelSnap.docs.map(doc => [doc.id, doc.data().ad_soyad]));
+    const yerMap = new Map(yerSnap.docs.map(doc => [doc.id, doc.data().name]));
+
+    if (nobetSnap.empty) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Seçili ay için nöbet kaydı bulunamadı.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = '';
+    const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+    nobetSnap.forEach(doc => {
+        const nobet = doc.data();
+        const tarih = new Date(nobet.tarih + 'T00:00:00');
+        const row = tbody.insertRow();
+        row.innerHTML = `<td>${tarih.toLocaleDateString('tr-TR')}</td><td>${gunler[tarih.getDay()]}</td><td>${personelMap.get(nobet.personelId) || 'Bilinmiyor'}</td><td>${yerMap.get(nobet.nobetYeriId) || 'Bilinmiyor'}</td><td><button class="btn btn-delete-nobet btn-delete" data-id="${doc.id}">Sil</button></td>`;
+    });
+}
+      
+        let izinTakipInitialized = false;
+        async function initializeIzinTakip() {
+            if (izinTakipInitialized) return;
+            izinTakipInitialized = true;
+            
+            const personelSelect = document.getElementById('izin-personel');
+            const izinTipiSelect = document.getElementById('izin-tipi');
+
+            personelSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+            izinTipiSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+            
+            const personelSnap = await getDocs(collection(db, 'personel'));
+            personelSelect.innerHTML = '<option value="">Personel Seçiniz...</option>';
+            personelSnap.forEach(doc => personelSelect.add(new Option(doc.data().ad_soyad, doc.id)));
+            
+            const izinTipiSnap = await getSettings('ayarlar_izin_tipleri');
+            izinTipiSelect.innerHTML = '<option value="">İzin Tipi Seçiniz...</option>';
+            izinTipiSnap.forEach(doc => izinTipiSelect.add(new Option(doc.data().name, doc.id)));
+
+            await renderIzinKayitlari();
+
+            document.getElementById('izin-kaydet-btn').addEventListener('click', async () => {
+                const personelId = document.getElementById('izin-personel').value;
+                const izinTipiId = document.getElementById('izin-tipi').value;
+                const baslangicTarihi = document.getElementById('izin-baslangic').value;
+                const bitisTarihi = document.getElementById('izin-bitis').value;
+                const aciklama = document.getElementById('izin-aciklama').value.trim();
+
+                if (!personelId || !izinTipiId || !baslangicTarihi || !bitisTarihi) {
+                    return showToast('Lütfen tüm zorunlu alanları doldurun.', 'error');
+                }
+                if (new Date(bitisTarihi) < new Date(baslangicTarihi)) {
+                    return showToast('Bitiş tarihi başlangıç tarihinden önce olamaz.', 'error');
+                }
+
+                await addDoc(collection(db, 'izinler'), { personelId, izinTipiId, baslangicTarihi, bitisTarihi, aciklama });
+                showToast('İzin başarıyla kaydedildi.');
+                await renderIzinKayitlari();
+                
+                document.getElementById('izin-personel').value = '';
+                document.getElementById('izin-tipi').value = '';
+                document.getElementById('izin-baslangic').value = '';
+                document.getElementById('izin-bitis').value = '';
+                document.getElementById('izin-aciklama').value = '';
+            });
+
+            document.getElementById('izin-kayitlari-tbody').addEventListener('click', async (e) => {
+                if (e.target.classList.contains('btn-delete-izin')) {
+                    if (confirm('Bu izin kaydını silmek istediğinizden emin misiniz?')) {
+                        await deleteDoc(doc(db, 'izinler', e.target.dataset.id));
+                        showToast('İzin kaydı silindi.');
+                        await renderIzinKayitlari();
+                    }
+                }
+                if (e.target.classList.contains('btn-print-dilekce')) {
+                    const izinId = e.target.dataset.id;
+                    generateDilekce(izinId);
+                }
+            });
+        }
+
+        async function renderIzinKayitlari() {
+            const tbody = document.getElementById('izin-kayitlari-tbody');
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">İzin kayıtları yükleniyor...</td></tr>`;
+
+            const [izinSnap, personelSnap, izinTipiSnap] = await Promise.all([
+                getDocs(query(collection(db, 'izinler'), orderBy('baslangicTarihi', 'desc'))),
+                getDocs(collection(db, 'personel')),
+                getSettings('ayarlar_izin_tipleri')
+            ]);
+            
+            const personelMap = new Map(personelSnap.docs.map(doc => [doc.id, doc.data().ad_soyad]));
+            const izinTipiMap = new Map(izinTipiSnap.docs.map(doc => [doc.id, doc.data().name]));
+
+            if (izinSnap.empty) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Kayıtlı izin bulunamadı.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            izinSnap.forEach(doc => {
+                const izin = doc.data();
+                const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
+                const bitis = new Date(izin.bitisTarihi + 'T00:00:00');
+                const sure = Math.round((bitis - baslangic) / (1000 * 60 * 60 * 24)) + 1;
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${personelMap.get(izin.personelId) || 'Bilinmiyor'}</td>
+                    <td>${izinTipiMap.get(izin.izinTipiId) || 'Bilinmiyor'}</td>
+                    <td>${baslangic.toLocaleDateString('tr-TR')}</td>
+                    <td>${bitis.toLocaleDateString('tr-TR')}</td>
+                    <td>${sure} gün</td>
+                    <td>${izin.aciklama || '-'}</td>
+                    <td class="actions-cell">
+                        <button class="btn btn-print-dilekce" data-id="${doc.id}" style="background-color:#0dcaf0;">Dilekçe</button>
+                        <button class="btn btn-delete-izin btn-delete" data-id="${doc.id}">Sil</button>
+                    </td>
+                `;
+            });
+        }
+
+        async function generateDilekce(izinId) {
+    const izinDoc = await getDoc(doc(db, 'izinler', izinId));
+    if (!izinDoc.exists()) {
+        showToast('İzin kaydı bulunamadı.', 'error');
+        return;
+    }
+    const izin = izinDoc.data();
+
+    const [personelDoc, izinTipiDoc] = await Promise.all([
+        getDoc(doc(db, 'personel', izin.personelId)),
+        getDoc(doc(db, 'ayarlar_izin_tipleri', izin.izinTipiId))
+    ]);
+
+    if (!personelDoc.exists() || !izinTipiDoc.exists()) {
+        showToast('Personel veya İzin Tipi tanımı bulunamadı.', 'error');
+        return;
+    }
+
+    const personel = personelDoc.data();
+    const izinTipi = izinTipiDoc.data();
+
+    const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00').toLocaleDateString('tr-TR');
+    const bitis = new Date(izin.bitisTarihi + 'T00:00:00').toLocaleDateString('tr-TR');
+
+    const dilekceHTML = `
+        <!DOCTYPE html>
+        <html lang="tr">
+        <head>
+            <meta charset="UTF-8">
+            <title>İzin Dilekçesi - ${personel.ad_soyad}</title>
+            <style>
+                body { font-family: 'Times New Roman', serif; font-size: 12pt; margin: 2.5cm; }
+                .header, .footer-right, .footer-left { text-align: center; }
+                .content { margin-top: 40px; text-indent: 2em; line-height: 1.5; }
+                .date { text-align: right; }
+                .signature { float: right; text-align: center; margin-top: 40px; }
+            </style>
+        </head>
+        <body>
+            <div class="header"><h3>... OKUL MÜDÜRLÜĞÜNE</h3></div>
+            <div class="content">
+                <p>Kurumunuzda görev yapan personellerinizden ${personel.ad_soyad} olarak, ${izin.aciklama || 'belirteceğim mazeretimden dolayı'} ${baslangic} - ${bitis} tarihleri arasında ${izinTipi.name} kullanmak istiyorum.</p>
+                <p>Gereğini bilgilerinize arz ederim.</p>
+            </div>
+            <div class="date">${new Date().toLocaleDateString('tr-TR')}</div>
+            <div class="signature">
+                <span>${personel.ad_soyad}</span><br>
+                <span>İmza</span>
+            </div>
+        </body>
+        </html>
+    `;
+
+    const win = window.open('', '_blank');
+    if (!win) {
+        showToast('Yeni sekme açılamadı. Lütfen tarayıcıdaki pop-up engelleyiciyi kontrol edin.', 'error');
+        return;
+    }
+
+    win.document.write(dilekceHTML);
+    win.document.close();
+    setTimeout(() => win.print(), 500);
+}
+
+// --- PUANTAJ CETVELİ YÖNETİMİ ---
+let puantajInitialized = false;
+let puantajPersonelList = [];
+let puantajData = {};
+
+async function initializePuantaj() {
+    if (puantajInitialized) return;
+
+    try {
+        const personelSnap = await getDocs(collection(db, "personel"));
+        const gorevSnap = await getSettings('ayarlar_gorevler');
+        const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
+
+        puantajPersonelList = personelSnap.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ad: data.ad_soyad || 'İsimsiz',
+                unvan: gorevMap.get(data.gorevi_bransi) || 'Belirtilmemiş',
+                maasKarsiligi: parseInt(data.maas_karsiligi) || 20,
+                rehberlik: parseInt(data.rehberlik_saati) || 0,
+                esDurumu: data.es_durumu,
+                cocuk0_6: data.cocuk_0_6,
+                cocuk6_18: data.cocuk_6_ustu
+            };
+        });
+
+        const selectMonth = document.getElementById('select-month'), inputYear = document.getElementById('input-year'),
+            generateBtn = document.getElementById('btn-generate'), printBtn = document.getElementById('btn-print'),
+            pdfBtn = document.getElementById('btn-pdf'), excelBtn = document.getElementById('btn-excel'),
+            modalOverlay = document.getElementById('edit-modal-overlay'),
+            modalSaveBtn = document.getElementById('modal-save'), modalCancelBtn = document.getElementById('modal-cancel');
+
+        const now = new Date(), months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+        selectMonth.innerHTML = '';
+        months.forEach((m, i) => selectMonth.add(new Option(m, i)));
+        selectMonth.value = now.getMonth();
+        inputYear.value = now.getFullYear();
+
+        const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin' };
+        const modalStatusSelect = document.getElementById('modal-status');
+        modalStatusSelect.innerHTML = '';
+        for(const code in statusCodes) modalStatusSelect.add(new Option(statusCodes[code], code));
+
+        if(!puantajInitialized) {
+            generateBtn.addEventListener('click', generateInitialPuantaj);
+            printBtn.addEventListener('click', printPuantaj);
+            pdfBtn.addEventListener('click', downloadPdf);
+            excelBtn.addEventListener('click', downloadExcel);
+            modalCancelBtn.addEventListener('click', () => modalOverlay.style.display = 'none');
+            modalSaveBtn.addEventListener('click', saveModalChanges);
+            modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; });
+        }
+
+        puantajInitialized = true;
+        await generateInitialPuantaj();
+    } catch (error) {
+        console.error("Puantaj başlatılırken kritik hata:", error);
+        showToast('Puantaj modülü başlatılamadı. Lütfen Ayarlarınızı kontrol edin.', 'error');
+    }
+}
+
+async function fetchIzinDataForPuantaj(year, month) {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0);
+    const q = query(collection(db, 'izinler'), 
+        where('baslangicTarihi', '<=', endDate.toISOString().split('T')[0]),
+        where('bitisTarihi', '>=', startDate.toISOString().split('T')[0])
+    );
+    const [izinSnap, izinTipiSnap] = await Promise.all([ getDocs(q), getSettings('ayarlar_izin_tipleri') ]);
+    const izinTipiKodMap = new Map(izinTipiSnap.docs.map(doc => [doc.id, doc.data().kod]));
+    const izinVerisi = {};
+    izinSnap.forEach(doc => {
+        const izin = doc.data();
+        const personelId = izin.personelId;
+        if (!izinVerisi[personelId]) izinVerisi[personelId] = {};
+        const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
+        const bitis = new Date(izin.bitisTarihi + 'T00:00:00');
+        const izinKodu = izinTipiKodMap.get(izin.izinTipiId) || 'I';
+        for (let d = new Date(baslangic); d <= bitis; d.setDate(d.getDate() + 1)) {
+            if (d.getFullYear() === year && d.getMonth() === month) {
+                izinVerisi[personelId][d.toISOString().split('T')[0]] = izinKodu;
+            }
+        }
+    });
+    return izinVerisi;
+}
+
+async function fetchAndCalculateNobetData(year, month) {
+    const startDate = new Date(year, month, 1).toISOString().split('T')[0];
+    const endDate = new Date(year, month + 1, 1).toISOString().split('T')[0];
+    const q = query(collection(db, 'nobetler'), where('tarih', '>=', startDate), where('tarih', '<', endDate));
+    const nobetSnap = await getDocs(q);
+    const nobetHaftalari = {};
+    const getWeekNumber = (d) => { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d - yearStart) / 86400000) + 1)/7); };
+    nobetSnap.forEach(doc => {
+        const nobet = doc.data(); const tarih = new Date(nobet.tarih + 'T00:00:00'); const haftaNo = getWeekNumber(tarih);
+        if (!nobetHaftalari[nobet.personelId]) nobetHaftalari[nobet.personelId] = new Set();
+        nobetHaftalari[nobet.personelId].add(haftaNo);
+    });
+    const nobetEkDers = {};
+    for (const personelId in nobetHaftalari) { nobetEkDers[personelId] = nobetHaftalari[personelId].size * 3; }
+    return nobetEkDers;
+}
+
+
+        // YUKARIDAKİ HATALI BLOĞUN YERİNE BU DOĞRU KODU YAPIŞTIRIN
+async function generateInitialPuantaj() {
+    try {
+        const year = parseInt(document.getElementById('input-year').value);
+        const month = parseInt(document.getElementById('select-month').value);
+        showToast('Puantaj oluşturuluyor, nöbet ve izin verileri hesaplanıyor...');
+
+        const [nobetVerisi, izinVerisi] = await Promise.all([
+            fetchAndCalculateNobetData(year, month),
+            fetchIzinDataForPuantaj(year, month)
+        ]);
+
+        puantajData = {};
+        puantajPersonelList.forEach(personel => {
+            puantajData[personel.id] = {};
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateString = date.toISOString().split('T')[0];
+                const dayOfWeek = date.getDay();
+                let code = 'N'; // Varsayılan: Normal Çalışma
+
+                if (isResmiTatil(date)) {
+                    code = 'RT'; // Resmi Tatil
+                } else if (izinVerisi[personel.id]?.[dateString]) {
+                    code = izinVerisi[personel.id][dateString]; // İzinli
+                } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    code = 'HT'; // Hafta Sonu Tatili
+                }
+
+                puantajData[personel.id][dateString] = { code: code, hours: 0, notes: '' };
+            }
+        });
+
+        renderPuantajTable(nobetVerisi);
+        renderGrandTotals(nobetVerisi);
+        renderLegend();
+        attachCellListeners();
+    } catch (error) {
+        console.error("Puantaj oluşturulurken hata:", error);
+        showToast('Puantaj oluşturulamadı. Lütfen verileri kontrol edin.', 'error');
+    }
+}
+
+function calculateMonthlyHours(personelId) {
+    const personel = puantajPersonelList.find(p => p.id == personelId);
+    if (!personel || !puantajData[personelId]) return { genelToplam: 0, ekDers: 0 };
+    let totalHours = 0;
+    Object.values(puantajData[personelId]).forEach(dayData => { if(dayData.code === 'N') totalHours += dayData.hours; });
+    const aylikDersSaati = (personel.maasKarsiligi / 5) * 4; 
+    let ekDers = Math.max(0, totalHours - aylikDersSaati);
+    return { genelToplam: totalHours, ekDers: Math.round(ekDers) };
+}
+
+
+
+
+function renderLegend() {
+    const legendContainer = document.getElementById('puantaj-legend');
+    if(!legendContainer) return;
+    legendContainer.innerHTML = '';
+    const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin' };
+    for (const code in statusCodes) {
+        const item = document.createElement('div'); item.className = 'legend-item';
+        item.innerHTML = `<span class="legend-color-box status-${code}"></span><b>(${code})</b>: ${statusCodes[code]}`;
+        legendContainer.appendChild(item);
+    }
+}
+
+ function renderGrandTotals(nobetVerisi = {}){
+    let totalEkders = 0, totalNobet = 0, totalRehberlik = 0;
+    puantajPersonelList.forEach(personel => {
+        totalEkders += calculateMonthlyHours(personel.id).ekDers;
+        totalNobet += nobetVerisi[personel.id] || 0;
+        totalRehberlik += personel.rehberlik;
+    });
+    document.getElementById('total-ekders').textContent = totalEkders + " Saat";
+    document.getElementById('total-nobet').textContent = totalNobet + " Saat";
+    document.getElementById('total-rehberlik').textContent = totalRehberlik + " Saat";
+}
+    
+        
+
+        function openEditModal(personelId, date) {
+            const personel = puantajPersonelList.find(p => p.id == personelId);
+            const dayData = puantajData[personelId]?.[date];
+            if(!personel || !dayData) return;
+            document.getElementById('p-modal-title').textContent = `${personel.ad} - ${new Date(date).toLocaleDateString('tr-TR', {timeZone: 'UTC'})}`;
+            document.getElementById('modal-status').value = dayData.code;
+            document.getElementById('modal-hours').value = dayData.hours;
+            document.getElementById('modal-notes').value = dayData.notes;
+            const modalSaveBtn = document.getElementById('modal-save');
+            modalSaveBtn.dataset.personelId = personelId;
+            modalSaveBtn.dataset.date = date;
+            document.getElementById('edit-modal-overlay').style.display = 'flex';
+        }
+
+
+
+
+        function downloadPdf() {
+    showToast('PDF oluşturuluyor, lütfen bekleyin...');
+    const table = document.getElementById('puantaj-table-container');
+    html2canvas(table, { scale: 2, useCORS: true }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a3' });
+        const imgProps= doc.getImageProperties(imgData);
+        const pdfWidth = doc.internal.pageSize.getWidth() - 40;
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        doc.addImage(imgData, 'PNG', 20, 20, pdfWidth, pdfHeight);
+        doc.save('puantaj.pdf');
+    });
+}
+
+        function downloadExcel() {
+            const table = document.getElementById('puantaj-table');
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Puantaj" });
+            const year = document.getElementById('input-year').value;
+            const month = parseInt(document.getElementById('select-month').value) + 1;
+            XLSX.writeFile(wb, `Puantaj_${month}_${year}.xlsx`);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+    // KULLANICI DURUMUNU KONTROL EDEN ANA YAPI
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // KULLANICI GİRİŞ YAPMIŞSA:
+            loginPanel.style.display = 'none';
+            appContainer.style.display = 'flex';
+
+            // --- UYGULAMA BAŞLATMA KODLARI (SADECE GİRİŞ YAPILDIĞINDA ÇALIŞIR) ---
+            const modal = document.getElementById('add-staff-modal');
+            const personelForm = document.getElementById('personelForm');
+            const openModal = (staffId=null, staffData={}) => { loadPersonelForm(staffId, staffData); modal.classList.add('open'); };
+            const closeModal = () => modal.classList.remove('open');
+
+            document.getElementById('open-add-staff-modal').addEventListener('click', () => openModal());
+            document.getElementById('add-staff-from-list-btn').addEventListener('click', () => openModal());
+            modal.querySelector('.close-modal').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+            document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
+                if(link.id === 'open-add-staff-modal') return; // Bu zaten yukarıda tanımlı
+                link.addEventListener('click', function(e) {
+                    if (this.dataset.target) e.preventDefault();
+                    const targetId = this.dataset.target; if(!targetId) return;
+                    document.querySelectorAll('.nav-link, .accordion-trigger, .module').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    if (this.closest('.menu-item-group')) { this.closest('.menu-item-group').querySelector('a').classList.add('active'); }
+                    document.getElementById(targetId).classList.add('active');
+                    if (targetId === 'staff-list') fetchStaff();
+                    if (targetId === 'settings') initializeSettings();
+                    if (targetId === 'gorevlendirme') initializeGorevlendirme(); 
+                    if (targetId === 'nobet-takip') initializeNobetTakip();
+                    if (targetId === 'puantaj') initializePuantaj();
+                    if (targetId === 'izin-takip') initializeIzinTakip();
+                    if (targetId === 'ders-programi') initializeSchedule();
+                });
+            });
+
+            document.querySelectorAll('.accordion-trigger').forEach(acc => acc.addEventListener('click', e => { e.preventDefault(); acc.parentElement.classList.toggle('open'); }));
+
+            personelForm.addEventListener('submit', async function(e) {
+                e.preventDefault(); const editingId = e.target.dataset.editingId; const data = Object.fromEntries(new FormData(e.target).entries());
+                try {
+                    if (editingId) { await setDoc(doc(db, "personel", editingId), data, { merge: true }); showToast('Personel güncellendi.'); }
+                    else { await addDoc(collection(db, "personel"), data); showToast('Personel eklendi.'); }
+                    closeModal(); if(document.getElementById('staff-list').classList.contains('active')) fetchStaff();
+                } catch (err) { showToast('Bir hata oluştu.', 'error'); console.error(err); }
+            });
+
+            document.getElementById('staff-list').addEventListener('click', async (e) => {
+                if(e.target.classList.contains('btn-delete')) { if (confirm('Bu personeli silmek istediğinizden emin misiniz?')) { await deleteDoc(doc(db, 'personel', e.target.dataset.id)); showToast('Personel silindi.'); fetchStaff(); } }
+                if(e.target.classList.contains('btn-edit')) { const docSnap = await getDoc(doc(db, 'personel', e.target.dataset.id)); if(docSnap.exists()) openModal(docSnap.id, docSnap.data()); }
+            });
+
+            document.getElementById('ekleBtn').addEventListener('click', addLesson);
+
+        } else {
+            // KULLANICI GİRİŞ YAPMAMIŞSA VEYA ÇIKIŞ YAPTIYSA:
+            loginPanel.style.display = 'flex';
+            appContainer.style.display = 'none';
+        }
+    });
+
+    // GİRİŞ VE ÇIKIŞ BUTONLARINA OLAYLARI EKLEME
+    loginBtn.addEventListener('click', async () => {
+        const email = loginEmailInput.value;
+        const password = loginPasswordInput.value;
+        loginError.style.display = 'none';
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            // Başarılı giriş sonrası onAuthStateChanged tetiklenecek ve paneli gösterecek.
+        } catch (error) {
+            loginError.textContent = "Hatalı e-posta veya şifre.";
+            loginError.style.display = 'block';
+            console.error("Giriş Hatası:", error);
+        }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+            // Başarılı çıkış sonrası onAuthStateChanged tetiklenecek ve giriş ekranını gösterecek.
+        } catch (error) {
+            console.error("Çıkış Hatası:", error);
+        }
+    });
+});
+    </script>
+</body>
+</html>
