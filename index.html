@@ -148,6 +148,14 @@
         .schedule-table th, .schedule-table td { border: 1px solid #e9ebee; padding: 6px; text-align: center; height: 75px; vertical-align: top; }
         .ders-karti { background-color: #1877f2; color: white; padding: 6px; border-radius: 6px; font-size: 13px; height: calc(100% - 12px); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .detail-entry { display: grid; grid-template-columns: 1fr 1fr 100px auto; gap: 15px; align-items: flex-end; margin-top: 15px; }
+        #edit-g-detay-ekle-btn { background-color: var(--success-color); }
+
+
+#gecici-detay-listesi { 
+    list-style: none; 
+    padding: 0; 
+    margin-top: 15px; 
+}
         #g-detay-ekle-btn { background-color: #28a745; }
         #gecici-detay-listesi { list-style: none; padding: 0; margin-top: 15px; }
         #gecici-detay-listesi li { display: flex; justify-content: space-between; align-items: center; background: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 8px; }
@@ -464,48 +472,49 @@
 </div>
             </div></div></div>
         </main> <div id="edit-gorevlendirme-modal" class="modal">
-            <div class="modal-body">
-    <form id="editGorevlendirmeForm">
-        <input type="hidden" id="edit-g-id">
-        <h4>Ana Bilgiler</h4>
-        <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-            <div class="form-group">
-                <label for="edit-g-tarih">Tarih</label>
-                <input type="date" id="edit-g-tarih">
-            </div>
-            <div class="form-group">
-                <label for="edit-g-asil-ogretmen">Asıl Öğretmen</label>
-                <select id="edit-g-asil-ogretmen"></select>
-            </div>
-            <div class="form-group">
-                <label for="edit-g-gorevli-ogretmen">Görevli Öğretmen</label>
-                <select id="edit-g-gorevli-ogretmen"></select>
-            </div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Detaylı Ders Görevlendirme Düzenle</h3>
+            <button class="close-modal">&times;</button>
         </div>
-        <div class="form-group">
-            <label for="edit-g-aciklama">Genel Açıklama</label>
-            <input type="text" id="edit-g-aciklama">
+        <div class="modal-body">
+            <form id="editGorevlendirmeForm">
+                <input type="hidden" id="edit-g-id">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label for="edit-g-tarih">Tarih</label>
+                        <input type="date" id="edit-g-tarih">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-g-asil-ogretmen">Asıl Öğretmen</label>
+                        <select id="edit-g-asil-ogretmen"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-g-gorevli-ogretmen">Görevli Öğretmen</label>
+                        <select id="edit-g-gorevli-ogretmen"></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-g-aciklama">Genel Açıklama</label>
+                    <input type="text" id="edit-g-aciklama">
+                </div>
+                
+                <div class="detail-entry" style="margin-top: 25px;">
+                    <div class="form-group"><label for="edit-d-sinif-select">Sınıf</label><select id="edit-d-sinif-select"></select></div>
+                    <div class="form-group"><label for="edit-d-brans-select">Ders (Branş)</label><select id="edit-d-brans-select"></select></div>
+                    <div class="form-group"><label for="edit-d-saat-select">Saat</label><select id="edit-d-saat-select"></select></div>
+                    <button type="button" id="edit-g-detay-ekle-btn" class="btn">Ekle</button>
+                </div>
+                <ul id="edit-g-detay-listesi" style="list-style: none; padding: 0; margin-top: 15px;">
+                </ul>
+                
+                <div class="button-group" style="margin-top:20px;">
+                    <button type="submit" class="btn btn-save">Değişiklikleri Kaydet</button>
+                </div>
+            </form>
         </div>
-        
-        <hr style="margin: 25px 0;">
-
-        <h4>Ders Dağılımı Detayları</h4>
-        <div class="detail-entry">
-            <div class="form-group"><label for="edit-d-sinif-select">Sınıf</label><select id="edit-d-sinif-select"></select></div>
-            <div class="form-group"><label for="edit-d-brans-select">Ders (Branş)</label><select id="edit-d-brans-select"></select></div>
-            <div class="form-group"><label for="edit-d-saat-select">Saat</label><select id="edit-d-saat-select"></select></div>
-            <button type="button" id="edit-g-detay-ekle-btn" class="btn">Ekle</button>
-        </div>
-        <ul id="edit-g-detay-listesi" style="list-style: none; padding: 0; margin-top: 15px;">
-            </ul>
-        
-        <div class="button-group" style="margin-top:20px;">
-            <button type="submit" class="btn btn-save">Değişiklikleri Kaydet</button>
-        </div>
-    </form>
+    </div>
 </div>
-            </div>
-        </div>
         
 <div id="edit-setting-modal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
