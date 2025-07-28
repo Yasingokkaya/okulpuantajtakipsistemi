@@ -248,6 +248,29 @@
                 display: none !important;
             }
         }
+.ders-karti {
+    position: relative; /* Silme butonu için konumlandırma */
+}
+.delete-lesson-btn {
+    position: absolute;
+    top: -2px;
+    right: 2px;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0;
+}
+.delete-lesson-btn:hover {
+    background: var(--danger-color);
+}
 </style>
 </head>
 <body>
@@ -483,21 +506,7 @@
 </div>
             </div>
         </div>
-        <div id="edit-setting-modal" class="modal"> ```
-
-### Adım 2: JavaScript Kodunu Güncelleme
-
-Şimdi `script` etiketleri arasındaki JavaScript kodunda değişiklikler yapacağız.
-
-#### 2.1. Düzenle Butonunun Tıklama Olayını Değiştirin
-
-`initializeGorevlendirme` fonksiyonu içindeki "Düzenle" butonuna tıklandığında `alert` gösteren bölümü bulup değiştireceğiz.
-
-**Mevcut Kodu Bulun:**
-```javascript
-                if (target.classList.contains('btn-edit-gorev')) {
-                    alert(`Düzenleme fonksiyonu eklenecek. ID: ${id}`);
-                }
+        
 <div id="edit-setting-modal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
         <div class="modal-header">
@@ -515,7 +524,8 @@
         </div>
     </div>
 </div>
-    </div>
+
+
 
     <div id="add-staff-modal" class="modal"><div class="modal-content"><div class="modal-header"><h3 id="modal-title">Yeni Personel Ekle</h3><button class="close-modal">&times;</button></div><div class="modal-body"><form id="personelForm"></form></div></div></div>
     <div id="edit-modal-overlay" class="modal-overlay"><div class="modal-content"><h3 id="p-modal-title">Puantaj Günü Düzenle</h3><div class="form-group"><label for="modal-status">Durum</label><select id="modal-status"></select></div><div class="form-group"><label for="modal-hours">Çalışılan Ders Saati</label><input type="number" id="modal-hours" min="0" max="12"></div><div class="form-group"><label for="modal-notes">Açıklama</label><input type="text" id="modal-notes" placeholder="Opsiyonel not..."></div><div class="modal-buttons"><button id="modal-cancel" class="btn">İptal</button><button id="modal-save" class="btn">Kaydet</button></div></div></div>
@@ -962,32 +972,27 @@ async function initializeSchedule() {
             getSettings('ayarlar_siniflar'),
             getSettings('ayarlar_dersler'),
             getDocs(query(collection(db, 'personel'))),
-            getSettings('ayarlar_personel_nevileri'), // Personel türlerini çek
-            getSettings('ayarlar_gorevler')           // Görevleri çek
+            getSettings('ayarlar_personel_nevileri'),
+            getSettings('ayarlar_gorevler')
         ]);
 
-        // Ayarlar'dan "Eğitim Personeli" ve "Rehber Öğretmen" ID'lerini bul
         const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.includes('Eğitim Personeli'));
         const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
-
         const rehberOgretmenGorev = gorevSnap.docs.find(doc => doc.data().name.includes('Rehber Öğretmen'));
         const rehberOgretmenGorevId = rehberOgretmenGorev ? rehberOgretmenGorev.id : null;
 
+        // Hatanın kaynağı olan 'siniflar' değişkeni burada doğru şekilde tanımlanıyor.
         const siniflar = siniflarSnap.docs.map(d => d.data().name);
         const dersler = derslerSnap.docs.map(d => d.data().name);
 
-        // Personelleri filtrele
         const personeller = personelSnap.docs
-            .map(doc => ({ id: doc.id, ...doc.data() })) // Önce tüm veriyi al
+            .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(p => {
-                // Sadece "Eğitim Personeli" olanları al
                 const isEgitimPersoneli = p.personel_nevisi === egitimPersoneliNeviId;
-                // "Rehber Öğretmen" olanları dışarıda bırak
                 const isRehberOgretmen = p.gorevi_bransi === rehberOgretmenGorevId;
-
                 return isEgitimPersoneli && !isRehberOgretmen;
             })
-            .map(p => p.ad_soyad); // Sadece ad soyadlarını listeye ekle
+            .map(p => p.ad_soyad);
 
         const dersSelect = document.getElementById('dersAdi');
         dersSelect.innerHTML = '<option value="">Ders Seçin...</option>';
@@ -1002,16 +1007,20 @@ async function initializeSchedule() {
             return;
         }
 
+        // Önceki adımlarda yaptığımız tüm güncellemeler burada yer alıyor.
         window.aktifSinif = siniflar[0];
         window.tumProgramlar = {};
-        siniflar.forEach(s => { window.tumProgramlar[s] = []; });
 
         await generateTimeSlots();
         createTabs(siniflar);
-        renderSchedule();
+        
+        // Aktif sınıfın programını veritabanından yüklüyoruz.
+        await loadScheduleForClass(window.aktifSinif);
+
         scheduleInitialized = true;
 
     } catch (error) {
+        // Hata yakalama bloğu.
         console.error("Ders programı başlatılırken hata:", error);
         showToast('Ders programı yüklenemedi. Ayarlarınızı kontrol edin.', 'error');
     }
@@ -1029,31 +1038,132 @@ async function initializeSchedule() {
             dersSaatleri.forEach(slot => saatSelect.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.baslangic)));
         }
         function createTabs(siniflar) {
-            const tabContainer = document.getElementById('tab-container'); tabContainer.innerHTML = '';
+            const tabContainer = document.getElementById('tab-container');
+            tabContainer.innerHTML = '';
             siniflar.forEach(sinif => {
-                const tab = document.createElement('button'); tab.className = 'tab-link'; if(sinif === window.aktifSinif) tab.classList.add('active');
+                const tab = document.createElement('button');
+                tab.className = 'tab-link';
+                if (sinif === window.aktifSinif) tab.classList.add('active');
                 tab.textContent = sinif;
-                tab.addEventListener('click', () => { window.aktifSinif = sinif; document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active')); tab.classList.add('active'); renderSchedule(); });
+                tab.addEventListener('click', () => {
+                    window.aktifSinif = sinif;
+                    document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    // YENİ: Taba tıklanınca ilgili sınıfın programını veritabanından yükle
+                    loadScheduleForClass(sinif);
+                });
                 tabContainer.appendChild(tab);
             });
         }
         function renderSchedule() {
-            const displayArea = document.getElementById('schedule-display-area'); const gunler = ["Pazartesi", "Sali", "Carsamba", "Persembe", "Cuma"];
-            let tableHTML = '<table class="schedule-table"><thead><tr><th>Saatler</th>'; gunler.forEach(gun => tableHTML += `<th>${gun}</th>`);
-            tableHTML += '</tr></thead><tbody>'; const mevcutProgram = window.tumProgramlar[window.aktifSinif];
+            const displayArea = document.getElementById('schedule-display-area');
+            const gunler = ["Pazartesi", "Sali", "Carsamba", "Persembe", "Cuma"];
+            let tableHTML = '<table class="schedule-table"><thead><tr><th>Saatler</th>';
+            gunler.forEach(gun => tableHTML += `<th>${gun}</th>`);
+            tableHTML += '</tr></thead><tbody>';
+
+            const mevcutProgram = window.tumProgramlar[window.aktifSinif] || {};
+
             dersSaatleri.forEach((slot) => {
                 tableHTML += `<tr><th>${slot.dersNo}. Ders<br>${slot.baslangic}-${slot.bitis}</th>`;
-                gunler.forEach(gun => { const dersData = mevcutProgram[gun]?.[slot.baslangic]; tableHTML += `<td data-gun="${gun}" data-saat="${slot.baslangic}">${dersData ? `<div class="ders-karti"><strong>${dersData.ogretmen}</strong><span>${dersData.dersAdi}</span></div>` : ''}</td>`; });
-                tableHTML += '</tr>'; if (slot.dersNo === 4) { tableHTML += '<tr><td colspan="6" style="background:#e9ecef;font-weight:bold;">ÖĞLE ARASI</td></tr>'; }
+                gunler.forEach(gun => {
+                    const dersData = mevcutProgram[gun]?.[slot.baslangic];
+                    // YENİ: Silme butonu eklendi ve data-attributeları olan td elementi güncellendi
+                    tableHTML += `<td data-gun="${gun}" data-saat="${slot.baslangic}">
+                        ${dersData ? `
+                        <div class="ders-karti">
+                            <button class="delete-lesson-btn" title="Dersi Sil">×</button>
+                            <strong>${dersData.ogretmen}</strong>
+                            <span>${dersData.dersAdi}</span>
+                        </div>` : ''}
+                    </td>`;
+                });
+                tableHTML += '</tr>';
+                if (slot.dersNo === 4) {
+                    tableHTML += '<tr><td colspan="6" style="background:#e9ecef;font-weight:bold;">ÖĞLE ARASI</td></tr>';
+                }
             });
             displayArea.innerHTML = tableHTML + `</tbody></table>`;
+
+            // YENİ: Silme butonu için olay dinleyici ekleniyor
+            document.querySelectorAll('.delete-lesson-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Diğer tıklama olaylarını engelle
+                    const td = e.target.closest('td');
+                    const gun = td.dataset.gun;
+                    const saat = td.dataset.saat;
+                    deleteLesson(gun, saat);
+                });
+            });
+        }
+async function loadScheduleForClass(sinifAdi) {
+            try {
+                // Sınıf adındaki '/' karakterini '-' ile değiştiriyoruz.
+                const sanitizedSinifAdi = sinifAdi.replace(/\//g, '-');
+                const docRef = doc(db, "ders_programlari", sanitizedSinifAdi);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    window.tumProgramlar[sinifAdi] = docSnap.data();
+                } else {
+                    window.tumProgramlar[sinifAdi] = {};
+                }
+            } catch (error) {
+                console.error("Ders programı yüklenirken hata:", error);
+                window.tumProgramlar[sinifAdi] = {}; 
+            }
+            renderSchedule();
+        }
+       
+
+        function deleteLesson(gun, saat) {
+             if (confirm(`${gun} günü ${saat} saatindeki dersi silmek istediğinizden emin misiniz?`)) {
+                if (window.tumProgramlar[window.aktifSinif]?.[gun]?.[saat]) {
+                    // 1. Geçici değişkenden dersi sil
+                    delete window.tumProgramlar[window.aktifSinif][gun][saat];
+                    // 2. Tabloyu güncel haliyle yeniden çiz
+                    renderSchedule();
+                    // 3. Değişikliği veritabanına kaydet
+                    saveScheduleForClass(window.aktifSinif);
+                }
+            }
         }
         function addLesson() {
             const gun = document.getElementById('gun').value; const saat = document.getElementById('saat').value; const ogretmen = document.getElementById('ogretmen').value; const dersAdi = document.getElementById('dersAdi').value;
-            if (!ogretmen || !dersAdi) return alert('Lütfen Öğretmen ve Ders seçin.');
-            if (!window.tumProgramlar[window.aktifSinif][gun]) { window.tumProgramlar[window.aktifSinif][gun] = {}; }
-            window.tumProgramlar[window.aktifSinif][gun][saat] = { ogretmen, dersAdi }; renderSchedule();
+            if (!ogretmen || !dersAdi) return showToast('Lütfen Öğretmen ve Ders seçin.', 'error');
+
+            // Geçici değişkende ilgili gün objesi yoksa oluştur
+            if (!window.tumProgramlar[window.aktifSinif]) {
+                 window.tumProgramlar[window.aktifSinif] = {};
+            }
+            if (!window.tumProgramlar[window.aktifSinif][gun]) {
+                window.tumProgramlar[window.aktifSinif][gun] = {};
+            }
+
+            // 1. Dersi geçici değişkene ekle
+            window.tumProgramlar[window.aktifSinif][gun][saat] = { ogretmen, dersAdi };
+            // 2. Tabloyu yeniden çizerek anında göster
+            renderSchedule();
+            // 3. YENİ: Değişikliği veritabanına otomatik kaydet
+            saveScheduleForClass(window.aktifSinif);
         }
+async function saveScheduleForClass(sinifAdi) {
+    // Firestore'da "9/A" gibi document ID'leri geçersizdir.
+    // Yükleme fonksiyonunda olduğu gibi '/' karakterini '-' ile değiştiriyoruz.
+    const sanitizedSinifAdi = sinifAdi.replace(/\//g, '-');
+    const docRef = doc(db, "ders_programlari", sanitizedSinifAdi);
+    const dataToSave = window.tumProgramlar[sinifAdi] || {};
+
+    try {
+        // setDoc komutu ile ilgili sınıfın tüm programını tek seferde kaydediyoruz.
+        // Bu komut, döküman yoksa oluşturur, varsa üzerine yazar.
+        await setDoc(docRef, dataToSave);
+        showToast(`${sinifAdi} için program başarıyla kaydedildi.`, 'success');
+    } catch (error) {
+        console.error("Ders programı kaydedilirken hata oluştu:", error);
+        showToast('Program kaydedilirken bir hata meydana geldi.', 'error');
+    }
+}
 
          let geciciDetaylar = [];
          let duzenlenenGorevDetaylari = []; //
