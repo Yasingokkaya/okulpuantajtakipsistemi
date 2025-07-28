@@ -147,7 +147,14 @@
         .schedule-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .schedule-table th, .schedule-table td { border: 1px solid #e9ebee; padding: 6px; text-align: center; height: 75px; vertical-align: top; }
         .ders-karti { background-color: #1877f2; color: white; padding: 6px; border-radius: 6px; font-size: 13px; height: calc(100% - 12px); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .detail-entry { display: grid; grid-template-columns: 1fr 1fr 100px auto; gap: 15px; align-items: flex-end; margin-top: 15px; }
+        .detail-entry {
+    display: grid;
+    /* Üçüncü sütunu da esnek (1fr) yaparak alanları eşitliyoruz */
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 15px;
+    align-items: flex-end;
+    margin-top: 15px;
+}
         #edit-g-detay-ekle-btn { background-color: var(--success-color); }
 
 
@@ -1198,10 +1205,14 @@ async function saveScheduleForClass(sinifAdi) {
                 const derslerSnap = await getSettings('ayarlar_dersler');
                 derslerSnap.forEach(doc => bransSelect.add(new Option(doc.data().name, doc.data().name)));
             }
+            await generateTimeSlots(); 
+            
             if (saatSelect && saatSelect.options.length === 0) {
-                for (let i = 1; i <= 8; i++) {
-                    saatSelect.add(new Option(i + ' Saat', i));
-                }
+                saatSelect.innerHTML = '<option value="">Ders Saati Seçin...</option>'; // Varsayılan metin
+                dersSaatleri.forEach(slot => {
+                    // Menüye "1. Ders (08:30-09:10)" formatında seçenekler ekliyoruz.
+                    saatSelect.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.dersNo));
+                });
             }
 
             await populateOgretmenSelectsForGorevlendirme();
@@ -1358,7 +1369,7 @@ async function renderGorevlendirmeTable() {
             const gorevli = personelMap.get(g.gorevliId) || 'Bilinmiyor';
             let detaylarHTML = '<ul class="ders-detaylari">';
             g.detaylar.forEach(d => {
-                detaylarHTML += `<li>${d.sinif} / ${d.brans} (${d.saat} Saat)</li>`;
+                detaylarHTML += `<li>${d.sinif} / ${d.brans} (${d.saat}. Ders)</li>`;
             });
             detaylarHTML += '</ul>';
             const row = gTbody.insertRow();
@@ -1384,7 +1395,7 @@ async function renderGorevlendirmeTable() {
 }
         function renderGeciciDetayListesi() {
             const geciciListeUL = document.getElementById('gecici-detay-listesi'); geciciListeUL.innerHTML = '';
-            geciciDetaylar.forEach((detay, index) => { const li = document.createElement('li'); li.innerHTML = `<span><b>${detay.sinif} / ${detay.brans}</b> - ${detay.saat} Saat</span> <button class="delete-temp-btn" data-index="${index}">Sil</button>`; geciciListeUL.appendChild(li); });
+            geciciDetaylar.forEach((detay, index) => { const li = document.createElement('li'); li.innerHTML = `<span><b>${detay.sinif} / ${detay.brans}</b> - ${detay.saat}. Ders</span> <button class="delete-temp-btn" data-index="${index}">Sil</button>`; geciciListeUL.appendChild(li); });
         }
         
 function renderDuzenlenenDetayListesi() {
@@ -1394,7 +1405,7 @@ function renderDuzenlenenDetayListesi() {
                 const li = document.createElement('li');
                 li.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 8px;";
                 li.innerHTML = `
-                    <span><b>${detay.sinif} / ${detay.brans}</b> - ${detay.saat} Saat</span>
+                    <span><b>${detay.sinif} / ${detay.brans}</b> - ${detay.saat}. Ders</span>
                     <button type="button" class="delete-temp-btn" data-index="${index}" style="background: none; border: none; color: var(--danger-color); cursor: pointer; font-weight: bold;">Sil</button>
                 `;
                 listeUL.appendChild(li);
@@ -1427,7 +1438,8 @@ function renderDuzenlenenDetayListesi() {
             const tarih = gTarih.value, asilId = gAsilOgretmen.value, gorevliId = gGorevliOgretmen.value, aciklama = gAciklama.value.trim();
             if (!tarih || !asilId || !gorevliId) { alert('Lütfen ana bilgilerdeki tüm zorunlu alanları doldurun.'); return; }
             if (geciciDetaylar.length === 0) { alert('Lütfen en az bir ders dağılımı detayı ekleyin.'); return; }
-            const toplamSaat = geciciDetaylar.reduce((sum, item) => sum + item.saat, 0);
+            // Toplam saat, artık eklenen ders listesindeki eleman sayısıdır.
+            const toplamSaat = geciciDetaylar.length;
             const yeniGorevlendirme = { tarih, asilId, gorevliId, toplamSaat, aciklama, detaylar: geciciDetaylar, kayitTarihi: new Date().toISOString() };
             try {
                 await addDoc(collection(db, 'ders_gorevlendirmeleri'), yeniGorevlendirme);
@@ -1453,10 +1465,12 @@ function renderDuzenlenenDetayListesi() {
                 const bransSelect = document.getElementById('edit-d-brans-select');
                 derslerSnap.forEach(doc => bransSelect.add(new Option(doc.data().name, doc.data().name)));
                 
+                await generateTimeSlots(); // Ders saatlerini yükle
                 const saatSelect = document.getElementById('edit-d-saat-select');
-                for (let i = 1; i <= 8; i++) {
-                    saatSelect.add(new Option(i + ' Saat', i));
-                }
+                saatSelect.innerHTML = '<option value="">Ders Saati Seçin...</option>'; // Menüyü temizle ve varsayılan ekle
+                dersSaatleri.forEach(slot => {
+                    saatSelect.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.dersNo));
+                });
 
                 const asilSelect = document.getElementById('edit-g-asil-ogretmen');
                 const gorevliSelect = document.getElementById('edit-g-gorevli-ogretmen');
@@ -1509,7 +1523,7 @@ function renderDuzenlenenDetayListesi() {
             }
 
             // Toplam saati güncel listeden tekrar hesapla
-            const toplamSaat = duzenlenenGorevDetaylari.reduce((sum, item) => sum + parseInt(item.saat), 0);
+            const toplamSaat = duzenlenenGorevDetaylari.length;
 
             const updatedData = {
                 tarih: document.getElementById('edit-g-tarih').value,
