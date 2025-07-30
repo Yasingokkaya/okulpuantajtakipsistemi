@@ -279,6 +279,9 @@
         }
         .status-RT { background-color: #D1EAFE; color: #0D47A1; } .status-I { background-color: #FFF4CC; color: #B26A00; }
         .status-R { background-color: #FFEBEE; color: #B71C1C; } .status-UI { background-color: #E4E7EB; color: #37474f; }
+        .status-S { background-color: #FFF9C4; color: #AF6000; } /* Yıllık İzin */
+        .status-K { background-color: #D7F9E9; color: #1B5E20; } /* Yarım Gün */
+        .status-RTÇ { background-color: #E1BEE7; color: #4A148C; } /* Resmi Tatil Çalışması */
         .puantaj-legend { margin-top: 25px; padding-top: 15px; border-top: 1px solid #dee2e6; display: flex; flex-wrap: wrap; gap: 15px 25px; }
         .legend-item { display: flex; align-items: center; font-size: 13px; }
         .legend-color-box { width: 16px; height: 16px; border: 1px solid #bdbdbd; margin-right: 8px; display: inline-block; }
@@ -294,45 +297,71 @@
         #edit-modal-overlay .modal-buttons button { padding: 8px 16px; border-radius: 5px; border: none; cursor: pointer; margin-left: 10px; }
         #modal-save { background-color: #198754; color: white; }
         #modal-cancel { background-color: #6c757d; color: white; }
-     @media print { 
+     
+@media print { 
+    @page {
+        size: A3 landscape;
+        margin: 0.5cm;
+    }
     * { 
         -webkit-print-color-adjust: exact !important; 
         print-color-adjust: exact !important; 
     } 
-    body { 
-        background-color: #fff; 
-        font-size: 10px;
+    body, html { 
+        background-color: #fff !important; 
+        font-size: 8px;
+        width: 100%;
+        height: auto;
+        overflow: visible;
     } 
     .sidebar, .main-content > .panel > .panel-header, .controls.puantaj, .puantaj-legend, .bottom-section, .modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir, .no-print { 
         display: none !important; 
     } 
     .main-content {
         padding: 0;
-    }
-    #puantaj .panel, #puantaj-table-container { 
-        box-shadow: none; 
-        border: none; 
-        padding: 0; 
         overflow: visible;
+    }
+     #puantaj, #puantaj .panel, #puantaj-table-container { 
+        box-shadow: none !important; 
+        border: none !important; 
+        padding: 0 !important; 
+        margin: 0 !important;
+        overflow: visible !important;
     } 
     .puantaj-table { 
-        font-size: 8.5px; 
-        width: 100%; 
-        table-layout: auto;
-        border-collapse: collapse;
+        font-size: 7px !important; 
+        width: 100% !important; 
+        table-layout: auto !important;
+        border-collapse: collapse !important;
     }
     .puantaj-table th, .puantaj-table td {
-        padding: 4px 2px;
-        min-width: 20px !important;
+        padding: 3px 1px !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: clip !important;
+        white-space: nowrap !important;
+        vertical-align: middle;
     }
-    .col-personel {
-        min-width: 120px !important;
+     .puantaj-table th {
+        font-weight: bold;
+    }
+    .puantaj-table h3 {
+        font-size: 10px !important;
+        margin: 10px 0 5px 0 !important;
+    }
+     .col-personel {
+        min-width: 80px !important;
         text-align: left;
     }
     .col-unvan {
-        min-width: 80px !important;
+        min-width: 60px !important;
+         text-align: left;
+    }
+     .puantaj-table .hour-cell {
+        font-size: 7px !important;
     }
 }
+/* EKLENECEK KOD BİTİŞİ */
         
         @media print {
             body, html {
@@ -2585,7 +2614,8 @@ function calculateStatusCounts(personelId) {
     const personelData = puantajData[personelId];
     if (!personelData) return {};
 
-    const counts = { N: 0, HT: 0, RT: 0, I: 0, R: 0, UI: 0 };
+   
+const counts = { N: 0, HT: 0, RT: 0, I: 0, R: 0, UI: 0, S: 0, K: 0, RTÇ: 0 };
     
     for (const date in personelData) {
         const dayCode = personelData[date].code;
@@ -2619,7 +2649,9 @@ function renderLegend() {
     const legendContainer = document.getElementById('puantaj-legend');
     if(!legendContainer) return;
     legendContainer.innerHTML = '';
-    const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin' };
+    
+// Bu satırı ekleyin:
+const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'RTÇ': 'Resmi Tatil Çalışması' };
     for (const code in statusCodes) {
         const item = document.createElement('div'); item.className = 'legend-item';
         item.innerHTML = `<span class="legend-color-box status-${code}"></span><b>(${code})</b>: ${statusCodes[code]}`;
@@ -2725,6 +2757,7 @@ function printPuantaj() {
     window.print();
 }
 
+// EKLENECEK YENİ FONKSİYON
 function renderPuantajTable(nobetVerisi) {
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
@@ -2746,49 +2779,60 @@ function renderPuantajTable(nobetVerisi) {
 
         finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${grupAdi.toUpperCase()} PERSONEL PUANTAJ CETVELİ</h3>`;
         
-        // --- BAŞLIKLAR GÜNCELLENDİ ---
+        // Tablo başlıkları güncellendi
         let tableHTML = `<table class="puantaj-table"><thead>
             <tr>
-                <th class="col-personel header-main-title">Personel</th>
-                <th class="col-unvan header-main-title">Unvan</th>
-                <th class="col-date header-main-title">İşe Giriş</th>
-                <th class="col-date header-main-title">İşten Çıkış</th>`;
+                <th class="col-personel header-main-title" rowspan="2">Personel</th>
+                <th class="col-unvan header-main-title" rowspan="2">Unvan</th>
+                <th class="col-date header-main-title" rowspan="2">İşe Giriş</th>
+                <th class="col-date header-main-title" rowspan="2">İşten Çıkış</th>
+                <th colspan="${daysInMonth}">Aylık Puantaj Durumu</th>
+                <th colspan="4">Aylık Saat Toplamları</th>
+                <th colspan="9">Aylık Gün Toplamları</th>
+                <th class="col-summary social-section" rowspan="2">Toplam Çalışılan Gün</th>
+                <th class="col-imza header-main-title" rowspan="2">İmza</th>
+            </tr>
+            <tr>`;
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
             tableHTML += `<th class="col-day">${day}<br>${gunler[date.getDay()]}</th>`;
         }
         tableHTML += `
-                <th class="col-summary summary-yellow">Aylık<br>Toplam</th>
+                <th class="col-summary summary-yellow">Aylık Toplam</th>
                 <th class="col-summary summary-green">Ek Ders</th>
                 <th class="col-summary summary-nobet">Nöbet</th>
                 <th class="col-summary summary-rehberlik">Rehberlik</th>
-                <th class="col-summary-count">Çalışılan<br>Gün (N)</th>
-                <th class="col-summary-count">H.Sonu<br>(HT)</th>
-                <th class="col-summary-count">R.Tatil<br>(RT)</th>
-                <th class="col-summary-count">İzinli<br>(I)</th>
-                <th class="col-summary-count">Raporlu<br>(R)</th>
-                <th class="col-imza header-main-title">İmza</th>
+                <th class="col-summary-count">Normal (N)</th>
+                <th class="col-summary-count">H.Sonu (HT)</th>
+                <th class="col-summary-count">R.Tatil (RT)</th>
+                <th class="col-summary-count">İzinli (I)</th>
+                <th class="col-summary-count">Raporlu (R)</th>
+                <th class="col-summary-count">Ücretsiz İzin (UI)</th>
+                <th class="col-summary-count">Yıllık İzin (S)</th>
+                <th class="col-summary-count">Yarım Gün (K)</th>
+                <th class="col-summary-count">Resmi T.Ç. (RTÇ)</th>
             </tr>
         </thead><tbody>`;
 
-        // --- HER PERSONEL İÇİN İKİ SATIRLI YAPI ---
         personelGrubu.forEach(personel => {
             const monthlyHours = calculateMonthlyHours(personel.id);
             const nobetSaat = nobetVerisi[personel.id] || 0;
             const rehberlikSaat = personel.rehberlik_gorevi === 'evet' ? calculateRehberlikHoursForMonth(year, month) : 0;
-            const statusCounts = calculateStatusCounts(personel.id); // Yeni gün sayılarını hesapla
+            const statusCounts = calculateStatusCounts(personel.id);
+            
+            // Toplam çalışılan günü hesapla: N + RTÇ + (K * 0.5)
+            const toplamCalisilanGun = (statusCounts.N || 0) + (statusCounts.RTÇ || 0) + ((statusCounts.K || 0) * 0.5);
 
             // 1. SATIR (DURUM SATIRI)
             tableHTML += `<tr class="personel-row-status">
-                <td class="col-personel">${personel.ad}</td>
-                <td class="col-unvan">${personel.unvan}</td>
-                <td class="col-date">${personel.ise_giris}</td>
-                <td class="col-date">${personel.isten_ayrilis}</td>`;
+                <td class="col-personel" rowspan="2">${personel.ad}</td>
+                <td class="col-unvan" rowspan="2">${personel.unvan}</td>
+                <td class="col-date" rowspan="2">${personel.ise_giris}</td>
+                <td class="col-date" rowspan="2">${personel.isten_ayrilis}</td>`;
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = new Date(year, month, day).toISOString().split('T')[0];
                 const dayData = puantajData[personel.id][dateString];
-                // Bu satırda sadece durum kodu (N, HT, RT) gösterilir.
                 tableHTML += `<td class="status-cell status-${dayData.code}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code}</td>`;
             }
 
@@ -2797,27 +2841,27 @@ function renderPuantajTable(nobetVerisi) {
                 <td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td>
                 <td class="summary-nobet" rowspan="2">${nobetSaat}</td>
                 <td class="summary-rehberlik" rowspan="2">${rehberlikSaat}</td>
-                <td class="col-summary-count">${statusCounts.N || 0}</td>
-                <td class="col-summary-count">${statusCounts.HT || 0}</td>
-                <td class="col-summary-count">${statusCounts.RT || 0}</td>
-                <td class="col-summary-count">${statusCounts.I || 0}</td>
-                <td class="col-summary-count">${statusCounts.R || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.I || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.UI || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td>
+                <td class="col-summary-count" rowspan="2">${statusCounts.RTÇ || 0}</td>
+                <td class="social-section" rowspan="2"><strong>${toplamCalisilanGun}</strong></td>
                 <td class="col-imza" rowspan="2"></td>
             </tr>`;
             
             // 2. SATIR (SAAT SATIRI)
-            tableHTML += `<tr class="personel-row-hours">
-                <td colspan="4"></td>`; // Personel, Unvan, Giriş, Çıkış için boşluk
-
+            tableHTML += `<tr class="personel-row-hours">`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = new Date(year, month, day).toISOString().split('T')[0];
                 const dayData = puantajData[personel.id][dateString];
-                // Bu satırda sadece 'N' durumu varsa saat gösterilir.
-                const hourContent = (dayData.code === 'N' && dayData.hours > 0) ? dayData.hours : '';
+                const hourContent = ((dayData.code === 'N' || dayData.code === 'K' || dayData.code === 'RTÇ') && dayData.hours > 0) ? dayData.hours : '';
                 tableHTML += `<td class="hour-cell">${hourContent}</td>`;
             }
-
-            tableHTML += `<td colspan="5"></td>`; // Yeni gün sayısı özetleri için boşluk
             tableHTML += `</tr>`;
         });
 
@@ -2827,7 +2871,6 @@ function renderPuantajTable(nobetVerisi) {
 
     container.innerHTML = finalHTML;
 }
-
 // Olası bir sonraki hatayı önlemek için: Eksik attachCellListeners fonksiyonu
 function attachCellListeners() {
     const cells = document.querySelectorAll('.status-cell');
