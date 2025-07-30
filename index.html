@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OYS - Okul Yönetim Sistemi</title>
+    <title>Okul Puantaj Sistemi</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -25,7 +25,50 @@
     display: flex; /* Bu satır eksikti */
     flex-direction: column; /* Bu satır eksikti */
 }
-        .sidebar-header { padding: 20px; font-size: 1.5em; font-weight: bold; text-align: center; border-bottom: 1px solid var(--sidebar-hover-bg); color: var(--white-color); }
+.sidebar nav {
+        flex-grow: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .sidebar-footer {
+        padding: 10px 0;
+        border-top: 1px solid var(--sidebar-hover-bg);
+        flex-shrink: 0;
+    }
+    .sidebar nav::-webkit-scrollbar {
+        width: 8px;
+    }
+    .sidebar nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .sidebar nav::-webkit-scrollbar-thumb {
+        background-color: var(--sidebar-hover-bg);
+        border-radius: 10px;
+        border: 2px solid var(--sidebar-bg);
+    }
+    .sidebar nav::-webkit-scrollbar-thumb:hover {
+        background-color: var(--theme-accent);
+    }
+        /* LOGO VE YENİ BAŞLIK İÇİN GÜNCELLENMİŞ STİL */
+.sidebar-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--sidebar-hover-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.sidebar-header img {
+    width: 160px; /* Yeni logo için daha geniş bir boyut */
+    height: auto; /* Resim oranını korur */
+    border-radius: 8px; /* Kenarları hafifçe yuvarlatır, daha modern bir görünüm için (isteğe bağlı) */
+}
+.sidebar-header span {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--white-color);
+}
         .sidebar-nav { list-style: none; padding: 0; margin: 20px 0; }
         .sidebar-nav li a { display: flex; align-items: center; gap: 10px; padding: 15px 20px; color: var(--sidebar-text); text-decoration: none; transition: background-color 0.2s, color 0.2s; border-left: 4px solid transparent; cursor: pointer; }
         .sidebar-nav li a:hover { background-color: var(--sidebar-hover-bg); color: var(--white-color); }
@@ -353,7 +396,7 @@
 <body>
 <div id="login-panel" style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--light-gray-color);">
     <div style="width: 100%; max-width: 400px; padding: 40px; background: var(--white-color); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <h2 style="text-align: center; color: var(--theme-primary); margin-bottom: 30px;">OYS Giriş Paneli</h2>
+        <h2 style="text-align: center; color: var(--theme-primary); margin-bottom: 30px;">Okul Puantaj Sistemi Giriş Paneli</h2>
         <div class="form-group">
             <label for="login-email">E-posta Adresi</label>
             <input type="email" id="login-email" placeholder="ornek@mail.com">
@@ -371,30 +414,34 @@
 
 
         <aside class="sidebar">
-            <div class="sidebar-header">OYS</div>
-            <nav>
-<div class="sidebar-footer">
-    <a id="logout-btn" style="cursor: pointer;">🚪 <span>Çıkış Yap</span></a>
+    <div class="sidebar-header">
+    <img src="logo.png" alt="Okul Puantaj Sistemi Logosu">
 </div>
 
-                <ul class="sidebar-nav">
-                    <li><a class="nav-link active" data-target="dashboard">🏠 <span>Ana Sayfa</span></a></li>
-                    <li class="menu-item-group">
-                        <a class="accordion-trigger">👥 <span>Personel Yönetimi</span></a>
-                        <ul class="sub-menu">
-                            <li><a id="open-add-staff-modal"><span>Yeni Personel Ekle</span></a></li>
-                            <li><a class="nav-link" data-target="staff-list"><span>Personel Listesi</span></a></li>
-                        </ul>
-                    </li>
-                    <li><a class="nav-link" data-target="ders-programi">📅 <span>Ders Programı</span></a></li>
-                    <li><a class="nav-link" data-target="gorevlendirme">📝 <span>Görevlendirmeler</span></a></li>
-                    <li><a class="nav-link" data-target="nobet-takip">🛡️ <span>Nöbet Takip</span></a></li>
-                    <li><a class="nav-link" data-target="izin-takip">✈️ <span>İzin Takip</span></a></li>
-                    <li><a class="nav-link" data-target="puantaj">📊 <span>Puantaj Cetveli</span></a></li>
-                    <li><a class="nav-link" data-target="settings">⚙️ <span>Ayarlar</span></a></li>
+    <nav>
+        <ul class="sidebar-nav">
+            <li><a class="nav-link active" data-target="dashboard">🏠 <span>Ana Sayfa</span></a></li>
+            <li class="menu-item-group">
+                <a class="accordion-trigger">👥 <span>Personel Yönetimi</span></a>
+                <ul class="sub-menu">
+                    <li><a id="open-add-staff-modal"><span>Yeni Personel Ekle</span></a></li>
+                    <li><a class="nav-link" data-target="staff-list"><span>Personel Listesi</span></a></li>
                 </ul>
-            </nav>
-        </aside>
+            </li>
+            <li><a class="nav-link" data-target="ders-programi">📅 <span>Ders Programı</span></a></li>
+            <li><a class="nav-link" data-target="gorevlendirme">📝 <span>Görevlendirmeler</span></a></li>
+            <li><a class="nav-link" data-target="nobet-takip">🛡️ <span>Nöbet Takip</span></a></li>
+            <li><a class="nav-link" data-target="izin-takip">✈️ <span>İzin Takip</span></a></li>
+            <li><a class="nav-link" data-target="puantaj">📊 <span>Puantaj Cetveli</span></a></li>
+            <li><a class="nav-link" data-target="settings">⚙️ <span>Ayarlar</span></a></li>
+        </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a id="logout-btn" style="cursor: pointer;">🚪 <span>Çıkış Yap</span></a>
+    </div>
+</aside>
+                    
 
         <main class="main-content">
             <div id="dashboard" class="module active"><div class="panel"><div class="panel-body"><h3>Hoş Geldiniz!</h3><p>Veri tanımlamaları için "Ayarlar" menüsünü kullanarak başlayabilirsiniz.</p></div></div></div>
