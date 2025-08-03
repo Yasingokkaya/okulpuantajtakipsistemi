@@ -2626,23 +2626,36 @@ const counts = { N: 0, HT: 0, RT: 0, I: 0, R: 0, UI: 0, S: 0, K: 0, RTÇ: 0 };
     return counts;
 }
 
-function calculateRehberlikHoursForMonth(year, month) {
-    let totalHours = 0;
+// YENİ EKLENECEK FONKSİYON
+function calculateEffectiveRehberlikHours(personelId, year, month, allPuantajData) {
+    const personel = puantajPersonelList.find(p => p.id === personelId);
+    // Personelin rehberlik görevi yoksa veya veri bulunamazsa 0 dön
+    if (!personel || personel.rehberlik_gorevi !== 'evet' || !allPuantajData[personelId]) {
+        return 0;
+    }
+
+    let effectiveHours = 0;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    // Ayın her gününü kontrol et
+    const personelMonthData = allPuantajData[personelId];
+
+    // Ayın her gününü döngüye al
     for (let day = 1; day <= daysInMonth; day++) {
         const currentDate = new Date(year, month, day);
-        
-        // Eğer gün Perşembe ise (getDay() -> Pazar=0, Pzt=1... Perşembe=4)
-        // o haftanın 2 saatlik ek dersi bu aya aittir.
+
+        // Eğer gün Perşembe ise (Pazar=0, Pzt=1... Perşembe=4)
         if (currentDate.getDay() === 4) {
-            totalHours += 2;
+            const dateString = currentDate.toISOString().split('T')[0];
+            const dayStatus = personelMonthData[dateString]?.code;
+
+            // Sadece normal çalışma günüyse ('N') rehberlik saati ekle.
+            // Diğer tüm durumlar (I, R, S, RT vb.) için ekleme yapma.
+            if (dayStatus === 'N') {
+                effectiveHours += 2;
+            }
         }
     }
-    return totalHours;
+    return effectiveHours;
 }
-
 
 
 function renderLegend() {
@@ -2659,7 +2672,8 @@ const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I
     }
 }
 
- function renderGrandTotals(nobetVerisi = {}) {
+
+function renderGrandTotals(nobetVerisi = {}) {
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
 
@@ -2668,9 +2682,8 @@ const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I
     puantajPersonelList.forEach(personel => {
         totalEkders += calculateMonthlyHours(personel.id).ekDers;
         totalNobet += nobetVerisi[personel.id] || 0;
-        if (personel.rehberlik_gorevi === 'evet') {
-            totalRehberlik += calculateRehberlikHoursForMonth(year, month);
-        }
+        // Toplam rehberlik saati de artık yeni akıllı fonksiyon ile hesaplanıyor.
+        totalRehberlik += calculateEffectiveRehberlikHours(personel.id, year, month, puantajData);
     });
 
     document.getElementById('total-ekders').textContent = totalEkders + " Saat";
@@ -2814,10 +2827,10 @@ function renderPuantajTable(nobetVerisi) {
             </tr>
         </thead><tbody>`;
 
-        personelGrubu.forEach(personel => {
+         personelGrubu.forEach(personel => {
             const monthlyHours = calculateMonthlyHours(personel.id);
             const nobetSaat = nobetVerisi[personel.id] || 0;
-            const rehberlikSaat = personel.rehberlik_gorevi === 'evet' ? calculateRehberlikHoursForMonth(year, month) : 0;
+            const rehberlikSaat = calculateEffectiveRehberlikHours(personel.id, year, month, puantajData); // YENİ HALİ BU ŞEKİLDE OLMALI
             const statusCounts = calculateStatusCounts(personel.id);
             
             // Toplam çalışılan günü hesapla: N + RTÇ + (K * 0.5)
