@@ -637,7 +637,13 @@
                     <div class="panel-body">
                         <div class="controls puantaj">
                             <div class="controls-left"><select id="select-month"></select> <input type="number" id="input-year" min="2020" max="2050"><button id="btn-generate">Puantajı Oluştur / Göster</button></div>
-                            <div class="controls-right export-buttons"><button id="btn-print">Yazdır</button><button id="btn-pdf">PDF İndir</button><button id="btn-excel">Excel İndir</button></div>
+                            <div class="controls-right export-buttons">
+    <button id="btn-save-puantaj" style="background-color: #28a745;">Kaydet</button>
+    <button id="btn-lock-puantaj" style="background-color: #fd7e14;">Puantajı Kilitle</button>
+    <button id="btn-print">Yazdır</button>
+    <button id="btn-pdf">PDF İndir</button>
+    <button id="btn-excel">Excel İndir</button>
+</div>
                         </div>
                         <div id="puantaj-table-container" class="table-container"></div>
                         <div id="puantaj-legend" class="puantaj-legend"></div>
@@ -2375,9 +2381,210 @@ async function saveTopluIzin() {
 let puantajInitialized = false;
 let puantajPersonelList = [];
 let puantajData = {};
+// YENİ EKLENEN DEĞİŞKENLER
+let isPuantajLocked = false; 
+let currentPuantajDocRef = null;
+// =================== 1. ADIM: EKSİK FONKSİYONLARI BURAYA EKLEYİN ===================
+
+// YENİ FONKSİYON: Ay ve yıla göre puantaj verisini Firestore'dan yükler.
+async function loadPuantajDataForCurrentMonth() {
+    const year = document.getElementById('input-year').value;
+    const month = document.getElementById('select-month').value;
+    const docId = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}`;
+    currentPuantajDocRef = doc(db, "kayitli_puantajlar", docId);
+
+    try {
+        const docSnap = await getDoc(currentPuantajDocRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            puantajData = data.puantajData || {};
+            isPuantajLocked = data.isLocked || false;
+            showToast('Kaydedilmiş puantaj verisi yüklendi.', 'success');
+        } else {
+            // Eğer kayıtlı veri yoksa, mevcut puantajı temizle
+            puantajData = {};
+            isPuantajLocked = false;
+            showToast('Bu ay için kaydedilmiş bir puantaj yok.', 'info');
+        }
+
+        updateLockStatusUI();
+
+        const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
+        renderPuantajTable(nobetVerisi);
+        renderGrandTotals(nobetVerisi);
+        renderLegend();
+        attachCellListeners();
+
+    } catch (error) {
+        console.error("Puantaj verisi yüklenirken hata: ", error);
+        showToast("Puantaj verisi yüklenemedi.", "error");
+    }
+}
+
+// YENİ FONKSİYON: Mevcut puantaj verisini Firestore'a kaydeder.
+async function savePuantajData() {
+    if (isPuantajLocked) {
+        showToast('Puantaj kilitli olduğu için kaydedilemez.', 'error');
+        return;
+    }
+    if (Object.keys(puantajData).length === 0) {
+        showToast('Kaydedilecek puantaj verisi bulunmuyor.', 'error');
+        return;
+    }
+
+    try {
+        await setDoc(currentPuantajDocRef, {
+            puantajData: puantajData,
+            isLocked: isPuantajLocked,
+            lastUpdated: new Date().toISOString()
+        }, { merge: true });
+        showToast('Puantaj başarıyla kaydedildi!', 'success');
+    } catch (error) {
+        console.error("Puantaj kaydedilirken hata: ", error);
+        showToast('Puantaj kaydedilemedi.', 'error');
+    }
+}
+
+// YENİ FONKSİYON: Puantaj kilidini açar veya kapatır.
+async function togglePuantajLock() {
+    isPuantajLocked = !isPuantajLocked; // Kilit durumunu tersine çevir
+
+    try {
+        if (!currentPuantajDocRef) {
+             const year = document.getElementById('input-year').value;
+             const month = document.getElementById('select-month').value;
+             const docId = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}`;
+             currentPuantajDocRef = doc(db, "kayitli_puantajlar", docId);
+        }
+        await setDoc(currentPuantajDocRef, { isLocked: isPuantajLocked }, { merge: true });
+        showToast(isPuantajLocked ? 'Puantaj kilitlendi.' : 'Puantaj kilidi açıldı.', 'success');
+        updateLockStatusUI();
+    } catch (error) {
+        console.error("Kilit durumu güncellenirken hata:", error);
+        showToast("Kilit durumu güncellenemedi.", "error");
+        isPuantajLocked = !isPuantajLocked; // Hata olursa durumu geri al
+    }
+}
+
+// YENİ FONKSİYON: Kilit butonunun metnini ve rengini günceller.
+function updateLockStatusUI() {
+    const lockBtn = document.getElementById('btn-lock-puantaj');
+    const generateBtn = document.getElementById('btn-generate');
+
+    if (isPuantajLocked) {
+        lockBtn.textContent = 'Kilidi Aç';
+        lockBtn.style.backgroundColor = '#17a2b8';
+        generateBtn.disabled = true;
+    } else {
+        lockBtn.textContent = 'Puantajı Kilitle';
+        lockBtn.style.backgroundColor = '#fd7e14';
+        generateBtn.disabled = false;
+    }
+}
+// =================== 1. ADIM BİTİŞİ ===================
+function renderPuantajTable(nobetVerisi) {
+    const container = document.getElementById('puantaj-table-container');
+    const year = parseInt(document.getElementById('input-year').value);
+    const month = parseInt(document.getElementById('select-month').value);
+    
+    if (Object.keys(puantajData).length === 0) {
+        container.innerHTML = '<p style="text-align:center; padding: 20px;">Görüntülenecek puantaj verisi yok. Lütfen "Puantajı Oluştur / Göster" butonuna tıklayın.</p>';
+        return;
+    }
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+
+    const grupluPersonel = {
+        'Belirsiz Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Belirsiz Süreli'),
+        'Belirli Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Belirli Süreli'),
+        'Kısmi Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Kısmi Süreli')
+    };
+
+    let finalHTML = '';
+
+    for (const grupAdi in grupluPersonel) {
+        const personelGrubu = grupluPersonel[grupAdi];
+        if (personelGrubu.length === 0) continue;
+
+        finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${grupAdi.toUpperCase()} PERSONEL PUANTAJ CETVELİ</h3>`;
+        
+        let tableHTML = `<table class="puantaj-table"><thead>
+            <tr>
+                <th class="col-personel header-main-title" rowspan="3">Personel</th>
+                <th class="col-unvan header-main-title" rowspan="3">Unvan</th>
+                <th colspan="${daysInMonth}">Aylık Puantaj Durumu</th>
+                <th colspan="4">Aylık Saat Toplamları</th>
+                <th colspan="3" class="social-section">Sosyal Yardımlar</th>
+                <th class="col-imza header-main-title" rowspan="3">İmza</th>
+            </tr>
+            <tr>
+                <th colspan="${daysInMonth}"></th>
+                <th class="summary-yellow" rowspan="2">Aylık Toplam</th>
+                <th class="summary-green" rowspan="2">Ek Ders</th>
+                <th class="summary-nobet" rowspan="2">Nöbet</th>
+                <th class="summary-rehberlik" rowspan="2">Rehberlik</th>
+                <th rowspan="2">Eş Durumu</th>
+                <th colspan="2">Çocuk Durumu</th>
+            </tr>
+             <tr>`;
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            tableHTML += `<th class="col-day">${day}<br>${gunler[date.getDay()]}</th>`;
+        }
+        tableHTML += `<th>0-6 Yaş</th><th>6-18 Yaş</th></tr></thead><tbody>`;
+
+         personelGrubu.forEach(personel => {
+            const monthlyHours = calculateMonthlyHours(personel.id);
+            const nobetSaat = nobetVerisi[personel.id] || 0;
+            const rehberlikSaat = calculateEffectiveRehberlikHours(personel.id, year, month, puantajData);
+            
+            // 1. SATIR (DURUM SATIRI)
+            tableHTML += `<tr class="personel-row-status">
+                <td class="col-personel" rowspan="2">${personel.ad}</td>
+                <td class="col-unvan" rowspan="2">${personel.unvan}</td>`;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateString = new Date(year, month, day).toISOString().split('T')[0];
+                const dayData = puantajData[personel.id]?.[dateString] || { code: '??', hours: 0 };
+                tableHTML += `<td class="status-cell status-${dayData.code}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code}</td>`;
+            }
+
+            tableHTML += `
+                <td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>
+                <td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td>
+                <td class="summary-nobet" rowspan="2">${nobetSaat}</td>
+                <td class="summary-rehberlik" rowspan="2">${rehberlikSaat}</td>
+                <td class="social-section" rowspan="2">${personel.esDurumu === 'calisiyor' ? 'Çalışıyor' : 'Çalışmıyor'}</td>
+                <td class="social-section" rowspan="2">${personel.cocuk0_6 > 0 ? personel.cocuk0_6 : ''}</td>
+                <td class="social-section" rowspan="2">${personel.cocuk6_18 > 0 ? personel.cocuk6_18 : ''}</td>
+                <td class="col-imza" rowspan="2"></td>
+            </tr>`;
+            
+            // 2. SATIR (SAAT SATIRI)
+            tableHTML += `<tr class="personel-row-hours">`;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateString = new Date(year, month, day).toISOString().split('T')[0];
+                const dayData = puantajData[personel.id]?.[dateString] || { code: '??', hours: 0 };
+                const hourContent = ((dayData.code === 'N' || dayData.code === 'K' || dayData.code === 'RTÇ') && dayData.hours > 0) ? dayData.hours : '';
+                tableHTML += `<td class="hour-cell">${hourContent}</td>`;
+            }
+            tableHTML += `</tr>`;
+        });
+
+        tableHTML += `</tbody></table>`;
+        finalHTML += tableHTML;
+    }
+
+    container.innerHTML = finalHTML;
+}
 
 async function initializePuantaj() {
-    if (puantajInitialized) return;
+    if (puantajInitialized) {
+        // Eğer zaten başlatıldıysa, sadece mevcut ayın verisini yükle
+        await loadPuantajDataForCurrentMonth();
+        return;
+    }
 
     try {
         const personelSnap = await getDocs(collection(db, "personel"));
@@ -2392,11 +2599,10 @@ async function initializePuantaj() {
                 unvan: gorevMap.get(data.gorevi_bransi) || 'Belirtilmemiş',
                 maasKarsiligi: parseInt(data.maas_karsiligi) || 20,
                 rehberlik_gorevi: data.rehberlik_gorevi || 'hayir',
-                esDurumu: data.es_durumu,
-                cocuk0_6: data.cocuk_0_6,
-                cocuk6_18: data.cocuk_6_ustu,
+                esDurumu: data.es_durumu || 'belirtilmedi', // Veritabanından gelen değeri al
+                cocuk0_6: data.cocuk_0_6 || 0, // Veritabanından gelen değeri al
+                cocuk6_18: data.cocuk_6_ustu || 0, // Veritabanından gelen değeri al
                 sozlesme_turu: data.sozlesme_turu || 'Belirsiz Süreli',
-                // --- YENİ EKLENEN SATIRLAR ---
                 ise_giris: data.ise_giris || '---',
                 isten_ayrilis: data.isten_ayrilis || '---'
             };
@@ -2406,7 +2612,9 @@ async function initializePuantaj() {
             generateBtn = document.getElementById('btn-generate'), printBtn = document.getElementById('btn-print'),
             pdfBtn = document.getElementById('btn-pdf'), excelBtn = document.getElementById('btn-excel'),
             modalOverlay = document.getElementById('edit-modal-overlay'),
-            modalSaveBtn = document.getElementById('modal-save'), modalCancelBtn = document.getElementById('modal-cancel');
+            modalSaveBtn = document.getElementById('modal-save'), modalCancelBtn = document.getElementById('modal-cancel'),
+            savePuantajBtn = document.getElementById('btn-save-puantaj'), // Yeni buton
+            lockPuantajBtn = document.getElementById('btn-lock-puantaj'); // Yeni buton
 
         const now = new Date(), months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
         selectMonth.innerHTML = '';
@@ -2414,13 +2622,20 @@ async function initializePuantaj() {
         selectMonth.value = now.getMonth();
         inputYear.value = now.getFullYear();
 
-        const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin' };
+        const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'RTÇ': 'Resmi Tatil Çalışması' };
         const modalStatusSelect = document.getElementById('modal-status');
         modalStatusSelect.innerHTML = '';
         for(const code in statusCodes) modalStatusSelect.add(new Option(statusCodes[code], code));
 
         if(!puantajInitialized) {
             generateBtn.addEventListener('click', generateInitialPuantaj);
+            savePuantajBtn.addEventListener('click', savePuantajData); // Kaydet butonuna olay ataması
+            lockPuantajBtn.addEventListener('click', togglePuantajLock); // Kilitle butonuna olay ataması
+            
+            // Ay veya yıl değiştiğinde veriyi yeniden yükle
+            selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth);
+            inputYear.addEventListener('change', loadPuantajDataForCurrentMonth);
+
             printBtn.addEventListener('click', printPuantaj);
             pdfBtn.addEventListener('click', downloadPdf);
             excelBtn.addEventListener('click', downloadExcel);
@@ -2430,13 +2645,14 @@ async function initializePuantaj() {
         }
 
         puantajInitialized = true;
-        await generateInitialPuantaj();
+        // OTOMATİK OLUŞTURMA YERİNE, KAYITLI VERİYİ YÜKLE
+        await loadPuantajDataForCurrentMonth();
+
     } catch (error) {
         console.error("Puantaj başlatılırken kritik hata:", error);
         showToast('Puantaj modülü başlatılamadı. Lütfen Ayarlarınızı kontrol edin.', 'error');
     }
 }
-
 async function fetchIzinDataForPuantaj(year, month) {
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month + 1, 0);
@@ -2539,13 +2755,22 @@ async function fetchAndProcessSchedules() {
         return {};
     }
 }
-        async function generateInitialPuantaj() {
+        // =================== 2. ADIM: GÜNCEL FONKSİYONU BURAYA EKLEYİN ===================
+async function generateInitialPuantaj() {
+    if (isPuantajLocked) {
+        showToast('Puantaj kilitli. Yeni puantaj oluşturmak için önce kilidi açmalısınız.', 'error');
+        return;
+    }
+
+    if (!confirm('Bu işlem, mevcut kaydedilmemiş tüm değişiklikleri sıfırlayarak yeni bir puantaj oluşturacaktır. Emin misiniz?')) {
+        return;
+    }
+
     try {
         const year = parseInt(document.getElementById('input-year').value);
         const month = parseInt(document.getElementById('select-month').value);
-        showToast('Puantaj oluşturuluyor: Ders programları, nöbet ve izin verileri hesaplanıyor...');
+        showToast('Puantaj oluşturuluyor: Tüm veriler hesaplanıyor...');
 
-        // 1. Gerekli tüm verileri paralel olarak çek
         const [scheduleData, nobetVerisi, izinVerisi] = await Promise.all([
             fetchAndProcessSchedules(),
             fetchAndCalculateNobetData(year, month),
@@ -2555,51 +2780,45 @@ async function fetchAndProcessSchedules() {
         const gunlerTR = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
         puantajData = {};
 
-        // 2. Her personel için puantaj verisini oluştur
         puantajPersonelList.forEach(personel => {
             puantajData[personel.id] = {};
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
+
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
                 const dateString = date.toISOString().split('T')[0];
                 const dayOfWeek = date.getDay();
                 const dayOfWeekTR = gunlerTR[dayOfWeek];
 
-                let code = 'N'; // Varsayılan: Normal Çalışma
-                let hours = 0; // Varsayılan saat
+                let code = 'N';
+                let hours = 0;
 
-                // 3. Durum kodunu ve saatleri belirle (Öncelik sırasına göre)
                 if (isResmiTatil(date)) {
                     code = 'RT';
-                    hours = 0;
                 } else if (izinVerisi[personel.id]?.[dateString]) {
                     code = izinVerisi[personel.id][dateString];
-                    hours = 0;
                 } else if (dayOfWeek === 0 || dayOfWeek === 6) {
                     code = 'HT';
-                    hours = 0;
                 } else {
-                    // Normal bir iş günü ise, ders programından saatleri al
                     code = 'N';
                     hours = scheduleData[personel.id]?.[dayOfWeekTR] || 0;
                 }
-
                 puantajData[personel.id][dateString] = { code: code, hours: hours, notes: '' };
             }
         });
 
-        // 4. Tabloyu ve diğer bileşenleri ekrana çiz
         renderPuantajTable(nobetVerisi); 
         renderGrandTotals(nobetVerisi);
         renderLegend();
         attachCellListeners();
+        showToast('Puantaj başarıyla oluşturuldu!', 'success');
 
     } catch (error) {
         console.error("Puantaj oluşturulurken hata:", error);
         showToast('Puantaj oluşturulamadı. Lütfen verileri kontrol edin.', 'error');
     }
 }
+// =================== 2. ADIM BİTİŞİ ===================
 
 function calculateMonthlyHours(personelId) {
     const personel = puantajPersonelList.find(p => p.id == personelId);
@@ -2733,157 +2952,47 @@ function renderGrandTotals(nobetVerisi = {}) {
             XLSX.writeFile(wb, `Puantaj_${month}_${year}.xlsx`);
         }
         
-function saveModalChanges() {
-            // Modal'daki kaydet butonunu ve üzerinde saklanan verileri al
-            const modalSaveBtn = document.getElementById('modal-save');
-            const personelId = modalSaveBtn.dataset.personelId;
-            const date = modalSaveBtn.dataset.date;
+// =================== 3. ADIM: İYİLEŞTİRİLMİŞ FONKSİYONU EKLEYİN ===================
+async function saveModalChanges() {
+    const modalSaveBtn = document.getElementById('modal-save');
+    const personelId = modalSaveBtn.dataset.personelId;
+    const date = modalSaveBtn.dataset.date;
 
-            if (!personelId || !date) {
-                showToast('Veri kaydedilirken bir hata oluştu.', 'error');
-                return;
-            }
+    if (!personelId || !date) {
+        showToast('Veri kaydedilirken bir hata oluştu.', 'error');
+        return;
+    }
 
-            // Modal'daki form elemanlarından yeni değerleri oku
-            const newCode = document.getElementById('modal-status').value;
-            const newHours = parseInt(document.getElementById('modal-hours').value) || 0;
-            const newNotes = document.getElementById('modal-notes').value;
+    const newCode = document.getElementById('modal-status').value;
+    const newHours = parseInt(document.getElementById('modal-hours').value) || 0;
+    const newNotes = document.getElementById('modal-notes').value;
 
-            // Arka planda çalışan ana puantaj verisini güncelle
-            if (puantajData[personelId] && puantajData[personelId][date]) {
-                puantajData[personelId][date] = {
-                    code: newCode,
-                    hours: newHours,
-                    notes: newNotes
-                };
-            }
+    if (puantajData[personelId] && puantajData[personelId][date]) {
+        puantajData[personelId][date] = {
+            code: newCode,
+            hours: newHours,
+            notes: newNotes
+        };
+    }
 
-            // Düzenleme modal'ını kapat
-            document.getElementById('edit-modal-overlay').style.display = 'none';
+    document.getElementById('edit-modal-overlay').style.display = 'none';
 
-            // Değişikliği ekrana yansıtmak için puantaj tablosunu yeniden oluştur
-            generateInitialPuantaj();
+    // Sadece tabloyu yeniden çizerek değişikliği yansıt, her şeyi sıfırlama!
+    const year = parseInt(document.getElementById('input-year').value);
+    const month = parseInt(document.getElementById('select-month').value);
+    const nobetVerisi = await fetchAndCalculateNobetData(year, month);
+    renderPuantajTable(nobetVerisi);
+    renderGrandTotals(nobetVerisi);
+    attachCellListeners(); // Hücrelere tıklama olaylarını yeniden bağla
 
-            showToast('Değişiklikler kaydedildi.');
-        }
+    showToast('Değişiklikler kaydedildi. Tamamen kalıcı olması için "Kaydet" butonuna tıklamayı unutmayın.', 'success');
+}
+// =================== 3. ADIM BİTİŞİ ===================
 function printPuantaj() {
     window.print();
 }
 
-// EKLENECEK YENİ FONKSİYON
-function renderPuantajTable(nobetVerisi) {
-    const container = document.getElementById('puantaj-table-container');
-    const year = parseInt(document.getElementById('input-year').value);
-    const month = parseInt(document.getElementById('select-month').value);
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 
-    const grupluPersonel = {
-        'Belirsiz Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Belirsiz Süreli'),
-        'Belirli Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Belirli Süreli'),
-        'Kısmi Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Kısmi Süreli')
-    };
-
-    let finalHTML = '';
-
-    for (const grupAdi in grupluPersonel) {
-        const personelGrubu = grupluPersonel[grupAdi];
-        if (personelGrubu.length === 0) continue;
-
-        finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${grupAdi.toUpperCase()} PERSONEL PUANTAJ CETVELİ</h3>`;
-        
-        // Tablo başlıkları güncellendi
-        let tableHTML = `<table class="puantaj-table"><thead>
-            <tr>
-                <th class="col-personel header-main-title" rowspan="2">Personel</th>
-                <th class="col-unvan header-main-title" rowspan="2">Unvan</th>
-                <th class="col-date header-main-title" rowspan="2">İşe Giriş</th>
-                <th class="col-date header-main-title" rowspan="2">İşten Çıkış</th>
-                <th colspan="${daysInMonth}">Aylık Puantaj Durumu</th>
-                <th colspan="4">Aylık Saat Toplamları</th>
-                <th colspan="9">Aylık Gün Toplamları</th>
-                <th class="col-summary social-section" rowspan="2">Toplam Çalışılan Gün</th>
-                <th class="col-imza header-main-title" rowspan="2">İmza</th>
-            </tr>
-            <tr>`;
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(year, month, day);
-            tableHTML += `<th class="col-day">${day}<br>${gunler[date.getDay()]}</th>`;
-        }
-        tableHTML += `
-                <th class="col-summary summary-yellow">Aylık Toplam</th>
-                <th class="col-summary summary-green">Ek Ders</th>
-                <th class="col-summary summary-nobet">Nöbet</th>
-                <th class="col-summary summary-rehberlik">Rehberlik</th>
-                <th class="col-summary-count">Normal (N)</th>
-                <th class="col-summary-count">H.Sonu (HT)</th>
-                <th class="col-summary-count">R.Tatil (RT)</th>
-                <th class="col-summary-count">İzinli (I)</th>
-                <th class="col-summary-count">Raporlu (R)</th>
-                <th class="col-summary-count">Ücretsiz İzin (UI)</th>
-                <th class="col-summary-count">Yıllık İzin (S)</th>
-                <th class="col-summary-count">Yarım Gün (K)</th>
-                <th class="col-summary-count">Resmi T.Ç. (RTÇ)</th>
-            </tr>
-        </thead><tbody>`;
-
-         personelGrubu.forEach(personel => {
-            const monthlyHours = calculateMonthlyHours(personel.id);
-            const nobetSaat = nobetVerisi[personel.id] || 0;
-            const rehberlikSaat = calculateEffectiveRehberlikHours(personel.id, year, month, puantajData); // YENİ HALİ BU ŞEKİLDE OLMALI
-            const statusCounts = calculateStatusCounts(personel.id);
-            
-            // Toplam çalışılan günü hesapla: N + RTÇ + (K * 0.5)
-            const toplamCalisilanGun = (statusCounts.N || 0) + (statusCounts.RTÇ || 0) + ((statusCounts.K || 0) * 0.5);
-
-            // 1. SATIR (DURUM SATIRI)
-            tableHTML += `<tr class="personel-row-status">
-                <td class="col-personel" rowspan="2">${personel.ad}</td>
-                <td class="col-unvan" rowspan="2">${personel.unvan}</td>
-                <td class="col-date" rowspan="2">${personel.ise_giris}</td>
-                <td class="col-date" rowspan="2">${personel.isten_ayrilis}</td>`;
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateString = new Date(year, month, day).toISOString().split('T')[0];
-                const dayData = puantajData[personel.id][dateString];
-                tableHTML += `<td class="status-cell status-${dayData.code}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code}</td>`;
-            }
-
-            tableHTML += `
-                <td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>
-                <td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td>
-                <td class="summary-nobet" rowspan="2">${nobetSaat}</td>
-                <td class="summary-rehberlik" rowspan="2">${rehberlikSaat}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.I || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.UI || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.RTÇ || 0}</td>
-                <td class="social-section" rowspan="2"><strong>${toplamCalisilanGun}</strong></td>
-                <td class="col-imza" rowspan="2"></td>
-            </tr>`;
-            
-            // 2. SATIR (SAAT SATIRI)
-            tableHTML += `<tr class="personel-row-hours">`;
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateString = new Date(year, month, day).toISOString().split('T')[0];
-                const dayData = puantajData[personel.id][dateString];
-                const hourContent = ((dayData.code === 'N' || dayData.code === 'K' || dayData.code === 'RTÇ') && dayData.hours > 0) ? dayData.hours : '';
-                tableHTML += `<td class="hour-cell">${hourContent}</td>`;
-            }
-            tableHTML += `</tr>`;
-        });
-
-        tableHTML += `</tbody></table>`;
-        finalHTML += tableHTML;
-    }
-
-    container.innerHTML = finalHTML;
-}
 // Olası bir sonraki hatayı önlemek için: Eksik attachCellListeners fonksiyonu
 function attachCellListeners() {
     const cells = document.querySelectorAll('.status-cell');
