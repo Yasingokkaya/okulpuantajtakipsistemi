@@ -767,78 +767,11 @@
                 </div>
             </div>
 
-            <div id="settings" class="module">
-                <div class="panel">
-                    <div class="panel-header"><h3>Uygulama Ayarları</h3></div>
-                    <div class="panel-body">
-                        <div class="settings-tabs">
-                            <button class="settings-tab-button active" data-tab="nevi">Personel Nevileri</button>
-                            <button class="settings-tab-button" data-tab="gorev">Görevler/Branşlar</button>
-                            <button class="settings-tab-button" data-tab="ders">Dersler</button>
-                            <button class="settings-tab-button" data-tab="sinif">Sınıflar</button>
-                            <button class="settings-tab-button" data-tab="nobet-yeri">Nöbet Yerleri</button>
-                            <button class="settings-tab-button" data-tab="izin-tipi">İzin Tipleri</button>
-                            <button class="settings-tab-button" data-tab="zaman-cizelgesi">Zaman Çizelgesi</button>
-                        </div>
-                        <div id="nevi-tab" class="settings-tab-content active"><h3>Personel Nevi Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-nevi-input" placeholder="Yeni personel nevi adı..."><button id="add-nevi-btn" class="btn">Ekle</button></div><ul id="nevi-list" class="settings-list"></ul></div>
-                        <div id="gorev-tab" class="settings-tab-content"><h3>Görev/Branş Yönetimi</h3><div class="add-setting-form"><select id="gorev-nevi-select"><option value="">Önce Personel Nevi Seçin</option></select><input type="text" id="add-gorev-input" placeholder="Yeni görev/branş adı..."><button id="add-gorev-btn" class="btn">Ekle</button></div><ul id="gorev-list" class="settings-list"></ul></div>
-                        <div id="ders-tab" class="settings-tab-content"><h3>Ders Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-ders-input" placeholder="Yeni ders adı..."><button id="add-ders-btn" class="btn">Ekle</button></div><ul id="ders-list" class="settings-list"></ul></div>
-                        <div id="sinif-tab" class="settings-tab-content"><h3>Sınıf Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-sinif-input" placeholder="Yeni sınıf adı..."><button id="add-sinif-btn" class="btn">Ekle</button></div><ul id="sinif-list" class="settings-list"></ul></div>
-                        <div id="nobet-yeri-tab" class="settings-tab-content"><h3>Nöbet Yeri Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-nobet-yeri-input" placeholder="Yeni nöbet yeri adı..."><button id="add-nobet-yeri-btn" class="btn">Ekle</button></div><ul id="nobet-yeri-list" class="settings-list"></ul></div>
-                        <div id="izin-tipi-tab" class="settings-tab-content"><h3>İzin Tipi Yönetimi</h3><div class="add-setting-form" style="grid-template-columns: 2fr 1fr auto; display: grid;"><input type="text" id="add-izin-tipi-ad-input" placeholder="Yeni izin tipi adı (Örn: Yıllık İzin)"><input type="text" id="add-izin-tipi-kod-input" placeholder="Puantaj Kodu (Örn: I)"><button id="add-izin-tipi-btn" class="btn">Ekle</button></div><ul id="izin-tipi-list" class="settings-list"></ul></div>
-                        <div id="zaman-cizelgesi-tab" class="settings-tab-content">
-                            <h3>Zaman Çizelgesi Ayarları</h3>
-                            <p>Ders programı modülü, buradaki ayarlara göre otomatik olarak şekillenecektir.</p>
-                            <div class="form-grid">
-                                <div class="form-group"><label for="setting-dersBaslangic">Ders Başlama Saati</label><input type="time" id="setting-dersBaslangic"></div>
-                                <div class="form-group"><label for="setting-toplamDers">Günlük Toplam Ders Sayısı</label><input type="number" id="setting-toplamDers" min="1"></div>
-                                <div class="form-group"><label for="setting-dersSuresi">Ders Süresi (Dakika)</label><input type="number" id="setting-dersSuresi" min="1"></div>
-                                <div class="form-group"><label for="setting-teneffusSuresi">Teneffüs Süresi (Dakika)</label><input type="number" id="setting-teneffusSuresi" min="0"></div>
-                                <div class="form-group"><label for="setting-ogleArasiDersNo">Öğle Arası Kaçıncı Dersten Sonra?</label><input type="number" id="setting-ogleArasiDersNo" min="0"></div>
-                                <div class="form-group"><label for="setting-ogleArasiSuresi">Öğle Arası Süresi (Dakika)</label><input type="number" id="setting-ogleArasiSuresi" min="0"></div>
-                            </div>
-                            <div class="button-group">
-                                <button id="zaman-cizelgesi-kaydet-btn" class="btn btn-save">Çizelge Ayarlarını Kaydet</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
 
             
-            <div id="puantaj" class="module"><div class="panel"><div class="panel-header"><h3>Puantaj Cetveli</h3></div><div class="panel-body"><div class="controls puantaj"><div class="controls-left"><select id="select-month"></select> <input type="number" id="input-year" min="2020" max="2050"><button id="btn-generate">Puantajı Oluştur / Göster</button></div><div class="controls-right export-buttons"><button id="btn-print">Yazdır</button><button id="btn-pdf">PDF İndir</button><button id="btn-excel">Excel İndir</button></div></div><div id="puantaj-table-container" class="table-container"></div><div id="puantaj-legend" class="puantaj-legend"></div><div id="bottom-section" class="bottom-section"><div class="summary-totals"><h3>Aylık Genel Toplamlar</h3><div class="total-line"><span class="label">Ek Ders Saati Toplamı:</span><span id="total-ekders" class="value">0</span></div><div class="total-line"><span class="label">Nöbet Toplamı:</span><span id="total-nobet" class="value">0</span></div><div class="total-line"><span class="label">Rehberlik Toplamı:</span><span id="total-rehberlik" class="value">0</span></div></div><div class="approval-section"><h3>Onay</h3><div class="name">Adı Soyadı</div><div>Okul Müdürü</div></div></div></div></div></div>
-            <div id="settings" class="module"><div class="panel"><div class="panel-header"><h3>Uygulama Ayarları</h3></div><div class="panel-body">
-                <div class="settings-tabs">
-                    <button class="settings-tab-button active" data-tab="nevi">Personel Nevileri</button>
-                    <button class="settings-tab-button" data-tab="gorev">Görevler/Branşlar</button>
-                    <button class="settings-tab-button" data-tab="ders">Dersler</button>
-                    <button class="settings-tab-button" data-tab="sinif">Sınıflar</button>
-                    <button class="settings-tab-button" data-tab="nobet-yeri">Nöbet Yerleri</button>
-                    <button class="settings-tab-button" data-tab="izin-tipi">İzin Tipleri</button>
-                    <button class="settings-tab-button" data-tab="zaman-cizelgesi">Zaman Çizelgesi</button>
-                </div>
-                <div id="nevi-tab" class="settings-tab-content active"><h3>Personel Nevi Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-nevi-input" placeholder="Yeni personel nevi adı..."><button id="add-nevi-btn" class="btn">Ekle</button></div><ul id="nevi-list" class="settings-list"></ul></div>
-                <div id="gorev-tab" class="settings-tab-content"><h3>Görev/Branş Yönetimi</h3><div class="add-setting-form"><select id="gorev-nevi-select"><option value="">Önce Personel Nevi Seçin</option></select><input type="text" id="add-gorev-input" placeholder="Yeni görev/branş adı..."><button id="add-gorev-btn" class="btn">Ekle</button></div><ul id="gorev-list" class="settings-list"></ul></div>
-                <div id="ders-tab" class="settings-tab-content"><h3>Ders Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-ders-input" placeholder="Yeni ders adı..."><button id="add-ders-btn" class="btn">Ekle</button></div><ul id="ders-list" class="settings-list"></ul></div>
-                <div id="sinif-tab" class="settings-tab-content"><h3>Sınıf Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-sinif-input" placeholder="Yeni sınıf adı..."><button id="add-sinif-btn" class="btn">Ekle</button></div><ul id="sinif-list" class="settings-list"></ul></div>
-                <div id="nobet-yeri-tab" class="settings-tab-content"><h3>Nöbet Yeri Yönetimi</h3><div class="add-setting-form"><input type="text" id="add-nobet-yeri-input" placeholder="Yeni nöbet yeri adı..."><button id="add-nobet-yeri-btn" class="btn">Ekle</button></div><ul id="nobet-yeri-list" class="settings-list"></ul></div>
-                <div id="izin-tipi-tab" class="settings-tab-content"><h3>İzin Tipi Yönetimi</h3><div class="add-setting-form" style="grid-template-columns: 2fr 1fr auto; display: grid;"><input type="text" id="add-izin-tipi-ad-input" placeholder="Yeni izin tipi adı (Örn: Yıllık İzin)"><input type="text" id="add-izin-tipi-kod-input" placeholder="Puantaj Kodu (Örn: I)"><button id="add-izin-tipi-btn" class="btn">Ekle</button></div><ul id="izin-tipi-list" class="settings-list"></ul></div>
-<div id="zaman-cizelgesi-tab" class="settings-tab-content">
-    <h3>Zaman Çizelgesi Ayarları</h3>
-    <p>Ders programı modülü, buradaki ayarlara göre otomatik olarak şekillenecektir.</p>
-    <div class="form-grid">
-        <div class="form-group"><label for="setting-dersBaslangic">Ders Başlama Saati</label><input type="time" id="setting-dersBaslangic"></div>
-        <div class="form-group"><label for="setting-toplamDers">Günlük Toplam Ders Sayısı</label><input type="number" id="setting-toplamDers" min="1"></div>
-        <div class="form-group"><label for="setting-dersSuresi">Ders Süresi (Dakika)</label><input type="number" id="setting-dersSuresi" min="1"></div>
-        <div class="form-group"><label for="setting-teneffusSuresi">Teneffüs Süresi (Dakika)</label><input type="number" id="setting-teneffusSuresi" min="0"></div>
-        <div class="form-group"><label for="setting-ogleArasiDersNo">Öğle Arası Kaçıncı Dersten Sonra?</label><input type="number" id="setting-ogleArasiDersNo" min="0"></div>
-        <div class="form-group"><label for="setting-ogleArasiSuresi">Öğle Arası Süresi (Dakika)</label><input type="number" id="setting-ogleArasiSuresi" min="0"></div>
-    </div>
-    <div class="button-group">
-        <button id="zaman-cizelgesi-kaydet-btn" class="btn btn-save">Çizelge Ayarlarını Kaydet</button>
-    </div>
-</div>
-            </div></div></div>
+            
+            
         </main> <div id="edit-gorevlendirme-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
