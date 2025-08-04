@@ -866,20 +866,106 @@
             <option value="Kısmi Süreli">Kısmi Süreli Sözleşme</option>
         </select>
     </div>
+
+<div class="form-group full-width" id="kismi_zamanli_div" style="display: none; background-color: #f0f3f5; padding: 15px; border-radius: 6px;">
+    <label style="font-weight: bold; color: var(--theme-primary); margin-bottom: 5px;">Kısmi Zamanlı Çalışma Saatleri</label>
+    <p style="font-size: 0.9em; margin-top: 0;">Lütfen personelin haftalık çalışma günlerini ve günlük saatlerini belirtin.</p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px;">
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="pzts_calisiyor" name="kismi_gunler" value="Pazartesi" style="width: auto; margin-right: 8px;">
+                <label for="pzts_calisiyor" style="margin: 0; font-weight: normal;">Pazartesi</label>
+            </div>
+            <div>
+                <input type="number" id="pzts_saat" name="pzts_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                <span style="margin-left: 5px;">saat</span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="sali_calisiyor" name="kismi_gunler" value="Sali" style="width: auto; margin-right: 8px;">
+                <label for="sali_calisiyor" style="margin: 0; font-weight: normal;">Salı</label>
+            </div>
+            <div>
+                <input type="number" id="sali_saat" name="sali_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                <span style="margin-left: 5px;">saat</span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="crs_calisiyor" name="kismi_gunler" value="Carsamba" style="width: auto; margin-right: 8px;">
+                <label for="crs_calisiyor" style="margin: 0; font-weight: normal;">Çarşamba</label>
+            </div>
+            <div>
+                <input type="number" id="crs_saat" name="crs_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                <span style="margin-left: 5px;">saat</span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="prs_calisiyor" name="kismi_gunler" value="Persembe" style="width: auto; margin-right: 8px;">
+                <label for="prs_calisiyor" style="margin: 0; font-weight: normal;">Perşembe</label>
+            </div>
+            <div>
+                <input type="number" id="prs_saat" name="prs_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                <span style="margin-left: 5px;">saat</span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="cuma_calisiyor" name="kismi_gunler" value="Cuma" style="width: auto; margin-right: 8px;">
+                <label for="cuma_calisiyor" style="margin: 0; font-weight: normal;">Cuma</label>
+            </div>
+            <div>
+                <input type="number" id="cuma_saat" name="cuma_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                <span style="margin-left: 5px;">saat</span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="cmrts_calisiyor" name="kismi_gunler" value="Cumartesi" style="width: auto; margin-right: 8px;">
+                <label for="cmrts_calisiyor" style="margin: 0; font-weight: normal;">Cumartesi</label>
+            </div>
+            <div>
+                <input type="number" id="cmrts_saat" name="cmrts_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                <span style="margin-left: 5px;">saat</span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="pazar_calisiyor" name="kismi_gunler" value="Pazar" style="width: auto; margin-right: 8px;">
+                <label for="pazar_calisiyor" style="margin: 0; font-weight: normal;">Pazar</label>
+            </div>
+            <div>
+                <input type="number" id="pazar_saat" name="pazar_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                <span style="margin-left: 5px;">saat</span>
+            </div>
+        </div>
+
+    </div>
+</div>
     <div class="form-group">
         <label>Eş Durumu:</label>
         <div class="radio-group">
             <div><input type="radio" id="es_calismiyor" name="es_durumu" value="calismiyor" checked><label for="es_calismiyor">Çalışmıyor</label></div>
             <div><input type="radio" id="es_calisiyor" name="es_durumu" value="calisiyor"><label for="es_calisiyor">Çalışıyor</label></div>
+            <div><input type="radio" id="es_bekar" name="es_durumu" value="bekar"><label for="es_bekar">Bekar</label></div>
         </div>
     </div>
-     <div class="form-group">
-        <label>Rehberlik Görevi Var Mı?:</label>
-        <div class="radio-group">
-            <div><input type="radio" id="rehberlik_yok" name="rehberlik_gorevi" value="hayir" checked><label for="rehberlik_yok">Hayır</label></div>
-            <div><input type="radio" id="rehberlik_var" name="rehberlik_gorevi" value="evet"><label for="rehberlik_var">Evet (Haftalık 2 Saat)</label></div>
-        </div>
+     <div class="form-group" id="rehberlik_gorevi_div">
+    <label>Rehberlik Görevi Var Mı?:</label>
+    <div class="radio-group">
+        <div><input type="radio" id="rehberlik_yok" name="rehberlik_gorevi" value="hayir" checked><label for="rehberlik_yok">Hayır</label></div>
+        <div><input type="radio" id="rehberlik_var" name="rehberlik_gorevi" value="evet"><label for="rehberlik_var">Evet (Haftalık 2 Saat)</label></div>
     </div>
+</div>
     <div class="form-group">
         <label for="cocuk_0_6">Çocuk Sayısı (0-6 Yaş):</label>
         <input type="number" id="cocuk_0_6" name="cocuk_0_6" min="0" value="0">
@@ -1207,70 +1293,101 @@ async function loadZamanCizelgesiAyarlari() {
         async function loadPersonelForm(staffId = null, staffData = null) {
     const template = document.getElementById('personel-form-template');
     const formContainer = document.getElementById('personelForm');
-    formContainer.innerHTML = '';
+    formContainer.innerHTML = ''; // Formu temizle
     formContainer.appendChild(template.content.cloneNode(true));
+
     formContainer.dataset.editingId = staffId || '';
     document.getElementById('modal-title').textContent = staffId ? 'Personel Bilgilerini Düzenle' : 'Yeni Personel Ekle';
+
+    // Form elementlerini al
     const neviSelect = document.getElementById('personel_nevisi');
     const gorevSelect = document.getElementById('gorevi_bransi');
+    const sozlesmeTuruSelect = document.getElementById('sozlesme_turu');
+    
+    // Koşullu gösterilecek div'leri al
+    const kismiZamanliDiv = document.getElementById('kismi_zamanli_div');
+    const rehberlikGoreviDiv = document.getElementById('rehberlik_gorevi_div');
+    const maasKarsiligiDiv = document.getElementById('maas_karsiligi_div');
+
+    // Formun görünürlüğünü yöneten merkezi fonksiyon
+    function updatePersonelFormVisibility() {
+        const selectedNeviText = neviSelect.options[neviSelect.selectedIndex]?.text || '';
+        const selectedContractType = sozlesmeTuruSelect.value;
+
+        // Kural 1: Kısmi zamanlı alanı göster/gizle
+        kismiZamanliDiv.style.display = (selectedContractType === 'Kısmi Süreli') ? 'block' : 'none';
+
+        // Kural 2: Belirsiz süreli için alanları gizle
+        const isIndefinite = selectedContractType === 'Belirsiz Süreli';
+        rehberlikGoreviDiv.style.display = isIndefinite ? 'none' : 'block';
+
+        // Kural 3: Hem "Belirsiz Süreli" hem de "Destek Personeli" için maaş karşılığını gizle
+        const isSupportStaff = selectedNeviText.includes('Destek Personeli');
+        maasKarsiligiDiv.style.display = (isIndefinite || isSupportStaff) ? 'none' : 'block';
+    }
+
+    // Personel Nevisi select'ini doldur
     const neviSnapshot = await getSettings('ayarlar_personel_nevileri');
     neviSnapshot.forEach(doc => neviSelect.add(new Option(doc.data().name, doc.id)));
-    neviSelect.addEventListener('change', async (e) => {
-        const neviId = e.target.value;
-        const maasKarsiligiDiv = document.getElementById('maas_karsiligi_div');
-        
-        // Seçilen personel nevisinin metnini al
-        const selectedText = neviSelect.options[neviSelect.selectedIndex].text;
 
-        // Eğer "Destek Personeli" seçiliyse ders saati alanını gizle, değilse göster
-        if (selectedText.includes('Destek Personeli')) {
-            maasKarsiligiDiv.style.display = 'none';
-        } else {
-            maasKarsiligiDiv.style.display = 'block';
-        }
-
+    // Olay Dinleyicileri
+    neviSelect.addEventListener('change', async () => {
         gorevSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+        const neviId = neviSelect.value;
         if (!neviId) {
             gorevSelect.innerHTML = '<option value="">Önce Personel Nevi Seçin</option>';
             return;
         }
-        
         const q = query(collection(db, 'ayarlar_gorevler'), where('neviId', '==', neviId));
-        try {
-            const gorevSnapshot = await getDocs(q);
-            gorevSelect.innerHTML = '<option value="">Seçim yapınız...</option>';
-            if (!gorevSnapshot.empty) {
-                const gorevler = [];
-                gorevSnapshot.forEach(doc => gorevler.push({ id: doc.id, ...doc.data() }));
-                gorevler.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-                gorevler.forEach(gorev => gorevSelect.add(new Option(gorev.name, gorev.id)));
-            } else {
-                gorevSelect.innerHTML = '<option value="">Bu nevi için görev tanımı yok</option>';
-            }
-        } catch (error) {
-            console.error("Görevler yüklenirken hata:", error);
-            showToast('Görevler yüklenemedi.', 'error');
-            gorevSelect.innerHTML = '<option value="">Yüklenemedi</option>';
+        const gorevSnapshot = await getDocs(q);
+        gorevSelect.innerHTML = '<option value="">Seçim yapınız...</option>';
+        if (!gorevSnapshot.empty) {
+            gorevSnapshot.forEach(doc => gorevSelect.add(new Option(doc.data().name, doc.id)));
         }
+        updatePersonelFormVisibility(); // Görünürlüğü güncelle
     });
+
+    sozlesmeTuruSelect.addEventListener('change', updatePersonelFormVisibility);
+
+    // Formu doldurma (Düzenleme modu için)
     if (staffId && staffData) {
         document.getElementById('ad_soyad').value = staffData.ad_soyad || '';
         neviSelect.value = staffData.personel_nevisi || '';
-        await neviSelect.dispatchEvent(new Event('change'));
-        document.getElementById('gorevi_bransi').value = staffData.gorevi_bransi || '';
-        document.querySelector(`input[name="es_durumu"][value="${staffData.es_durumu || 'calismiyor'}"]`).checked = true;
+        await neviSelect.dispatchEvent(new Event('change')); // Görevlerin dolmasını bekle
+        gorevSelect.value = staffData.gorevi_bransi || '';
+        sozlesmeTuruSelect.value = staffData.sozlesme_turu || 'Belirsiz Süreli';
+        document.querySelector(`input[name="es_durumu"][value="${staffData.es_durumu || 'bekar'}"]`).checked = true;
+        document.querySelector(`input[name="rehberlik_gorevi"][value="${staffData.rehberlik_gorevi || 'hayir'}"]`).checked = true;
         document.getElementById('cocuk_0_6').value = staffData.cocuk_0_6 || '0';
         document.getElementById('cocuk_6_ustu').value = staffData.cocuk_6_ustu || '0';
         document.getElementById('ise_giris').value = staffData.ise_giris || '';
         document.getElementById('isten_ayrilis').value = staffData.isten_ayrilis || '';
         document.getElementById('aciklama').value = staffData.aciklama || '';
         document.getElementById('maas_karsiligi').value = staffData.maas_karsiligi || '20';
-        document.getElementById('rehberlik_saati').value = staffData.rehberlik_saati || '0';
+
+        // Kısmi zamanlı verilerini doldur
+        if (staffData.kismi_zamanli_calisma) {
+            const gunMap = { 'Pazartesi': 'pzts', 'Sali': 'sali', 'Carsamba': 'crs', 'Persembe': 'prs', 'Cuma': 'cuma' };
+            for (const gun in staffData.kismi_zamanli_calisma) {
+                const shortDay = gunMap[gun];
+                if (shortDay) {
+                    const checkbox = document.getElementById(`${shortDay}_calisiyor`);
+                    const input = document.getElementById(`${shortDay}_saat`);
+                    if (checkbox && input) {
+                        checkbox.checked = true;
+                        input.value = staffData.kismi_zamanli_calisma[gun];
+                    }
+                }
+            }
+        }
     } else {
+        // Yeni personel için varsayılanlar
         document.getElementById('ise_giris').valueAsDate = new Date();
+        document.getElementById('es_bekar').checked = true;
     }
-// Form yüklendiğinde de personel nevisini kontrol etmesi için 'change' olayını tetikle
-    neviSelect.dispatchEvent(new Event('change'));
+
+    // Form ilk yüklendiğinde doğru alanların görünür olmasını sağla
+    updatePersonelFormVisibility();
 }
         
         let scheduleInitialized = false;
@@ -3235,13 +3352,61 @@ function attachCellListeners() {
             document.querySelectorAll('.accordion-trigger').forEach(acc => acc.addEventListener('click', e => { e.preventDefault(); acc.parentElement.classList.toggle('open'); }));
 
             personelForm.addEventListener('submit', async function(e) {
-                e.preventDefault(); const editingId = e.target.dataset.editingId; const data = Object.fromEntries(new FormData(e.target).entries());
-                try {
-                    if (editingId) { await setDoc(doc(db, "personel", editingId), data, { merge: true }); showToast('Personel güncellendi.'); }
-                    else { await addDoc(collection(db, "personel"), data); showToast('Personel eklendi.'); }
-                    closeModal(); if(document.getElementById('staff-list').classList.contains('active')) fetchStaff();
-                } catch (err) { showToast('Bir hata oluştu.', 'error'); console.error(err); }
-            });
+    e.preventDefault();
+    const editingId = e.target.dataset.editingId;
+
+    // DÜZELTME: FormData nesnesini önce bir değişkene atıyoruz.
+    const formData = new FormData(e.target);
+    // Şimdi bu değişkeni kullanarak 'data' objesini oluşturuyoruz.
+    const data = Object.fromEntries(formData.entries());
+
+    // Kısmi süreli çalışma verilerini işle ve ana veri objesine ekle
+    if (data.sozlesme_turu === 'Kısmi Süreli') {
+        data.kismi_zamanli_calisma = {};
+        // Hatanın olduğu yer burasıydı. Artık 'formData' tanımlı.
+        const gunler = formData.getAll('kismi_gunler');
+
+        gunler.forEach(gun => {
+            let saatKey = '';
+            if (gun === 'Pazartesi') saatKey = 'pzts_saat';
+            else if (gun === 'Sali') saatKey = 'sali_saat';
+            else if (gun === 'Carsamba') saatKey = 'crs_saat';
+            else if (gun === 'Persembe') saatKey = 'prs_saat';
+            else if (gun === 'Cuma') saatKey = 'cuma_saat';
+            else if (gun === 'Cumartesi') saatKey = 'cmrts_saat';
+            else if (gun === 'Pazar') saatKey = 'pazar_saat';
+
+            if (saatKey && data[saatKey]) {
+                data.kismi_zamanli_calisma[gun] = parseInt(data[saatKey]);
+            }
+        });
+
+        // Ana 'data' objesinden gereksiz, geçici anahtarları temizle
+        delete data.kismi_gunler;
+        delete data.pzts_saat;
+        delete data.sali_saat;
+        delete data.crs_saat;
+        delete data.prs_saat;
+        delete data.cuma_saat;
+        delete data.cmrts_saat;
+        delete data.pazar_saat;
+    }
+
+    try {
+        if (editingId) {
+            await setDoc(doc(db, "personel", editingId), data, { merge: true });
+            showToast('Personel güncellendi.');
+        } else {
+            await addDoc(collection(db, "personel"), data);
+            showToast('Personel eklendi.');
+        }
+        closeModal();
+        if (document.getElementById('staff-list').classList.contains('active')) fetchStaff();
+    } catch (err) {
+        showToast('Bir hata oluştu.', 'error');
+        console.error(err);
+    }
+});
 
             document.getElementById('staff-list').addEventListener('click', async (e) => {
                 if(e.target.classList.contains('btn-delete')) { if (confirm('Bu personeli silmek istediğinizden emin misiniz?')) { await deleteDoc(doc(db, 'personel', e.target.dataset.id)); showToast('Personel silindi.'); fetchStaff(); } }
