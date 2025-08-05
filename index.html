@@ -15,15 +15,22 @@
             --light-gray-color: #f4f7f9; --dark-text-color: #2c3e50; --border-color: #dee2e6;
             --white-color: #ffffff; --success-color: #28a745; --danger-color: #dc3545; --info-color: #17a2b8;
         }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--light-gray-color); overflow: hidden; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--light-gray-color); }
         .app-container { display: flex; height: 100vh; }
         .sidebar {
     width: 230px;
     background-color: var(--sidebar-bg);
     color: var(--sidebar-text);
     flex-shrink: 0;
-    display: flex; /* Bu satır eksikti */
-    flex-direction: column; /* Bu satır eksikti */
+    display: flex;
+    flex-direction: column;
+    /* EKLENEN YENİ KODLAR BAŞLANGICI */
+    position: fixed; /* Kenar çubuğu ekrana sabitler */
+    top: 0;
+    left: 0;
+    height: 100%; /* Yüksekliği ekranın tamamı yapar */
+    z-index: 100; /* Diğer elemanların üzerinde kalmasını sağlar */
+    /* EKLENEN YENİ KODLAR BİTİŞİ */
 }
 .sidebar nav {
         flex-grow: 1;
@@ -116,7 +123,7 @@
     background-color: var(--danger-color);
     color: var(--white-color);
 }
-        .main-content { flex-grow: 1; overflow-y: auto; padding: 25px; }
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 25px; margin-left: 230px; /* Kenar menü genişliği kadar soldan boşluk */ }
         .module { display: none; }
         .module.active { display: block; }
         .panel { background-color: var(--white-color); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
@@ -352,67 +359,75 @@
         #modal-save { background-color: #198754; color: white; }
         #modal-cancel { background-color: #6c757d; color: white; }
      
-@media print { 
+@media print {
+    /* YATAY A3 ZORLAMASI KALDIRILDI, SADECE KENAR BOŞLUKLARI AYARLANDI */
     @page {
-        size: A3 landscape;
-        margin: 0.5cm;
+        margin: 1cm;
     }
-    * { 
-        -webkit-print-color-adjust: exact !important; 
-        print-color-adjust: exact !important; 
-    } 
-    body, html { 
-        background-color: #fff !important; 
-        font-size: 8px;
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* DAHA OKUNAKLI BİR TEMEL YAZI TİPİ BOYUTU AYARLANDI */
+    body, html {
+        background-color: #fff !important;
+        font-size: 10pt; /* 8px'ten 10pt'ye yükseltildi */
         width: 100%;
         height: auto;
-        overflow: visible;
-    } 
-    .sidebar, .main-content > .panel > .panel-header, .controls.puantaj, .puantaj-legend, .bottom-section, .modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir, .no-print { 
-        display: none !important; 
-    } 
+        overflow: visible !important;
+    }
+
+    /* Yazdırmada gizlenecek genel elemanlar */
+    .sidebar, .main-content > .panel > .panel-header, .controls.puantaj, .puantaj-legend, .bottom-section, .modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir, .no-print, #gorevlendirme .gorevlendirme-form-area {
+        display: none !important;
+    }
+    
     .main-content {
         padding: 0;
         overflow: visible;
+        margin-left: 0; /* Sabit menü boşluğu iptal edildi */
     }
-     #puantaj, #puantaj .panel, #puantaj-table-container { 
-        box-shadow: none !important; 
-        border: none !important; 
-        padding: 0 !important; 
+
+    .panel {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
         margin: 0 !important;
+    }
+
+    /* GÖREVLENDİRME TABLOSU İÇİN ÖZEL, OKUNAKLI STİLLER EKLENDİ */
+    .gorevlendirme-table, .gorevlendirme-table th, .gorevlendirme-table td {
+        border: 1px solid #666; /* Çizgiler daha belirgin hale getirildi */
+    }
+    .gorevlendirme-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt; /* Okunaklı bir boyut */
+    }
+    .gorevlendirme-table th, .gorevlendirme-table td {
+        padding: 8px; /* Hücre içi boşluklar artırıldı */
+        text-align: left;
+    }
+    .gorevlendirme-table th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+    }
+    .gorevlendirme-table .ders-detaylari {
+        padding-left: 15px;
+        margin: 0;
+    }
+    
+    /* Puantaj tablosu için olan küçük font ayarları korunuyor, çünkü o tablo çok geniş */
+    #puantaj-table-container {
         overflow: visible !important;
-    } 
-    .puantaj-table { 
-        font-size: 7px !important; 
-        width: 100% !important; 
-        table-layout: auto !important;
-        border-collapse: collapse !important;
+    }
+    .puantaj-table {
+        font-size: 7px !important;
     }
     .puantaj-table th, .puantaj-table td {
         padding: 3px 1px !important;
-        min-width: 0 !important;
-        overflow: hidden !important;
-        text-overflow: clip !important;
-        white-space: nowrap !important;
-        vertical-align: middle;
-    }
-     .puantaj-table th {
-        font-weight: bold;
-    }
-    .puantaj-table h3 {
-        font-size: 10px !important;
-        margin: 10px 0 5px 0 !important;
-    }
-     .col-personel {
-        min-width: 80px !important;
-        text-align: left;
-    }
-    .col-unvan {
-        min-width: 60px !important;
-         text-align: left;
-    }
-     .puantaj-table .hour-cell {
-        font-size: 7px !important;
     }
 }
 /* EKLENECEK KOD BİTİŞİ */
@@ -536,44 +551,49 @@
             <h3>Detaylı Ders Görevlendirme</h3>
         </div>
         <div class="panel-body">
-            <div class="gorevlendirme-layout">
-                <div class="gorev-panel">
-                    <h4>Ana Bilgiler</h4>
-                    <div class="form-group">
-                        <label for="g-tarih">Tarih</label>
-                        <input type="date" id="g-tarih">
+            <div class="gorevlendirme-form-area no-print">
+                <div class="gorevlendirme-layout">
+                    <div class="gorev-panel">
+                        <h4>Ana Bilgiler</h4>
+                        <div class="form-group">
+                            <label for="g-tarih">Tarih</label>
+                            <input type="date" id="g-tarih">
+                        </div>
+                        <div class="form-group">
+                            <label for="g-asil-ogretmen">Asıl Öğretmen</label>
+                            <select id="g-asil-ogretmen"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="g-gorevli-ogretmen">Görevli Öğretmen</label>
+                            <select id="g-gorevli-ogretmen"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="g-aciklama">Genel Açıklama</label>
+                            <input type="text" id="g-aciklama" placeholder="Örn: Öğretmenin raporlu olması">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="g-asil-ogretmen">Asıl Öğretmen</label>
-                        <select id="g-asil-ogretmen"></select>
+                    <div class="gorev-panel">
+                        <h4>Ders Dağılımı Detayları</h4>
+                        <div class="detail-entry">
+                            <div class="form-group"><label for="d-sinif-select">Sınıf</label><select id="d-sinif-select"></select></div>
+                            <div class="form-group"><label for="d-brans-select">Ders (Branş)</label><select id="d-brans-select"></select></div>
+                            <div class="form-group"><label for="d-saat-select">Saat</label><select id="d-saat-select"></select></div>
+                            <button id="g-detay-ekle-btn" class="btn">Ekle</button>
+                        </div>
+                        <ul id="gecici-detay-listesi"></ul>
+                        <button id="g-kaydet-btn" class="btn btn-save" style="width: 100%; margin-top: 15px; padding: 12px;">Tüm Görevlendirmeyi Kaydet</button>
                     </div>
-                    <div class="form-group">
-                        <label for="g-gorevli-ogretmen">Görevli Öğretmen</label>
-                        <select id="g-gorevli-ogretmen"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="g-aciklama">Genel Açıklama</label>
-                        <input type="text" id="g-aciklama" placeholder="Örn: Öğretmenin raporlu olması">
-                    </div>
-                </div>
-
-                <div class="gorev-panel">
-                    <h4>Ders Dağılımı Detayları</h4>
-                    <div class="detail-entry">
-                        <div class="form-group"><label for="d-sinif-select">Sınıf</label><select id="d-sinif-select"></select></div>
-                        <div class="form-group"><label for="d-brans-select">Ders (Branş)</label><select id="d-brans-select"></select></div>
-                        <div class="form-group"><label for="d-saat-select">Saat</label><select id="d-saat-select"></select></div>
-                        <button id="g-detay-ekle-btn" class="btn">Ekle</button>
-                    </div>
-                    <ul id="gecici-detay-listesi"></ul>
-                    <button id="g-kaydet-btn" class="btn btn-save" style="width: 100%; margin-top: 15px; padding: 12px;">Tüm Görevlendirmeyi Kaydet</button>
                 </div>
             </div>
-            <h2 style="margin-top: 40px;">Mevcut Görevlendirmeler</h2>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px;">
+                <h2 style="margin: 0;">Mevcut Görevlendirmeler</h2>
+                <button id="btn-gorev-yazdir" class="btn btn-header-add no-print" style="background-color: var(--info-color);">Yazdır</button>
+            </div>
             <div class="table-container">
                 <table class="gorevlendirme-table">
                     <thead>
-                        <tr><th>Tarih</th><th>Asıl Öğretmen</th><th>Görevli Öğretmen</th><th>Toplam Saat</th><th>Ders Detayları</th><th>Açıklama</th><th>İşlemler</th></tr>
+                        <tr><th>Tarih</th><th>Asıl Öğretmen</th><th>Görevli Öğretmen</th><th>Toplam Saat</th><th>Ders Detayları</th><th>Açıklama</th><th class="no-print">İşlemler</th></tr>
                     </thead>
                     <tbody id="gorevlendirme-tbody"></tbody>
                 </table>
@@ -841,160 +861,169 @@
     <div id="edit-modal-overlay" class="modal-overlay"><div class="modal-content"><h3 id="p-modal-title">Puantaj Günü Düzenle</h3><div class="form-group"><label for="modal-status">Durum</label><select id="modal-status"></select></div><div class="form-group"><label for="modal-hours">Çalışılan Ders Saati</label><input type="number" id="modal-hours" min="0" max="12"></div><div class="form-group"><label for="modal-notes">Açıklama</label><input type="text" id="modal-notes" placeholder="Opsiyonel not..."></div><div class="modal-buttons"><button id="modal-cancel" class="btn">İptal</button><button id="modal-save" class="btn">Kaydet</button></div></div></div>
     
     <template id="personel-form-template">
-        <div class="form-grid">
-    <div class="form-group">
-        <label for="ad_soyad">Adı Soyadı:</label>
-        <input type="text" id="ad_soyad" name="ad_soyad" required>
-    </div>
-    <div class="form-group">
-        <label for="personel_nevisi">Personel Nevisi:</label>
-        <select id="personel_nevisi" name="personel_nevisi" required>
-            <option value="" disabled selected>Seçim yapınız...</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label for="gorevi_bransi">Görevi / Branşı:</label>
-        <select id="gorevi_bransi" name="gorevi_bransi" required>
-            <option value="" disabled selected>Önce Personel Nevisi seçin</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label for="sozlesme_turu">Sözleşme Türü:</label>
-        <select id="sozlesme_turu" name="sozlesme_turu">
-            <option value="Belirsiz Süreli">Belirsiz Süreli Sözleşme</option>
-            <option value="Belirli Süreli">Belirli Süreli Sözleşme</option>
-            <option value="Kısmi Süreli">Kısmi Süreli Sözleşme</option>
-        </select>
-    </div>
-
-<div class="form-group full-width" id="kismi_zamanli_div" style="display: none; background-color: #f0f3f5; padding: 15px; border-radius: 6px;">
-    <label style="font-weight: bold; color: var(--theme-primary); margin-bottom: 5px;">Kısmi Zamanlı Çalışma Saatleri</label>
-    <p style="font-size: 0.9em; margin-top: 0;">Lütfen personelin haftalık çalışma günlerini ve günlük saatlerini belirtin.</p>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px;">
-
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" id="pzts_calisiyor" name="kismi_gunler" value="Pazartesi" style="width: auto; margin-right: 8px;">
-                <label for="pzts_calisiyor" style="margin: 0; font-weight: normal;">Pazartesi</label>
-            </div>
-            <div>
-                <input type="number" id="pzts_saat" name="pzts_saat" min="0" max="12" style="width: 60px; padding: 8px;">
-                <span style="margin-left: 5px;">saat</span>
-            </div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="ad_soyad">Adı Soyadı:</label>
+            <input type="text" id="ad_soyad" name="ad_soyad" required>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" id="sali_calisiyor" name="kismi_gunler" value="Sali" style="width: auto; margin-right: 8px;">
-                <label for="sali_calisiyor" style="margin: 0; font-weight: normal;">Salı</label>
-            </div>
-            <div>
-                <input type="number" id="sali_saat" name="sali_saat" min="0" max="12" style="width: 60px; padding: 8px;">
-                <span style="margin-left: 5px;">saat</span>
-            </div>
+        <div class="form-group">
+            <label for="tc_kimlik_no">T.C. Kimlik No:</label>
+            <input type="text" id="tc_kimlik_no" name="tc_kimlik_no">
+        </div>
+        <div class="form-group">
+            <label for="sgk_no">SGK No:</label>
+            <input type="text" id="sgk_no" name="sgk_no">
+        </div>
+        <div class="form-group">
+            <label for="personel_nevisi">Personel Nevisi:</label>
+            <select id="personel_nevisi" name="personel_nevisi" required>
+                <option value="" disabled selected>Seçim yapınız...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="gorevi_bransi">Görevi / Branşı:</label>
+            <select id="gorevi_bransi" name="gorevi_bransi" required>
+                <option value="" disabled selected>Önce Personel Nevisi seçin</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sozlesme_turu">Sözleşme Türü:</label>
+            <select id="sozlesme_turu" name="sozlesme_turu">
+                <option value="Belirsiz Süreli">Belirsiz Süreli Sözleşme</option>
+                <option value="Belirli Süreli">Belirli Süreli Sözleşme</option>
+                <option value="Kısmi Süreli">Kısmi Süreli Sözleşme</option>
+            </select>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" id="crs_calisiyor" name="kismi_gunler" value="Carsamba" style="width: auto; margin-right: 8px;">
-                <label for="crs_calisiyor" style="margin: 0; font-weight: normal;">Çarşamba</label>
-            </div>
-            <div>
-                <input type="number" id="crs_saat" name="crs_saat" min="0" max="12" style="width: 60px; padding: 8px;">
-                <span style="margin-left: 5px;">saat</span>
+        <div class="form-group full-width" id="kismi_zamanli_div" style="display: none; background-color: #f0f3f5; padding: 15px; border-radius: 6px;">
+            <label style="font-weight: bold; color: var(--theme-primary); margin-bottom: 5px;">Kısmi Zamanlı Çalışma Saatleri</label>
+            <p style="font-size: 0.9em; margin-top: 0;">Lütfen personelin haftalık çalışma günlerini ve günlük saatlerini belirtin.</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px;">
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="pzts_calisiyor" name="kismi_gunler" value="Pazartesi" style="width: auto; margin-right: 8px;">
+                        <label for="pzts_calisiyor" style="margin: 0; font-weight: normal;">Pazartesi</label>
+                    </div>
+                    <div>
+                        <input type="number" id="pzts_saat" name="pzts_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                        <span style="margin-left: 5px;">saat</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="sali_calisiyor" name="kismi_gunler" value="Sali" style="width: auto; margin-right: 8px;">
+                        <label for="sali_calisiyor" style="margin: 0; font-weight: normal;">Salı</label>
+                    </div>
+                    <div>
+                        <input type="number" id="sali_saat" name="sali_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                        <span style="margin-left: 5px;">saat</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="crs_calisiyor" name="kismi_gunler" value="Carsamba" style="width: auto; margin-right: 8px;">
+                        <label for="crs_calisiyor" style="margin: 0; font-weight: normal;">Çarşamba</label>
+                    </div>
+                    <div>
+                        <input type="number" id="crs_saat" name="crs_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                        <span style="margin-left: 5px;">saat</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="prs_calisiyor" name="kismi_gunler" value="Persembe" style="width: auto; margin-right: 8px;">
+                        <label for="prs_calisiyor" style="margin: 0; font-weight: normal;">Perşembe</label>
+                    </div>
+                    <div>
+                        <input type="number" id="prs_saat" name="prs_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                        <span style="margin-left: 5px;">saat</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="cuma_calisiyor" name="kismi_gunler" value="Cuma" style="width: auto; margin-right: 8px;">
+                        <label for="cuma_calisiyor" style="margin: 0; font-weight: normal;">Cuma</label>
+                    </div>
+                    <div>
+                        <input type="number" id="cuma_saat" name="cuma_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                        <span style="margin-left: 5px;">saat</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="cmrts_calisiyor" name="kismi_gunler" value="Cumartesi" style="width: auto; margin-right: 8px;">
+                        <label for="cmrts_calisiyor" style="margin: 0; font-weight: normal;">Cumartesi</label>
+                    </div>
+                    <div>
+                        <input type="number" id="cmrts_saat" name="cmrts_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                        <span style="margin-left: 5px;">saat</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="pazar_calisiyor" name="kismi_gunler" value="Pazar" style="width: auto; margin-right: 8px;">
+                        <label for="pazar_calisiyor" style="margin: 0; font-weight: normal;">Pazar</label>
+                    </div>
+                    <div>
+                        <input type="number" id="pazar_saat" name="pazar_saat" min="0" max="12" style="width: 60px; padding: 8px;">
+                        <span style="margin-left: 5px;">saat</span>
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" id="prs_calisiyor" name="kismi_gunler" value="Persembe" style="width: auto; margin-right: 8px;">
-                <label for="prs_calisiyor" style="margin: 0; font-weight: normal;">Perşembe</label>
-            </div>
-            <div>
-                <input type="number" id="prs_saat" name="prs_saat" min="0" max="12" style="width: 60px; padding: 8px;">
-                <span style="margin-left: 5px;">saat</span>
+        <div class="form-group">
+            <label>Eş Durumu:</label>
+            <div class="radio-group">
+                <div><input type="radio" id="es_calismiyor" name="es_durumu" value="calismiyor" checked><label for="es_calismiyor">Çalışmıyor</label></div>
+                <div><input type="radio" id="es_calisiyor" name="es_durumu" value="calisiyor"><label for="es_calisiyor">Çalışıyor</label></div>
+                <div><input type="radio" id="es_bekar" name="es_durumu" value="bekar"><label for="es_bekar">Bekar</label></div>
             </div>
         </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" id="cuma_calisiyor" name="kismi_gunler" value="Cuma" style="width: auto; margin-right: 8px;">
-                <label for="cuma_calisiyor" style="margin: 0; font-weight: normal;">Cuma</label>
-            </div>
-            <div>
-                <input type="number" id="cuma_saat" name="cuma_saat" min="0" max="12" style="width: 60px; padding: 8px;">
-                <span style="margin-left: 5px;">saat</span>
-            </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" id="cmrts_calisiyor" name="kismi_gunler" value="Cumartesi" style="width: auto; margin-right: 8px;">
-                <label for="cmrts_calisiyor" style="margin: 0; font-weight: normal;">Cumartesi</label>
-            </div>
-            <div>
-                <input type="number" id="cmrts_saat" name="cmrts_saat" min="0" max="12" style="width: 60px; padding: 8px;">
-                <span style="margin-left: 5px;">saat</span>
-            </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" id="pazar_calisiyor" name="kismi_gunler" value="Pazar" style="width: auto; margin-right: 8px;">
-                <label for="pazar_calisiyor" style="margin: 0; font-weight: normal;">Pazar</label>
-            </div>
-            <div>
-                <input type="number" id="pazar_saat" name="pazar_saat" min="0" max="12" style="width: 60px; padding: 8px;">
-                <span style="margin-left: 5px;">saat</span>
-            </div>
-        </div>
-
-    </div>
-</div>
-    <div class="form-group">
-        <label>Eş Durumu:</label>
+         <div class="form-group" id="rehberlik_gorevi_div">
+        <label>Rehberlik Görevi Var Mı?:</label>
         <div class="radio-group">
-            <div><input type="radio" id="es_calismiyor" name="es_durumu" value="calismiyor" checked><label for="es_calismiyor">Çalışmıyor</label></div>
-            <div><input type="radio" id="es_calisiyor" name="es_durumu" value="calisiyor"><label for="es_calisiyor">Çalışıyor</label></div>
-            <div><input type="radio" id="es_bekar" name="es_durumu" value="bekar"><label for="es_bekar">Bekar</label></div>
+            <div><input type="radio" id="rehberlik_yok" name="rehberlik_gorevi" value="hayir" checked><label for="rehberlik_yok">Hayır</label></div>
+            <div><input type="radio" id="rehberlik_var" name="rehberlik_gorevi" value="evet"><label for="rehberlik_var">Evet (Haftalık 2 Saat)</label></div>
         </div>
     </div>
-     <div class="form-group" id="rehberlik_gorevi_div">
-    <label>Rehberlik Görevi Var Mı?:</label>
-    <div class="radio-group">
-        <div><input type="radio" id="rehberlik_yok" name="rehberlik_gorevi" value="hayir" checked><label for="rehberlik_yok">Hayır</label></div>
-        <div><input type="radio" id="rehberlik_var" name="rehberlik_gorevi" value="evet"><label for="rehberlik_var">Evet (Haftalık 2 Saat)</label></div>
+        <div class="form-group">
+            <label for="cocuk_0_6">Çocuk Sayısı (0-6 Yaş):</label>
+            <input type="number" id="cocuk_0_6" name="cocuk_0_6" min="0" value="0">
+        </div>
+        <div class="form-group">
+            <label for="cocuk_6_ustu">Çocuk Sayısı (6-18 Yaş):</label>
+            <input type="number" id="cocuk_6_ustu" name="cocuk_6_ustu" min="0" value="0">
+        </div>
+        <div class="form-group">
+            <label for="ise_giris">İşe Giriş Tarihi:</label>
+            <input type="date" id="ise_giris" name="ise_giris" required>
+        </div>
+        <div class="form-group">
+            <label for="isten_ayrilis">İşten Ayrılış Tarihi:</label>
+            <input type="date" id="isten_ayrilis" name="isten_ayrilis">
+        </div>
+        <div class="form-group" id="maas_karsiligi_div">
+            <label for="maas_karsiligi">Maaş Karşılığı Ders Saati:</label>
+            <input type="number" id="maas_karsiligi" name="maas_karsiligi" min="0" value="20">
+        </div>
+        <div class="form-group full-width">
+            <label for="aciklama">Açıklama:</label>
+            <textarea id="aciklama" name="aciklama" rows="3"></textarea>
+        </div>
+        <div class="form-group full-width button-group">
+            <button type="submit" class="btn btn-save">Personeli Kaydet</button>
+        </div>
     </div>
-</div>
-    <div class="form-group">
-        <label for="cocuk_0_6">Çocuk Sayısı (0-6 Yaş):</label>
-        <input type="number" id="cocuk_0_6" name="cocuk_0_6" min="0" value="0">
-    </div>
-    <div class="form-group">
-        <label for="cocuk_6_ustu">Çocuk Sayısı (6-18 Yaş):</label>
-        <input type="number" id="cocuk_6_ustu" name="cocuk_6_ustu" min="0" value="0">
-    </div>
-    <div class="form-group">
-        <label for="ise_giris">İşe Giriş Tarihi:</label>
-        <input type="date" id="ise_giris" name="ise_giris" required>
-    </div>
-    <div class="form-group">
-        <label for="isten_ayrilis">İşten Ayrılış Tarihi:</label>
-        <input type="date" id="isten_ayrilis" name="isten_ayrilis">
-    </div>
-    <div class="form-group" id="maas_karsiligi_div">
-        <label for="maas_karsiligi">Maaş Karşılığı Ders Saati:</label>
-        <input type="number" id="maas_karsiligi" name="maas_karsiligi" min="0" value="20">
-    </div>
-    <div class="form-group full-width">
-        <label for="aciklama">Açıklama:</label>
-        <textarea id="aciklama" name="aciklama" rows="3"></textarea>
-    </div>
-    <div class="form-group full-width button-group">
-        <button type="submit" class="btn btn-save">Personeli Kaydet</button>
-    </div>
-</div>
-    </template>
+</template>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1289,7 +1318,7 @@ async function loadZamanCizelgesiAyarlari() {
                 listContainer.innerHTML = tableHTML + `</tbody></table>`;
             } catch (e) { listContainer.innerHTML = '<p style="color:red;">Personel listesi yüklenemedi.</p>'; console.error(e); }
         }
-
+  
         async function loadPersonelForm(staffId = null, staffData = null) {
     const template = document.getElementById('personel-form-template');
     const formContainer = document.getElementById('personelForm');
@@ -1299,41 +1328,30 @@ async function loadZamanCizelgesiAyarlari() {
     formContainer.dataset.editingId = staffId || '';
     document.getElementById('modal-title').textContent = staffId ? 'Personel Bilgilerini Düzenle' : 'Yeni Personel Ekle';
 
-    // Form elementlerini al
     const neviSelect = document.getElementById('personel_nevisi');
     const gorevSelect = document.getElementById('gorevi_bransi');
     const sozlesmeTuruSelect = document.getElementById('sozlesme_turu');
-    
-    // Koşullu gösterilecek div'leri al
     const kismiZamanliDiv = document.getElementById('kismi_zamanli_div');
     const rehberlikGoreviDiv = document.getElementById('rehberlik_gorevi_div');
     const maasKarsiligiDiv = document.getElementById('maas_karsiligi_div');
 
-    // Formun görünürlüğünü yöneten merkezi fonksiyon
     function updatePersonelFormVisibility() {
         const selectedNeviText = neviSelect.options[neviSelect.selectedIndex]?.text || '';
         const selectedContractType = sozlesmeTuruSelect.value;
-
-        // Kural 1: Kısmi zamanlı alanı göster/gizle
         kismiZamanliDiv.style.display = (selectedContractType === 'Kısmi Süreli') ? 'block' : 'none';
-
-        // Kural 2: Belirsiz süreli için alanları gizle
         const isIndefinite = selectedContractType === 'Belirsiz Süreli';
         rehberlikGoreviDiv.style.display = isIndefinite ? 'none' : 'block';
-
-        // Kural 3: Hem "Belirsiz Süreli" hem de "Destek Personeli" için maaş karşılığını gizle
         const isSupportStaff = selectedNeviText.includes('Destek Personeli');
         maasKarsiligiDiv.style.display = (isIndefinite || isSupportStaff) ? 'none' : 'block';
     }
 
-    // Personel Nevisi select'ini doldur
     const neviSnapshot = await getSettings('ayarlar_personel_nevileri');
     neviSnapshot.forEach(doc => neviSelect.add(new Option(doc.data().name, doc.id)));
 
-    // Olay Dinleyicileri
+    // Olay Dinleyicisi: Nevi değiştiğinde Görev listesini doldurur
     neviSelect.addEventListener('change', async () => {
-        gorevSelect.innerHTML = '<option value="">Yükleniyor...</option>';
         const neviId = neviSelect.value;
+        gorevSelect.innerHTML = '<option value="">Yükleniyor...</option>';
         if (!neviId) {
             gorevSelect.innerHTML = '<option value="">Önce Personel Nevi Seçin</option>';
             return;
@@ -1344,7 +1362,7 @@ async function loadZamanCizelgesiAyarlari() {
         if (!gorevSnapshot.empty) {
             gorevSnapshot.forEach(doc => gorevSelect.add(new Option(doc.data().name, doc.id)));
         }
-        updatePersonelFormVisibility(); // Görünürlüğü güncelle
+        updatePersonelFormVisibility();
     });
 
     sozlesmeTuruSelect.addEventListener('change', updatePersonelFormVisibility);
@@ -1352,12 +1370,40 @@ async function loadZamanCizelgesiAyarlari() {
     // Formu doldurma (Düzenleme modu için)
     if (staffId && staffData) {
         document.getElementById('ad_soyad').value = staffData.ad_soyad || '';
+        document.getElementById('tc_kimlik_no').value = staffData.tc_kimlik_no || '';
+        document.getElementById('sgk_no').value = staffData.sgk_no || '';
+        
+        // 1. Personel Nevisini ayarla
         neviSelect.value = staffData.personel_nevisi || '';
-        await neviSelect.dispatchEvent(new Event('change')); // Görevlerin dolmasını bekle
+        
+        // --- ÖNEMLİ DÜZELTME BAŞLANGICI ---
+        // Hatalı olan dispatchEvent kaldırılarak, görev listesi manuel olarak ve doğru zamanlamayla dolduruluyor.
+        
+        // 2. Görev listesini, seçilen Nevi'ye göre DOLDUR ve bitmesini BEKLE (await)
+        const neviId = neviSelect.value;
+        gorevSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+        if (neviId) {
+            const q = query(collection(db, 'ayarlar_gorevler'), where('neviId', '==', neviId));
+            const gorevSnapshot = await getDocs(q);
+            gorevSelect.innerHTML = '<option value="">Seçim yapınız...</option>';
+            gorevSnapshot.forEach(doc => gorevSelect.add(new Option(doc.data().name, doc.id)));
+        } else {
+            gorevSelect.innerHTML = '<option value="">Önce Personel Nevisi seçin</option>';
+        }
+
+        // 3. Artık liste dolu olduğu için personelin mevcut GÖREVİNİ SEÇ
         gorevSelect.value = staffData.gorevi_bransi || '';
+        // --- ÖNEMLİ DÜZELTME BİTİŞİ ---
+
         sozlesmeTuruSelect.value = staffData.sozlesme_turu || 'Belirsiz Süreli';
-        document.querySelector(`input[name="es_durumu"][value="${staffData.es_durumu || 'bekar'}"]`).checked = true;
-        document.querySelector(`input[name="rehberlik_gorevi"][value="${staffData.rehberlik_gorevi || 'hayir'}"]`).checked = true;
+        
+        if (staffData.es_durumu) {
+            document.querySelector(`input[name="es_durumu"][value="${staffData.es_durumu}"]`).checked = true;
+        }
+        if (staffData.rehberlik_gorevi) {
+            document.querySelector(`input[name="rehberlik_gorevi"][value="${staffData.rehberlik_gorevi}"]`).checked = true;
+        }
+        
         document.getElementById('cocuk_0_6').value = staffData.cocuk_0_6 || '0';
         document.getElementById('cocuk_6_ustu').value = staffData.cocuk_6_ustu || '0';
         document.getElementById('ise_giris').value = staffData.ise_giris || '';
@@ -1365,9 +1411,8 @@ async function loadZamanCizelgesiAyarlari() {
         document.getElementById('aciklama').value = staffData.aciklama || '';
         document.getElementById('maas_karsiligi').value = staffData.maas_karsiligi || '20';
 
-        // Kısmi zamanlı verilerini doldur
         if (staffData.kismi_zamanli_calisma) {
-            const gunMap = { 'Pazartesi': 'pzts', 'Sali': 'sali', 'Carsamba': 'crs', 'Persembe': 'prs', 'Cuma': 'cuma' };
+            const gunMap = { 'Pazartesi': 'pzts', 'Sali': 'sali', 'Carsamba': 'crs', 'Persembe': 'prs', 'Cuma': 'cuma', 'Cumartesi': 'cmrts', 'Pazar': 'pazar' };
             for (const gun in staffData.kismi_zamanli_calisma) {
                 const shortDay = gunMap[gun];
                 if (shortDay) {
@@ -1381,12 +1426,10 @@ async function loadZamanCizelgesiAyarlari() {
             }
         }
     } else {
-        // Yeni personel için varsayılanlar
         document.getElementById('ise_giris').valueAsDate = new Date();
         document.getElementById('es_bekar').checked = true;
     }
 
-    // Form ilk yüklendiğinde doğru alanların görünür olmasını sağla
     updatePersonelFormVisibility();
 }
         
@@ -1595,114 +1638,22 @@ async function saveScheduleForClass(sinifAdi) {
          let geciciDetaylar = [];
          let duzenlenenGorevDetaylari = []; //
          let gorevlendirmeInitialized = false;
-        async function initializeGorevlendirme() {
-            if (gorevlendirmeInitialized) return;
 
-            // Ana form elementleri
-            const gDetayEkleBtn = document.getElementById('g-detay-ekle-btn');
-            const gKaydetBtn = document.getElementById('g-kaydet-btn');
-            const geciciListeUL = document.getElementById('gecici-detay-listesi');
-            const gorevlendirmeTbody = document.getElementById('gorevlendirme-tbody');
-            const sinifSelect = document.getElementById('d-sinif-select');
-            const bransSelect = document.getElementById('d-brans-select');
-            const saatSelect = document.getElementById('d-saat-select');
-
-            // Select'leri doldurma (eğer boşlarsa)
-            if (sinifSelect && sinifSelect.options.length === 0) {
-                const siniflarSnap = await getSettings('ayarlar_siniflar');
-                siniflarSnap.forEach(doc => sinifSelect.add(new Option(doc.data().name, doc.data().name)));
-            }
-            if (bransSelect && bransSelect.options.length === 0) {
-                const derslerSnap = await getSettings('ayarlar_dersler');
-                derslerSnap.forEach(doc => bransSelect.add(new Option(doc.data().name, doc.data().name)));
-            }
-            await generateTimeSlots(); 
-            
-            if (saatSelect && saatSelect.options.length === 0) {
-                saatSelect.innerHTML = '<option value="">Ders Saati Seçin...</option>'; // Varsayılan metin
-                dersSaatleri.forEach(slot => {
-                    // Menüye "1. Ders (08:30-09:10)" formatında seçenekler ekliyoruz.
-                    saatSelect.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.dersNo));
-                });
-            }
-
-            await populateOgretmenSelectsForGorevlendirme();
-            await renderGorevlendirmeTable();
-
-            // Olay dinleyicileri (elementlerin varlığını kontrol ederek ekleme)
-            if(gDetayEkleBtn) gDetayEkleBtn.addEventListener('click', addDetay);
-            if(gKaydetBtn) gKaydetBtn.addEventListener('click', addGorevlendirme);
-            if(geciciListeUL) geciciListeUL.addEventListener('click', (e) => {
-                if (e.target.classList.contains('delete-temp-btn')) {
-                    const index = parseInt(e.target.dataset.index);
-                    geciciDetaylar.splice(index, 1);
-                    renderGeciciDetayListesi();
-                }
-            });
-            if(gorevlendirmeTbody) gorevlendirmeTbody.addEventListener('click', async (e) => {
-                const target = e.target.closest('button');
-                if (!target) return;
-                const id = target.dataset.id;
-                if (target.classList.contains('btn-delete-gorev')) {
-                    if (confirm('Bu görevlendirme kaydını silmek istediğinizden emin misiniz?')) {
-                        await deleteDoc(doc(db, 'ders_gorevlendirmeleri', id));
-                        showToast('Görevlendirme başarıyla silindi.');
-                        await renderGorevlendirmeTable();
-                    }
-                }
-                if (target.classList.contains('btn-edit-gorev')) {
-                    openEditGorevlendirmeModal(id);
-                }
-            });
-
-            // Düzenleme Modalı içindeki butonlar için olay dinleyicileri
-            const editDetayEkleBtn = document.getElementById('edit-g-detay-ekle-btn');
-            if(editDetayEkleBtn) editDetayEkleBtn.addEventListener('click', () => {
-                const sinif = document.getElementById('edit-d-sinif-select').value;
-                const brans = document.getElementById('edit-d-brans-select').value;
-                const saat = parseInt(document.getElementById('edit-d-saat-select').value);
-
-                if (!sinif || !brans || !saat) {
-                    return showToast('Lütfen Sınıf, Branş ve Saat seçimi yapın.', 'error');
-                }
-                duzenlenenGorevDetaylari.push({ sinif, brans, saat });
-                renderDuzenlenenDetayListesi();
-            });
-
-            const editDetayListesi = document.getElementById('edit-g-detay-listesi');
-            if(editDetayListesi) editDetayListesi.addEventListener('click', (e) => {
-                if (e.target.classList.contains('delete-temp-btn')) {
-                    const index = parseInt(e.target.dataset.index);
-                    duzenlenenGorevDetaylari.splice(index, 1);
-                    renderDuzenlenenDetayListesi();
-                }
-            });
-            
-            const editForm = document.getElementById('editGorevlendirmeForm');
-            if(editForm) editForm.addEventListener('submit', saveGorevlendirmeChanges);
-            
-            const closeModalBtn = document.querySelector('#edit-gorevlendirme-modal .close-modal');
-            if(closeModalBtn) closeModalBtn.addEventListener('click', () => {
-                document.getElementById('edit-gorevlendirme-modal').classList.remove('open');
-            });
-
-            gorevlendirmeInitialized = true;
-        }
         async function populateOgretmenSelectsForGorevlendirme() {
     const gAsilOgretmen = document.getElementById('g-asil-ogretmen');
     const gGorevliOgretmen = document.getElementById('g-gorevli-ogretmen');
+    if (!gAsilOgretmen || !gGorevliOgretmen) return;
+
     gAsilOgretmen.innerHTML = '<option value="">Yükleniyor...</option>';
     gGorevliOgretmen.innerHTML = '<option value="">Yükleniyor...</option>';
 
     try {
-        // Gerekli tüm verileri aynı anda çek
         const [personelSnap, neviSnap, gorevSnap] = await Promise.all([
             getDocs(collection(db, 'personel')),
             getSettings('ayarlar_personel_nevileri'),
             getSettings('ayarlar_gorevler')
         ]);
 
-        // Ayarlar'dan "Eğitim Personeli" ve diğer idari görevlerin ID'lerini bul
         const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.includes('Eğitim Personeli'));
         const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
 
@@ -1714,23 +1665,16 @@ async function saveScheduleForClass(sinifAdi) {
             }
         });
 
-        // Personelleri filtrele
         const gosterilecekPersoneller = [];
         personelSnap.forEach(doc => {
             const personel = { id: doc.id, ...doc.data() };
-
-            // Koşul 1: Personel nevisi "Eğitim Personeli" mi?
             const isEgitimPersoneli = personel.personel_nevisi === egitimPersoneliNeviId;
-
-            // Koşul 2: Görevi/Branşı Müdür, Müdür Yrd. veya Rehber Öğretmen mi?
             const isIdariGorevli = idariGorevler.has(personel.gorevi_bransi);
-
             if (isEgitimPersoneli || isIdariGorevli) {
                 gosterilecekPersoneller.push(personel);
             }
         });
 
-        // Listeleri temizle ve doldur
         gAsilOgretmen.innerHTML = '<option value="">Seçiniz...</option>';
         gGorevliOgretmen.innerHTML = '<option value="">Seçiniz...</option>';
         gosterilecekPersoneller.forEach(p => {
@@ -1743,6 +1687,98 @@ async function saveScheduleForClass(sinifAdi) {
         showToast('Öğretmen listesi yüklenemedi.', 'error');
     }
 }
+
+async function initializeGorevlendirme() {
+    if (gorevlendirmeInitialized) return;
+
+    const gDetayEkleBtn = document.getElementById('g-detay-ekle-btn');
+    const gKaydetBtn = document.getElementById('g-kaydet-btn');
+    const geciciListeUL = document.getElementById('gecici-detay-listesi');
+    const gorevlendirmeTbody = document.getElementById('gorevlendirme-tbody');
+    const sinifSelect = document.getElementById('d-sinif-select');
+    const bransSelect = document.getElementById('d-brans-select');
+    const saatSelect = document.getElementById('d-saat-select');
+    const yazdirBtn = document.getElementById('btn-gorev-yazdir');
+
+    if (sinifSelect && sinifSelect.options.length === 0) {
+        const siniflarSnap = await getSettings('ayarlar_siniflar');
+        siniflarSnap.forEach(doc => sinifSelect.add(new Option(doc.data().name, doc.data().name)));
+    }
+    if (bransSelect && bransSelect.options.length === 0) {
+        const derslerSnap = await getSettings('ayarlar_dersler');
+        derslerSnap.forEach(doc => bransSelect.add(new Option(doc.data().name, doc.data().name)));
+    }
+    await generateTimeSlots(); 
+    
+    if (saatSelect && saatSelect.options.length === 0) {
+        saatSelect.innerHTML = '<option value="">Ders Saati Seçin...</option>';
+        dersSaatleri.forEach(slot => {
+            saatSelect.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.dersNo));
+        });
+    }
+
+    await populateOgretmenSelectsForGorevlendirme();
+    await renderGorevlendirmeTable();
+
+    if(gDetayEkleBtn) gDetayEkleBtn.addEventListener('click', addDetay);
+    if(gKaydetBtn) gKaydetBtn.addEventListener('click', addGorevlendirme);
+    if(yazdirBtn) yazdirBtn.addEventListener('click', () => window.print());
+
+    if(geciciListeUL) geciciListeUL.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-temp-btn')) {
+            const index = parseInt(e.target.dataset.index);
+            geciciDetaylar.splice(index, 1);
+            renderGeciciDetayListesi();
+        }
+    });
+    if(gorevlendirmeTbody) gorevlendirmeTbody.addEventListener('click', async (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+        const id = target.dataset.id;
+        if (target.classList.contains('btn-delete-gorev')) {
+            if (confirm('Bu görevlendirme kaydını silmek istediğinizden emin misiniz?')) {
+                await deleteDoc(doc(db, 'ders_gorevlendirmeleri', id));
+                showToast('Görevlendirme başarıyla silindi.');
+                await renderGorevlendirmeTable();
+            }
+        }
+        if (target.classList.contains('btn-edit-gorev')) {
+            openEditGorevlendirmeModal(id);
+        }
+    });
+
+    const editDetayEkleBtn = document.getElementById('edit-g-detay-ekle-btn');
+    if(editDetayEkleBtn) editDetayEkleBtn.addEventListener('click', () => {
+        const sinif = document.getElementById('edit-d-sinif-select').value;
+        const brans = document.getElementById('edit-d-brans-select').value;
+        const saat = parseInt(document.getElementById('edit-d-saat-select').value);
+        if (!sinif || !brans || !saat) {
+            return showToast('Lütfen Sınıf, Branş ve Saat seçimi yapın.', 'error');
+        }
+        duzenlenenGorevDetaylari.push({ sinif, brans, saat });
+        renderDuzenlenenDetayListesi();
+    });
+
+    const editDetayListesi = document.getElementById('edit-g-detay-listesi');
+    if(editDetayListesi) editDetayListesi.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-temp-btn')) {
+            const index = parseInt(e.target.dataset.index);
+            duzenlenenGorevDetaylari.splice(index, 1);
+            renderDuzenlenenDetayListesi();
+        }
+    });
+    
+    const editForm = document.getElementById('editGorevlendirmeForm');
+    if(editForm) editForm.addEventListener('submit', saveGorevlendirmeChanges);
+    
+    const closeModalBtn = document.querySelector('#edit-gorevlendirme-modal .close-modal');
+    if(closeModalBtn) closeModalBtn.addEventListener('click', () => {
+        document.getElementById('edit-gorevlendirme-modal').classList.remove('open');
+    });
+
+    gorevlendirmeInitialized = true;
+}
+
 async function renderGorevlendirmeTable() {
     const gTbody = document.getElementById('gorevlendirme-tbody');
     gTbody.innerHTML = '<tr><td colspan="7">Görevlendirmeler yükleniyor...</td></tr>';
@@ -1758,19 +1794,6 @@ async function renderGorevlendirmeTable() {
         if (gorevlendirmeSnap.empty) {
             gTbody.innerHTML = '<tr><td colspan="7">Kayıtlı görevlendirme bulunamadı.</td></tr>';
             return;
-        }
-
-        // Tablo başlığını kontrol et ve gerekirse güncelle
-        const theadRow = gTbody.previousElementSibling.querySelector('tr');
-        if (!theadRow.innerHTML.includes('İşlemler')) {
-             theadRow.innerHTML = `
-                <th>Tarih</th>
-                <th>Asıl Öğretmen</th>
-                <th>Görevli Öğretmen</th>
-                <th>Toplam Saat</th>
-                <th>Ders Detayları</th>
-                <th>Açıklama</th>
-                <th>İşlemler</th>`;
         }
 
         gTbody.innerHTML = '';
@@ -1792,9 +1815,9 @@ async function renderGorevlendirmeTable() {
                 <td><b>${g.toplamSaat}</b></td>
                 <td>${detaylarHTML}</td>
                 <td>${g.aciklama}</td>
-                <td class="actions-cell">
-                   <button class="btn btn-edit btn-edit-gorev" data-id="${doc.id}" title="Düzenle">✏️</button>
-                   <button class="btn btn-delete btn-delete-gorev" data-id="${doc.id}" title="Sil">🗑️</button>
+                <td class="actions-cell no-print">
+                   <button class="btn btn-edit btn-edit-gorev" data-id="${doc.id}">Düzenle</button>
+                   <button class="btn btn-delete btn-delete-gorev" data-id="${doc.id}">Sil</button>
                 </td>
             `;
         });
@@ -2435,9 +2458,10 @@ async function saveTopluIzin() {
     }
     const izin = izinDoc.data();
 
-    const [personelDoc, izinTipiDoc] = await Promise.all([
+    const [personelDoc, izinTipiDoc, gorevSnap] = await Promise.all([
         getDoc(doc(db, 'personel', izin.personelId)),
-        getDoc(doc(db, 'ayarlar_izin_tipleri', izin.izinTipiId))
+        getDoc(doc(db, 'ayarlar_izin_tipleri', izin.izinTipiId)),
+        getSettings('ayarlar_gorevler')
     ]);
 
     if (!personelDoc.exists() || !izinTipiDoc.exists()) {
@@ -2447,36 +2471,102 @@ async function saveTopluIzin() {
 
     const personel = personelDoc.data();
     const izinTipi = izinTipiDoc.data();
+    const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
 
-    const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00').toLocaleDateString('tr-TR');
-    const bitis = new Date(izin.bitisTarihi + 'T00:00:00').toLocaleDateString('tr-TR');
+    const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
+    const bitis = new Date(izin.bitisTarihi + 'T00:00:00');
+    
+    const iseBaslama = new Date(bitis);
+    iseBaslama.setDate(iseBaslama.getDate() + 1);
+
+    const baslangicTR = baslangic.toLocaleDateString('tr-TR');
+    const bitisTR = bitis.toLocaleDateString('tr-TR');
+    const iseBaslamaTR = iseBaslama.toLocaleDateString('tr-TR');
+    const gorevi = gorevMap.get(personel.gorevi_bransi) || 'Belirtilmemiş';
+
+    let izinIstekMetni = '';
+    const izinTipiAdi = izinTipi.name.toLowerCase();
+
+    if (izinTipiAdi.includes('yıllık')) {
+        izinIstekMetni = `Okulunuzdaki ${baslangic.getFullYear()} yılına ait yıllık ücretli iznimi, ${baslangicTR} tarihinden itibaren kullanmak istiyorum.`;
+    } else if (izinTipiAdi.includes('ücretsiz')) {
+        izinIstekMetni = `${izin.aciklama || 'Mazeretimden'} dolayı ${baslangicTR} tarihinden itibaren ${bitisTR} tarihine kadar ücretsiz izne ayrılmak istiyorum.`;
+    } else {
+        izinIstekMetni = `${izin.aciklama || 'Mazeretimden'} dolayı ${baslangicTR} - ${bitisTR} tarihleri arasında izinli sayılmamı talep ediyorum.`;
+    }
 
     const dilekceHTML = `
         <!DOCTYPE html>
         <html lang="tr">
         <head>
             <meta charset="UTF-8">
-            <title>İzin Dilekçesi - ${personel.ad_soyad}</title>
+            <title>İzin İstek Formu - ${personel.ad_soyad}</title>
             <style>
-                body { font-family: 'Times New Roman', serif; font-size: 12pt; margin: 2.5cm; }
-                .header, .footer-right, .footer-left { text-align: center; }
-                .content { margin-top: 40px; text-indent: 2em; line-height: 1.5; }
-                .date { text-align: right; }
-                .signature { float: right; text-align: center; margin-top: 40px; }
+                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+                body { font-family: 'Roboto', sans-serif; font-size: 11pt; margin: 2cm; line-height: 1.6; color: #333; }
+                .container { width: 100%; max-width: 800px; margin: auto; }
+                h2 { text-align: center; font-weight: 700; margin-bottom: 20px; }
+                .header-section { text-align: center; font-weight: 500; font-size: 12pt; margin-bottom: 30px; }
+                .info-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+                .info-table td { padding: 8px; border: 1px solid #ccc; }
+                .info-table td:first-child { width: 180px; font-weight: 500; background-color: #f2f2f2; }
+                .content { text-indent: 1.5em; margin-bottom: 25px; }
+                .signature-section { margin-top: 40px; }
+                .approval-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; }
+                .date-signature-block { display: flex; justify-content: space-between; align-items: flex-end; }
+                .date-block { text-align: left; }
+                .signature-block { text-align: center; }
+                .footer-table { width: 100%; border-collapse: collapse; margin-top: 30px; text-align: left; }
+                .footer-table td { padding: 8px 0; }
+                .footer-table td:first-child { width: 180px; }
+                .imza-cizgi { border-bottom: 1px solid #333; display: inline-block; width: 150px; }
             </style>
         </head>
         <body>
-            <div class="header"><h3>... OKUL MÜDÜRLÜĞÜNE</h3></div>
-            <div class="content">
-                <p>Kurumunuzda görev yapan personellerinizden ${personel.ad_soyad} olarak, ${izin.aciklama || 'belirteceğim mazeretimden dolayı'} ${baslangic} - ${bitis} tarihleri arasında ${izinTipi.name} kullanmak istiyorum.</p>
-                <p>Gereğini bilgilerinize arz ederim.</p>
-            </div>
-            <div class="date">${new Date().toLocaleDateString('tr-TR')}</div>
-            <div class="signature">
-                <span>${personel.ad_soyad}</span><br>
-                <span>İmza</span>
-            </div>
+            <div class="container">
+                <h2>${izinTipi.name.toUpperCase()} İSTEK FORMU</h2>
+                <div class="header-section">... OKUL MÜDÜRLÜĞÜNE</div>
+                
+                <table class="info-table">
+                    <tr><td>ADI SOYADI</td><td>: ${personel.ad_soyad || ''}</td></tr>
+                    <tr><td>T.C. KİMLİK NO</td><td>: ${personel.tc_kimlik_no || ''}</td></tr>
+                    <tr><td>SGK NO</td><td>: ${personel.sgk_no || ''}</td></tr>
+                    <tr><td>İŞE GİRİŞ TARİHİ</td><td>: ${personel.ise_giris || ''}</td></tr>
+                    <tr><td>GÖREVİ</td><td>: ${gorevi}</td></tr>
+                    <tr><td>GÖREV YERİ ADRESİ</td><td>: HANIMÇEŞME MAHALLESİ GÜNDÜZ SOKAK NO:13 TAVŞANLI/KÜTAHYA</td></tr>
+                </table>
 
+                <p class="content">
+                    ${izinIstekMetni}
+                </p>
+                <p>Gereğini arz ederim.</p>
+
+                <div class="date-signature-block">
+                    <div class="date-block">
+                         Tarih: ${new Date().toLocaleDateString('tr-TR')}
+                    </div>
+                    <div class="signature-block">
+                        İzin Talep Eden<br><br>
+                        ${personel.ad_soyad}<br>
+                        (İmza)
+                    </div>
+                </div>
+
+                <div class="approval-section">
+                    <p style="text-align:center;">Yukarıda belirtilen tarihlerde ${izinTipi.name.toLowerCase()} kullanması uygundur.</p>
+                    <div style="text-align:center; margin-top: 50px;">
+                        Okul Müdürü<br><br>
+                        <span class="imza-cizgi"></span><br>
+                        (İmza)
+                    </div>
+                </div>
+
+                <table class="footer-table">
+                    <tr><td>İzine Çıkış Tarihi</td><td>: ${baslangicTR}</td></tr>
+                    <tr><td>İzin Bitiş Tarihi</td><td>: ${bitisTR}</td></tr>
+                    <tr><td>İşe Başlama Tarihi</td><td>: ${iseBaslamaTR}</td></tr>
+                </table>
+            </div>
         </body>
         </html>
     `;
