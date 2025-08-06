@@ -905,6 +905,7 @@
     <button id="btn-print">Yazdır</button>
     <button id="btn-pdf">PDF İndir</button>
     <button id="btn-excel">Excel İndir</button>
+    <button id="btn-delete-puantaj" style="background-color: var(--danger-color);">Puantajı Sil</button>
 </div>
                         </div>
                         <div id="puantaj-table-container" class="table-container"></div>
@@ -3122,7 +3123,6 @@ async function savePuantajData() {
     }
 }
 
-// YENİ FONKSİYON: Puantaj kilidini açar veya kapatır.
 async function togglePuantajLock() {
     isPuantajLocked = !isPuantajLocked; // Kilit durumunu tersine çevir
 
@@ -3140,6 +3140,45 @@ async function togglePuantajLock() {
         console.error("Kilit durumu güncellenirken hata:", error);
         showToast("Kilit durumu güncellenemedi.", "error");
         isPuantajLocked = !isPuantajLocked; // Hata olursa durumu geri al
+    }
+}
+
+// YENİ EKLENEN SİLME FONKSİYONU
+async function deleteCurrentPuantaj() {
+    if (isPuantajLocked) {
+        showToast('Puantaj kilitli. Silmek için önce kilidi açmalısınız.', 'error');
+        return;
+    }
+
+    if (!currentPuantajDocRef) {
+        showToast('Bu ay için silinecek kayıtlı bir puantaj bulunmuyor.', 'error');
+        return;
+    }
+
+    const year = document.getElementById('input-year').value;
+    const monthName = document.getElementById('select-month').options[document.getElementById('select-month').selectedIndex].text;
+
+    if (!confirm(`${monthName} ${year} ayına ait puantaj cetvelini kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+        return;
+    }
+
+    try {
+        await deleteDoc(currentPuantajDocRef);
+
+        // Lokal verileri ve arayüzü temizle
+        puantajData = {};
+        isPuantajLocked = false;
+        currentPuantajDocRef = null;
+
+        updateLockStatusUI();
+        renderPuantajTable({}); // Tabloyu boşaltarak "veri yok" mesajını göster
+        renderGrandTotals({}); // Genel toplamları sıfırla
+
+        showToast('Puantaj başarıyla silindi.', 'success');
+
+    } catch (error) {
+        console.error("Puantaj silinirken hata:", error);
+        showToast('Puantaj silinirken bir hata oluştu.', 'error');
     }
 }
 
@@ -3219,11 +3258,12 @@ function formatTextForWrapping(text) {
  */
 
 
-        // =================== 2. ADIM (A): YENİ BUTONU TANIMLAYIN ===================
+       // =================== 2. ADIM (A): YENİ BUTONU TANIMLAYIN ===================
 const selectMonth = document.getElementById('select-month'), inputYear = document.getElementById('input-year'),
     showBtn = document.getElementById('btn-show-puantaj'), // YENİ BUTON
     generateBtn = document.getElementById('btn-generate'), // MEVCUT BUTON
     printBtn = document.getElementById('btn-print'),
+    deleteBtn = document.getElementById('btn-delete-puantaj'), // YENİ BUTON TANIMLANDI
 // =================== 2. ADIM (A) BİTİŞİ ===================
             pdfBtn = document.getElementById('btn-pdf'), excelBtn = document.getElementById('btn-excel'),
             modalOverlay = document.getElementById('edit-modal-overlay'),
@@ -3380,10 +3420,11 @@ function renderPuantajTable(nobetVerisi) {
     container.innerHTML = finalHTML;
     attachCellListeners();
 }
-        // =================== 2. ADIM (B): YENİ BUTONA İŞLEV ATAYIN ===================
+       // =================== 2. ADIM (B): YENİ BUTONA İŞLEV ATAYIN ===================
 if(!puantajInitialized) {
-    showBtn.addEventListener('click', loadPuantajDataForCurrentMonth); // YENİ OLAY ATAMASI
+    showBtn.addEventListener('click', loadPuantajDataForCurrentMonth); 
     generateBtn.addEventListener('click', generateInitialPuantaj);
+    deleteBtn.addEventListener('click', deleteCurrentPuantaj); // YENİ OLAY ATAMASI
     savePuantajBtn.addEventListener('click', savePuantajData);
     lockPuantajBtn.addEventListener('click', togglePuantajLock);
 
