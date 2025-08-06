@@ -160,6 +160,32 @@
         input, select, textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); }
         .full-width { grid-column: 1 / -1; }
         .button-group { text-align: right; margin-top: 15px; }
+.izin-hesaplama-alani {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        #personel-izin-hakki, #izin-hesaplama-sonucu {
+            flex: 1;
+            padding: 12px;
+            background-color: #eef1f3;
+            border-radius: 6px;
+            border: 1px solid #d8dde2;
+            font-size: 14px;
+            color: #37474f;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #izin-hesaplama-sonucu {
+            font-weight: bold;
+            background-color: #e6f7ff;
+            border-color: #b3e0ff;
+            color: #0056b3;
+        }
         .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--white-color); }
         td.actions-cell { width: auto; min-width: 160px; display: flex; gap: 8px; align-items: center; }
         .actions-cell .btn { flex: 1; }
@@ -781,6 +807,13 @@
                                     <input type="text" id="izin-aciklama" placeholder="İzinle ilgili kısa bir not...">
                                 </div>
                             </div>
+                            <div class="izin-hesaplama-alani">
+                                <div id="personel-izin-hakki">
+                                    </div>
+                                <div id="izin-hesaplama-sonucu">
+                                    </div>
+                            </div>
+
                             <div class="button-group">
                                 <button id="izin-kaydet-btn" class="btn btn-save">İzin Kaydını Oluştur</button>
                             </div>
@@ -2367,30 +2400,86 @@ async function initializeIzinTakip() {
     if (izinTakipInitialized) return;
     izinTakipInitialized = true;
 
-    // --- TOPLU İZİN MODAL ELEMENTLERİ ---
-    const topluIzinModal = document.getElementById('toplu-izin-modal');
-    const openTopluIzinBtn = document.getElementById('open-toplu-izin-modal-btn');
-    const topluIzinKaydetBtn = document.getElementById('toplu-izin-kaydet-btn');
-
-    // --- Mevcut Elementler ---
     const personelSelect = document.getElementById('izin-personel');
     const izinTipiSelect = document.getElementById('izin-tipi');
+    const baslangicInput = document.getElementById('izin-baslangic');
+    const openTopluIzinBtn = document.getElementById('open-toplu-izin-modal-btn');
+    const topluIzinModal = document.getElementById('toplu-izin-modal');
+    const topluIzinKaydetBtn = document.getElementById('toplu-izin-kaydet-btn');
+    const bitisInput = document.getElementById('izin-bitis');
+    const izinHakkiDiv = document.getElementById('personel-izin-hakki');
+    const hesaplamaSonucuDiv = document.getElementById('izin-hesaplama-sonucu');
 
-    personelSelect.innerHTML = '<option value="">Yükleniyor...</option>';
-    izinTipiSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+    // --- Gerekli tüm verileri fonksiyonun başında çekiyoruz ---
+    izinHakkiDiv.innerHTML = '<em>Personel verileri yükleniyor...</em>';
+    const [personelSnap, izinTipiSnap, neviSnap] = await Promise.all([
+        getDocs(query(collection(db, 'personel'), orderBy('ad_soyad'))),
+        getSettings('ayarlar_izin_tipleri'),
+        getSettings('ayarlar_personel_nevileri')
+    ]);
 
-    const personelSnap = await getDocs(collection(db, 'personel'));
+    const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
+    const staffListForLeave = personelSnap.docs.map(doc => ({
+        id: doc.id, ...doc.data(), neviAdi: neviMap.get(doc.data().personel_nevisi) || 'Bilinmiyor'
+    }));
+    
+    // --- Select menülerini doldur ---
     personelSelect.innerHTML = '<option value="">Personel Seçiniz...</option>';
-    personelSnap.forEach(doc => personelSelect.add(new Option(doc.data().ad_soyad, doc.id)));
+    staffListForLeave.forEach(p => personelSelect.add(new Option(p.ad_soyad, p.id)));
 
-    const izinTipiSnap = await getSettings('ayarlar_izin_tipleri');
     izinTipiSelect.innerHTML = '<option value="">İzin Tipi Seçiniz...</option>';
     izinTipiSnap.forEach(doc => izinTipiSelect.add(new Option(doc.data().name, doc.id)));
 
-    await renderIzinKayitlari();
+    // --- Yeni Yardımcı Fonksiyon: Kıdeme göre yasal izin hakkını hesaplar ---
+    const getIzinHakki = (iseGirisTarihi) => {
+        if (!iseGirisTarihi) return { kidemStr: "İşe giriş tarihi yok", izinHakki: 0 };
+        const startDate = new Date(iseGirisTarihi);
+        const anlikTarih = new Date();
+        const yillar = anlikTarih.getFullYear() - startDate.getFullYear();
+        let hizmetSuresi = yillar;
+        if (anlikTarih.getMonth() < startDate.getMonth() || (anlikTarih.getMonth() === startDate.getMonth() && anlikTarih.getDate() < startDate.getDate())) {
+            hizmetSuresi--;
+        }
+        
+        let izinHakki = 0;
+        if (hizmetSuresi >= 15) { izinHakki = 26; }
+        else if (hizmetSuresi > 5) { izinHakki = 20; }
+        else if (hizmetSuresi >= 1) { izinHakki = 14; }
 
-    // --- TEKLİ İZİN KAYDETME BUTONU ---
+        return `<strong>Kıdem:</strong> ${hizmetSuresi} Yıl | <strong>Yasal İzin Hakkı:</strong> ${izinHakki} gün`;
+    };
+
+    // --- Yeni Ana Fonksiyon: Değişikliklerde tüm hesaplamaları günceller ---
+    const updateIzinHesaplamalari = () => {
+        const personelId = personelSelect.value;
+        const baslangic = baslangicInput.value;
+        const bitis = bitisInput.value;
+        
+        // 1. Personelin yasal izin hakkını göster
+        const seciliPersonel = staffListForLeave.find(p => p.id === personelId);
+        if (seciliPersonel) {
+            izinHakkiDiv.innerHTML = getIzinHakki(seciliPersonel.ise_giris);
+        } else {
+            izinHakkiDiv.innerHTML = '<em>Yasal izin hakkı için personel seçiniz.</em>';
+        }
+
+        // 2. Seçilen tarih aralığı için net izin süresini hesapla ve göster
+        if (personelId && baslangic && bitis && new Date(bitis) >= new Date(baslangic)) {
+            const sure = calculateIzinSuresi({ personelId, baslangicTarihi: baslangic, bitisTarihi: bitis }, staffListForLeave);
+            hesaplamaSonucuDiv.innerHTML = `Hesaplanan Süre: <strong>${sure} iş günü</strong>`;
+        } else {
+            hesaplamaSonucuDiv.innerHTML = '<em>Net süre için tarih aralığı seçiniz.</em>';
+        }
+    };
+
+    // --- Olay Dinleyicileri ---
+    personelSelect.addEventListener('change', updateIzinHesaplamalari);
+    baslangicInput.addEventListener('change', updateIzinHesaplamalari);
+    bitisInput.addEventListener('change', updateIzinHesaplamalari);
+    
+    // Mevcut diğer olay dinleyicileri (kaydetme, silme vb.)
     document.getElementById('izin-kaydet-btn').addEventListener('click', async () => {
+        // ... (Bu kısımdaki kodunuz aynı kalacak, buraya dokunmayın)
         const personelId = document.getElementById('izin-personel').value;
         const izinTipiId = document.getElementById('izin-tipi').value;
         const baslangicTarihi = document.getElementById('izin-baslangic').value;
@@ -2404,28 +2493,25 @@ async function initializeIzinTakip() {
             return showToast('Bitiş tarihi başlangıç tarihinden önce olamaz.', 'error');
         }
 
-        // Raporlama için oluşturma türünü 'manuel' olarak ekliyoruz.
         await addDoc(collection(db, 'izinler'), { personelId, izinTipiId, baslangicTarihi, bitisTarihi, aciklama, olusturmaTuru: 'manuel' });
         showToast('İzin başarıyla kaydedildi.');
         await renderIzinKayitlari();
-
+        
+        // Formu temizle
         document.getElementById('izin-personel').value = '';
         document.getElementById('izin-tipi').value = '';
         document.getElementById('izin-baslangic').value = '';
         document.getElementById('izin-bitis').value = '';
         document.getElementById('izin-aciklama').value = '';
+        updateIzinHesaplamalari(); // Hesaplama alanlarını sıfırla
     });
-
-    // --- YENİ EKLENEN TOPLU İZİN İÇİN OLAY DİNLEYİCİLERİ ---
     openTopluIzinBtn.addEventListener('click', openTopluIzinModal);
     topluIzinKaydetBtn.addEventListener('click', saveTopluIzin);
     topluIzinModal.querySelector('.close-modal').addEventListener('click', () => topluIzinModal.classList.remove('open'));
-    topluIzinModal.addEventListener('click', (e) => {
-        if(e.target === topluIzinModal) topluIzinModal.classList.remove('open');
-    });
-
-    // --- İZİN LİSTESİ (TABLO) İÇİN OLAY DİNLEYİCİLERİ (DEĞİŞİKLİK YOK) ---
+    
+    // --- DÜZELTİLMİŞ OLAY DİNLEYİCİSİ ---
     document.getElementById('izin-kayitlari-tbody').addEventListener('click', async (e) => {
+        // Silme butonu kontrolü
         if (e.target.classList.contains('btn-delete-izin')) {
             if (confirm('Bu izin kaydını silmek istediğinizden emin misiniz?')) {
                 await deleteDoc(doc(db, 'izinler', e.target.dataset.id));
@@ -2433,12 +2519,18 @@ async function initializeIzinTakip() {
                 await renderIzinKayitlari();
             }
         }
+        // Dilekçe butonu kontrolü (DOĞRU YERİ BURASI)
         if (e.target.classList.contains('btn-print-dilekce')) {
             const izinId = e.target.dataset.id;
             generateDilekce(izinId);
         }
     });
+
+    // --- Sayfa ilk açıldığında tabloyu ve başlangıç hesaplamasını yap ---
+    await renderIzinKayitlari();
+    updateIzinHesaplamalari(); 
 }
+        
 // YENİ FONKSİYON 1: Toplu İzin Modalını Açma ve Doldurma
 async function openTopluIzinModal() {
     const modal = document.getElementById('toplu-izin-modal');
@@ -2913,6 +3005,7 @@ function renderPuantajTable(nobetVerisi) {
 let puantajInitialized = false;
 let puantajPersonelList = [];
 let puantajData = {};
+
 // YENİ EKLENEN DEĞİŞKENLER
 let isPuantajLocked = false; 
 let currentPuantajDocRef = null;
@@ -3529,8 +3622,9 @@ function calculateMonthlyHours(personelId) {
     
     
     return { genelToplam, ekDers: Math.round(ekDers) };
-}
+} // calculateMonthlyHours fonksiyonu burada biter
 
+// Arada fazladan bir şey olmadan diğer fonksiyon başlar
 function calculateStatusCounts(personelId) {
     const personelData = puantajData[personelId];
     if (!personelData) return {};
