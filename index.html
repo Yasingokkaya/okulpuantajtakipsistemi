@@ -294,6 +294,42 @@
     border-bottom: 2px solid #adb5bd;
 }
 
+/* ================================================= */
+        /* === YENİ ÇİZİMİNİZE GÖRE GÜNCELLENMİŞ STİLLER === */
+        /* ================================================= */
+        
+        /* Dikey ayırıcı çizginin stilini tanımlar */
+        .vertical-divider {
+            border-right: 2px solid #555;
+        }
+
+        /* Her personelin altını ayıran yatay çizgiyi tanımlar */
+        .horizontal-divider > td {
+            border-bottom: 2px solid #333;
+        }
+
+        @media print {
+            .vertical-divider {
+                border-right: 2px solid #000 !important;
+            }
+            .horizontal-divider > td {
+                border-bottom: 2px solid #000 !important;
+            }
+        }
+        
+    
+        @media print {
+            /* Yazdırırken yatay çizginin siyah ve belirgin olmasını sağlar */
+            .puantaj-table .personel-row-status > td {
+                border-bottom: 1.5px solid #000 !important;
+            }
+
+            /* Yazdırırken dikey çizginin siyah ve belirgin olmasını sağlar */
+            .puantaj-table .week-divider {
+                border-right: 1.5px solid #000 !important;
+            }
+        }
+
 /* Üzerine gelince her iki satırın da rengini değiştirme */
 .puantaj-table tbody tr:hover > td {
     background-color: #f1f9ff !important;
@@ -316,6 +352,7 @@
     font-weight: 500;
     height: 32px;
 }
+
 /* YENİ EKLENEN KOD BAŞLANGICI */
 
         /* Adım 1: 'N' kodlu hücrelerin arka planını şeffaf yapar */
@@ -324,10 +361,7 @@
             color: #37474f; /* Yazı rengi okunaklı kalsın */
         }
 
-        /* Adım 2: Haftaları ayıran dikey çizgi stilini tanımlar */
-        .puantaj-table .week-divider {
-            border-right: 2px solid #6c757d; /* Daha kalın ve koyu bir çizgi */
-        }
+        
 
         /* YENİ EKLENEN KOD BİTİŞİ */
 
@@ -357,6 +391,7 @@
         .status-S { background-color: #FFF9C4; color: #AF6000; } /* Yıllık İzin */
         .status-K { background-color: #D7F9E9; color: #1B5E20; } /* Yarım Gün */
         .status-RTÇ { background-color: #E1BEE7; color: #4A148C; } /* Resmi Tatil Çalışması */
+        .status-HT { background-color: #FFEBCC; color: #B85B00; } /* Hafta Sonu */
         .puantaj-legend { margin-top: 25px; padding-top: 15px; border-top: 1px solid #dee2e6; display: flex; flex-wrap: wrap; gap: 15px 25px; }
         .legend-item { display: flex; align-items: center; font-size: 13px; }
         .legend-color-box { width: 16px; height: 16px; border: 1px solid #bdbdbd; margin-right: 8px; display: inline-block; }
@@ -398,13 +433,12 @@
         margin-left: 0 !important;
     }
 
-    /* Yazdırmada GİZLENECEK tüm elemanlar bu listede */
-    .sidebar, .panel-header, .controls.puantaj, .puantaj-legend, .bottom-section, .no-print,
-    .modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir,
-    #gorevlendirme .gorevlendirme-form-area {
-        display: none !important;
-    }
-
+   /* Yazdırmada GİZLENECEK tüm elemanlar bu listede */
+            .sidebar, .panel-header, .controls.puantaj, .no-print,
+            .modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir,
+            #gorevlendirme .gorevlendirme-form-area {
+                display: none !important;
+            }
 
     /* ------------------------------------------------------------- */
     /* 2. PUANTAJ CETVELİ YAZDIRMA AYARLARI                          */
@@ -428,10 +462,7 @@
         text-align: center !important;
         vertical-align: middle !important;
     }
-/* YAZDIRMA İÇİN HAFTALIK AYIRICI ÇİZGİ (YENİ EKLENEN KOD) */
-        .puantaj-table .week-divider {
-            border-right: 3px double #000 !important; /* Kalın, çift ve siyah bir çizgi */
-        }
+
 
     /* İSTEK 1: Sütun başlıkları artık alta kayacak */
     .puantaj-table thead th {
@@ -450,14 +481,14 @@
     vertical-align: middle !important;
 }
 
-/* Personel adı sütunu için minimum genişlik ayarı */
+/* Personel adı sütunu için minimum genişlik ayarı (DARALTILDI) */
 .puantaj-table .col-personel {
-    min-width: 120px !important;
+    min-width: 90px !important;
 }
 
-/* Unvan sütunu için minimum genişlik ayarı */
+/* Unvan sütunu için minimum genişlik ayarı (DARALTILDI) */
 .puantaj-table .col-unvan {
-    min-width: 100px !important;
+    min-width: 80px !important;
 }
 
     /* İSTEK 2: Saat sayıları büyütüldü ve kalın yapıldı */
@@ -2499,45 +2530,102 @@ async function saveTopluIzin() {
         showToast('Kayıt sırasında bir hata oluştu.', 'error');
     }
 }
-        async function renderIzinKayitlari() {
-            const tbody = document.getElementById('izin-kayitlari-tbody');
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">İzin kayıtları yükleniyor...</td></tr>`;
 
-            const [izinSnap, personelSnap, izinTipiSnap] = await Promise.all([
-                getDocs(query(collection(db, 'izinler'), orderBy('baslangicTarihi', 'desc'))),
-                getDocs(collection(db, 'personel')),
-                getSettings('ayarlar_izin_tipleri')
-            ]);
-            
-            const personelMap = new Map(personelSnap.docs.map(doc => [doc.id, doc.data().ad_soyad]));
-            const izinTipiMap = new Map(izinTipiSnap.docs.map(doc => [doc.id, doc.data().name]));
+// =================================================================
+// === YENİ EKLENECEK İZİN SÜRESİ HESAPLAMA FONKSİYONU ===
+// =================================================================
+function calculateIzinSuresi(izin, staffList) {
+    const personel = staffList.find(p => p.id === izin.personelId);
+    if (!personel) return 0; // Personel bulunamazsa 0 gün dön
 
-            if (izinSnap.empty) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Kayıtlı izin bulunamadı.</td></tr>`;
-                return;
-            }
+    let workDays = 0;
+    const startDate = new Date(izin.baslangicTarihi + 'T00:00:00');
+    const endDate = new Date(izin.bitisTarihi + 'T00:00:00');
 
-            tbody.innerHTML = '';
-            izinSnap.forEach(doc => {
-                const izin = doc.data();
-                const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
-                const bitis = new Date(izin.bitisTarihi + 'T00:00:00');
-                const sure = Math.round((bitis - baslangic) / (1000 * 60 * 60 * 24)) + 1;
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${personelMap.get(izin.personelId) || 'Bilinmiyor'}</td>
-                    <td>${izinTipiMap.get(izin.izinTipiId) || 'Bilinmiyor'}</td>
-                    <td>${baslangic.toLocaleDateString('tr-TR')}</td>
-                    <td>${bitis.toLocaleDateString('tr-TR')}</td>
-                    <td>${sure} gün</td>
-                    <td>${izin.aciklama || '-'}</td>
-                    <td class="actions-cell">
-                        <button class="btn btn-print-dilekce" data-id="${doc.id}" style="background-color:#0dcaf0;">Dilekçe</button>
-                        <button class="btn btn-delete-izin btn-delete" data-id="${doc.id}">Sil</button>
-                    </td>
-                `;
-            });
+    // Başlangıç ve bitiş tarihleri arasındaki her günü kontrol et
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const currentDate = new Date(d);
+
+        // 1. Resmi Tatil mi? Kontrol et.
+        if (isResmiTatil(currentDate)) {
+            continue; // Resmi tatil ise bu günü sayma, döngüde sonraki güne geç.
         }
+
+        // 2. Hafta Sonu mu? Personele göre kontrol et.
+        const dayOfWeek = currentDate.getDay(); // Pazar=0, Pzt=1, ..., Cmt=6
+        let isWeekend = false;
+        
+        if (personel.neviAdi.includes('Eğitim Personeli') || personel.neviAdi.includes('İdari Personel')) {
+            if (dayOfWeek === 6 || dayOfWeek === 0) { // Cumartesi veya Pazar
+                isWeekend = true;
+            }
+        } else { // Destek Personeli ve diğerleri
+            if (dayOfWeek === 0) { // Sadece Pazar
+                isWeekend = true;
+            }
+        }
+
+        if (isWeekend) {
+            continue; // Hafta sonu ise bu günü sayma, sonraki güne geç.
+        }
+
+        // 3. Resmi tatil veya hafta sonu değilse, bu bir iş günüdür.
+        workDays++;
+    }
+    return workDays;
+}
+        async function renderIzinKayitlari() {
+    const tbody = document.getElementById('izin-kayitlari-tbody');
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">İzin kayıtları yükleniyor...</td></tr>`;
+
+    // Gerekli tüm verileri tek seferde ve paralel olarak çek
+    const [izinSnap, personelSnap, izinTipiSnap, neviSnap] = await Promise.all([
+        getDocs(query(collection(db, 'izinler'), orderBy('baslangicTarihi', 'desc'))),
+        getDocs(collection(db, 'personel')),
+        getSettings('ayarlar_izin_tipleri'),
+        getSettings('ayarlar_personel_nevileri')
+    ]);
+    
+    const personelMap = new Map(personelSnap.docs.map(doc => [doc.id, doc.data().ad_soyad]));
+    const izinTipiMap = new Map(izinTipiSnap.docs.map(doc => [doc.id, doc.data().name]));
+    const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
+
+    // Süre hesaplaması için gerekli personel nevi adını içeren geçici bir liste oluştur
+    const staffListForLeave = personelSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        neviAdi: neviMap.get(doc.data().personel_nevisi) || 'Bilinmiyor'
+    }));
+
+    if (izinSnap.empty) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Kayıtlı izin bulunamadı.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = '';
+    izinSnap.forEach(doc => {
+        const izin = doc.data();
+        const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
+        const bitis = new Date(izin.bitisTarihi + 'T00:00:00');
+        
+        // ESKİ HESAPLAMA YERİNE YENİ FONKSİYONU ÇAĞIR
+        const sure = calculateIzinSuresi(izin, staffListForLeave);
+
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${personelMap.get(izin.personelId) || 'Bilinmiyor'}</td>
+            <td>${izinTipiMap.get(izin.izinTipiId) || 'Bilinmiyor'}</td>
+            <td>${baslangic.toLocaleDateString('tr-TR')}</td>
+            <td>${bitis.toLocaleDateString('tr-TR')}</td>
+            <td>${sure} gün</td>
+            <td>${izin.aciklama || '-'}</td>
+            <td class="actions-cell">
+                <button class="btn btn-print-dilekce" data-id="${doc.id}" style="background-color:#0dcaf0;">Dilekçe</button>
+                <button class="btn btn-delete-izin btn-delete" data-id="${doc.id}">Sil</button>
+            </td>
+        `;
+    });
+}
 
         async function generateDilekce(izinId) {
     const izinDoc = await getDoc(doc(db, 'izinler', izinId));
@@ -2614,7 +2702,7 @@ async function saveTopluIzin() {
         <body>
             <div class="container">
                 <h2>${izinTipi.name.toUpperCase()} İSTEK FORMU</h2>
-                <div class="header-section">... OKUL MÜDÜRLÜĞÜNE</div>
+                <div class="header-section"> ÖZEL İSABET ORTAOKULU MÜDÜRLÜĞÜNE</div>
                 
                 <table class="info-table">
                     <tr><td>ADI SOYADI</td><td>: ${personel.ad_soyad || ''}</td></tr>
@@ -2732,8 +2820,9 @@ function renderPuantajTable(nobetVerisi) {
 
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
-            const isSunday = date.getDay() === 0;
-            const dividerClass = isSunday ? 'week-divider' : '';
+            // KONTROL GÜNCELLENDİ: Cumartesi (6) veya Pazar (0) mı?
+            const isWeekendEdge = (date.getDay() === 6 || date.getDay() === 0);
+            const dividerClass = isWeekendEdge ? 'week-divider' : '';
             tableHTML += `<th class="col-day ${dividerClass}">${day}<br>${gunler[date.getDay()]}</th>`;
         }
 
@@ -2766,8 +2855,9 @@ function renderPuantajTable(nobetVerisi) {
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = new Date(year, month, day).toISOString().split('T')[0];
                 const dayData = personelPuantajData[dateString];
-                const isSunday = new Date(year, month, day).getDay() === 0;
-                const dividerClass = isSunday ? 'week-divider' : '';
+                 // KONTROL GÜNCELLENDİ: Cumartesi (6) veya Pazar (0) mı?
+                const isWeekendEdge = new Date(year, month, day).getDay() === 6 || new Date(year, month, day).getDay() === 0;
+                const dividerClass = isWeekendEdge ? 'week-divider' : '';
                 tableHTML += `<td class="status-cell status-${dayData.code} ${dividerClass}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || ''}</td>`;
             }
 
@@ -2797,8 +2887,9 @@ function renderPuantajTable(nobetVerisi) {
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = new Date(year, month, day).toISOString().split('T')[0];
                 const dayData = personelPuantajData[dateString];
-                const isSunday = new Date(year, month, day).getDay() === 0;
-                const dividerClass = isSunday ? 'week-divider' : '';
+                 // KONTROL GÜNCELLENDİ: Cumartesi (6) veya Pazar (0) mı?
+                const isWeekendEdge = new Date(year, month, day).getDay() === 6 || new Date(year, month, day).getDay() === 0;
+                const dividerClass = isWeekendEdge ? 'week-divider' : '';
                 const hourContent = (dayData?.code === 'N' || dayData?.code === 'K' || dayData?.code === 'RTÇ') && dayData?.hours > 0 ? dayData.hours : '';
                 const cellClass = hourContent ? 'hour-cell has-hours' : 'hour-cell';
                 tableHTML += `<td class="${cellClass} ${dividerClass}">${hourContent}</td>`;
@@ -3045,30 +3136,30 @@ function renderPuantajTable(nobetVerisi) {
         finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${grupAdi.toUpperCase()} PERSONEL PUANTAJ CETVELİ</h3>`;
         
         let tableHTML = `<table class="puantaj-table"><thead><tr>
-            <th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2">İşe Giriş</th><th rowspan="2">İşten Çıkış</th>
+            <th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2">İşe Giriş</th><th rowspan="2" class="vertical-divider">İşten Çıkış</th>
             <th colspan="${daysInMonth}">Aylık Puantaj Durumu</th>
-            <th colspan="4">Aylık Saat Toplamları</th>
-            <th colspan="9">Aylık Gün Toplamları</th>
-            <th rowspan="2">Toplam Çalışılan Gün</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th>
+            <th colspan="4" class="vertical-divider">Aylık Saat Toplamları</th>
+            <th colspan="9" class="vertical-divider">Aylık Gün Toplamları</th>
+            <th rowspan="2" class="vertical-divider">Toplam Çalışılan Gün</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th>
         </tr><tr>`;
 
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
-            tableHTML += `<th class="col-day">${day}<br>${gunler[date.getDay()]}</th>`;
+            // ÇİZİMDEKİ GİBİ: Pazar veya ayın sonu ise dikey çizgi ekle
+            const isDividerDay = (date.getDay() === 0 || day === daysInMonth);
+            const dividerClass = isDividerDay ? 'vertical-divider' : '';
+            tableHTML += `<th class="col-day ${dividerClass}">${day}<br>${gunler[date.getDay()]}</th>`;
         }
         
         tableHTML += `
-            <th>Aylık Toplam</th><th>Ek Ders</th><th>Nöbet</th><th>Rehberlik</th>
-            <th>N</th><th>HT</th><th>RT</th><th>I</th><th>R</th><th>UI</th><th>S</th><th>K</th><th>RTÇ</th>
+            <th>Aylık Toplam</th><th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>
+            <th>N</th><th>HT</th><th>RT</th><th>I</th><th>R</th><th>UI</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th>
             <th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th>
         </tr></thead><tbody>`;
 
         personelGrubu.forEach(personel => {
             const personelPuantajData = puantajData[personel.id];
-            if (!personelPuantajData) {
-                console.error(`Puantaj verisi, ${personel.ad} (ID: ${personel.id}) için bulunamadı.`);
-                return; 
-            }
+            if (!personelPuantajData) { return; }
 
             const monthlyHours = calculateMonthlyHours(personel.id);
             const nobetSaat = nobetVerisi[personel.id] || 0;
@@ -3080,19 +3171,21 @@ function renderPuantajTable(nobetVerisi) {
                 <td class="col-personel" rowspan="2">${formatTextForWrapping(personel.ad)}</td>
                 <td class="col-unvan" rowspan="2">${formatTextForWrapping(personel.unvan)}</td>
                 <td class="col-date" rowspan="2">${personel.ise_giris}</td>
-                <td class="col-date" rowspan="2">${personel.isten_ayrilis || '---'}</td>`;
+                <td class="col-date vertical-divider" rowspan="2">${personel.isten_ayrilis || '---'}</td>`;
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = new Date(year, month, day).toISOString().split('T')[0];
-                const dayData = personelPuantajData[dateString]; 
-                tableHTML += `<td class="status-cell status-${dayData.code}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || '?'}</td>`;
+                const dayData = personelPuantajData[dateString];
+                const isDividerDay = (new Date(year, month, day).getDay() === 0 || day === daysInMonth);
+                const dividerClass = isDividerDay ? 'vertical-divider' : '';
+                tableHTML += `<td class="status-cell status-${dayData.code} ${dividerClass}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || ''}</td>`;
             }
 
             tableHTML += `
                 <td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>
                 <td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td>
                 <td class="summary-nobet" rowspan="2">${nobetSaat}</td>
-                <td class="summary-rehberlik" rowspan="2">${rehberlikSaat}</td>
+                <td class="summary-rehberlik vertical-divider" rowspan="2">${rehberlikSaat}</td>
                 <td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td>
                 <td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td>
                 <td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td>
@@ -3101,25 +3194,24 @@ function renderPuantajTable(nobetVerisi) {
                 <td class="col-summary-count" rowspan="2">${statusCounts.UI || 0}</td>
                 <td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td>
                 <td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td>
-                <td class="col-summary-count" rowspan="2">${statusCounts.RTÇ || 0}</td>
-                <td class="total-worked-day" rowspan="2">${toplamCalisilanGun}</td>
+                <td class="col-summary-count vertical-divider" rowspan="2">${statusCounts.RTÇ || 0}</td>
+                <td class="total-worked-day vertical-divider" rowspan="2">${toplamCalisilanGun}</td>
                 <td class="social-section" rowspan="2">${personel.esDurumu === 'calismiyor' ? 'Çalışmıyor' : (personel.esDurumu === 'calisiyor' ? 'Çalışıyor' : 'Bekar')}</td>
                 <td class="social-section" rowspan="2">${personel.cocuk0_6 || ''}</td>
                 <td class="social-section" rowspan="2">${personel.cocuk6_18 || ''}</td>
                 <td class="col-imza" rowspan="2"></td>
             </tr>`;
             
-            tableHTML += `<tr class="personel-row-hours">`;
+            // ÇİZİMDEKİ GİBİ: Saat satırına yatay ayırıcı sınıfı ekleniyor
+            tableHTML += `<tr class="personel-row-hours horizontal-divider">`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = new Date(year, month, day).toISOString().split('T')[0];
                 const dayData = personelPuantajData[dateString];
-                
-                // ================== DEĞİŞİKLİK BURADA ==================
-                // Saat varsa 'has-hours' class'ı ekleniyor, yoksa eklenmiyor.
+                const isDividerDay = (new Date(year, month, day).getDay() === 0 || day === daysInMonth);
+                const dividerClass = isDividerDay ? 'vertical-divider' : '';
                 const hourContent = (dayData?.code === 'N' || dayData?.code === 'K' || dayData?.code === 'RTÇ') && dayData?.hours > 0 ? dayData.hours : '';
                 const cellClass = hourContent ? 'hour-cell has-hours' : 'hour-cell';
-                tableHTML += `<td class="${cellClass}">${hourContent}</td>`;
-                // ================== DEĞİŞİKLİK BİTTİ ==================
+                tableHTML += `<td class="${cellClass} ${dividerClass}">${hourContent}</td>`;
             }
             tableHTML += `</tr>`;
         });
@@ -3311,24 +3403,49 @@ async function generateInitialPuantaj() {
                     }
 
                 } else {
-                    // --- DİĞER TÜM PERSONEL (Tüm Öğretmenler ve Tam Zamanlı Personel) İÇİN STANDART MANTIK ---
+                    // --- DİĞER TÜM PERSONEL (Tüm Öğretmenler ve Tam Zamanlı Personel) İÇİN YENİ STANDART MANTIK ---
+
+                    let isWeekend = false;
+                    // Hafta sonu tanımını personel nevisine göre yap
+                    if (personel.neviAdi.includes('Eğitim Personeli') || personel.neviAdi.includes('İdari Personel')) {
+                        // Öğretmen ve İdari Personel için Cumartesi(6) ve Pazar(0) hafta tatilidir.
+                        if (dayOfWeek === 6 || dayOfWeek === 0) {
+                            isWeekend = true;
+                        }
+                    } else { // Destek Personeli ve diğerleri için
+                        // Sadece Pazar(0) hafta tatilidir.
+                        if (dayOfWeek === 0) {
+                            isWeekend = true;
+                        }
+                    }
+
+                    // YENİ ÖNCELİK SIRASI:
+                    // 1. Resmi Tatil mi?
                     if (isResmiTatil(date)) {
                         code = 'RT';
+                    // 2. Hafta Tatili mi?
+                    } else if (isWeekend) {
+                        code = 'HT';
+                    // 3. İzinli mi?
                     } else if (izinVerisi[personel.id]?.[dateString]) {
                         code = izinVerisi[personel.id][dateString];
-                    } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-                        code = 'HT';
+                    // 4. Hiçbiri değilse Normal Çalışma Günü
                     } else {
                         code = 'N';
                         // Öğretmense saatini ders programından al, değilse varsayılan saat ata
                         if (personel.neviAdi.includes('Eğitim Personeli')) {
                             hours = scheduleData[personel.id]?.[dayOfWeekTR] || 0;
-                        } else {
-                            hours = 8;
+                       } else {
+                            // YENİ KONTROL: Sözleşme türüne göre saat ata
+                            if (personel.sozlesme_turu === 'Belirsiz Süreli') {
+                                hours = 7.5;
+                            } else {
+                                hours = 8; // Diğer tam zamanlı personel (örn: Belirli Süreli) için 8 saat kalır
+                            }
                         }
                     }
                 }
-        puantajData[personel.id][dateString] = { code: code, hours: hours, notes: '' };
+               puantajData[personel.id][dateString] = { code: code, hours: hours, notes: '' };
             }
         });
 
@@ -3348,13 +3465,72 @@ async function generateInitialPuantaj() {
 
 function calculateMonthlyHours(personelId) {
     const personel = puantajPersonelList.find(p => p.id == personelId);
-    if (!personel || !puantajData[personelId]) return { genelToplam: 0, ekDers: 0 };
-    let totalHours = 0;
-    Object.values(puantajData[personelId]).forEach(dayData => { if(dayData.code === 'N') totalHours += dayData.hours; });
-    const aylikDersSaati = (personel.maasKarsiligi / 5) * 4; 
-    let ekDers = Math.max(0, totalHours - aylikDersSaati);
-    return { genelToplam: totalHours, ekDers: Math.round(ekDers) };
+    const personelData = puantajData[personelId];
+    if (!personel || !personelData) return { genelToplam: 0, ekDers: 0 };
+
+    let genelToplam = 0;
+    let ekDers = 0;
+    const unvan = personel.unvan || '';
+
+    // KURAL 1: Personel "Okul Müdürü" ise
+    if (unvan.includes('Okul Müdürü')) {
+        Object.keys(personelData).forEach(dateString => {
+            const dayData = personelData[dateString];
+            if (dayData.code === 'N' || dayData.code === 'RTÇ') {
+                ekDers += 4;
+            }
+        });
+        genelToplam = ekDers;
+        return { genelToplam, ekDers };
+    }
+
+    // KURAL 2: Personel "Müdür Yardımcısı" ise
+    if (unvan.includes('Müdür Yardımcısı')) {
+        const yardimciSchedule = [0, 4, 4, 4, 3, 3, 0]; // Pazar, Pzt, Sal, Çar, Per, Cum, Cmt
+        Object.keys(personelData).forEach(dateString => {
+            const dayData = personelData[dateString];
+            if (dayData.code === 'N' || dayData.code === 'RTÇ') {
+                const date = new Date(dateString + 'T00:00:00');
+                const dayOfWeek = date.getDay();
+                ekDers += yardimciSchedule[dayOfWeek];
+            }
+        });
+        genelToplam = ekDers;
+        return { genelToplam, ekDers };
+    }
+
+    // KURAL 3: Diğer tüm personel (Öğretmenler, Destek Personeli vb.) için standart hesaplama
+    Object.values(personelData).forEach(dayData => {
+        if (dayData.code === 'N' || dayData.code === 'K' || dayData.code === 'RTÇ') {
+            genelToplam += (dayData.hours || 0);
+        }
+    });
+
+    const maasKarsiligiHaftalik = parseInt(personel.maasKarsiligi) || 0;
+
+    if (!personel.neviAdi.includes('Eğitim Personeli') || maasKarsiligiHaftalik === 0) {
+        ekDers = genelToplam;
+    } else {
+        const workWeeks = new Set();
+        // --- HATANIN OLDUĞU YER BURASIYDI ---
+        // getWeek fonksiyonundaki 'a' harfi 'd' olarak düzeltildi.
+        const getWeek = (d) => { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d - yearStart) / 86400000) + 1)/7); };
+        
+        Object.keys(personelData).forEach(dateString => {
+             if(personelData[dateString].code === 'N' || personelData[dateString].code === 'RTÇ' || personelData[dateString].code === 'K'){
+                 workWeeks.add(getWeek(new Date(dateString + 'T00:00:00')));
+             }
+        });
+
+        const toplamMaasKarsiligi = workWeeks.size * maasKarsiligiHaftalik;
+        ekDers = Math.max(0, genelToplam - toplamMaasKarsiligi);
+    }
+    
+    
+    
+    return { genelToplam, ekDers: Math.round(ekDers) };
 }
+
 function calculateStatusCounts(personelId) {
     const personelData = puantajData[personelId];
     if (!personelData) return {};
