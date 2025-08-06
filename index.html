@@ -360,9 +360,11 @@
         #modal-cancel { background-color: #6c757d; color: white; }
      
 @media print {
-    /* YATAY A3 ZORLAMASI KALDIRILDI, SADECE KENAR BOŞLUKLARI AYARLANDI */
+    /* ------------------------------------------------------------- */
+    /* 1. GENEL YAZDIRMA AYARLARI                                    */
+    /* ------------------------------------------------------------- */
     @page {
-        margin: 1cm;
+        margin: 1cm; /* Sayfa kenar boşlukları */
     }
 
     * {
@@ -370,64 +372,106 @@
         print-color-adjust: exact !important;
     }
 
-    /* DAHA OKUNAKLI BİR TEMEL YAZI TİPİ BOYUTU AYARLANDI */
     body, html {
         background-color: #fff !important;
-        font-size: 10pt; /* 8px'ten 10pt'ye yükseltildi */
-        width: 100%;
-        height: auto;
+        font-size: 10pt; /* Varsayılan okunaklı font boyutu */
         overflow: visible !important;
     }
 
-    /* Yazdırmada gizlenecek genel elemanlar */
-    .sidebar, .main-content > .panel > .panel-header, .controls.puantaj, .puantaj-legend, .bottom-section, .modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir, .no-print, #gorevlendirme .gorevlendirme-form-area {
+    .main-content {
+        padding: 0 !important;
+        overflow: visible !important;
+        margin-left: 0 !important;
+    }
+
+    /* Yazdırmada GİZLENECEK tüm elemanlar bu listede */
+    .sidebar, .panel-header, .controls.puantaj, .puantaj-legend, .bottom-section, .no-print,
+    .modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir,
+    #gorevlendirme .gorevlendirme-form-area {
         display: none !important;
     }
-    
-    .main-content {
-        padding: 0;
-        overflow: visible;
-        margin-left: 0; /* Sabit menü boşluğu iptal edildi */
-    }
 
-    .panel {
-        box-shadow: none !important;
-        border: none !important;
-        padding: 0 !important;
+
+    /* ------------------------------------------------------------- */
+    /* 2. PUANTAJ CETVELİ YAZDIRMA AYARLARI                          */
+    /* ------------------------------------------------------------- */
+    #puantaj, #puantaj .panel, #puantaj-table-container { 
+        box-shadow: none !important; 
+        border: none !important; 
+        padding: 0 !important; 
         margin: 0 !important;
+        overflow: visible !important;
     }
 
-    /* GÖREVLENDİRME TABLOSU İÇİN ÖZEL, OKUNAKLI STİLLER EKLENDİ */
-    .gorevlendirme-table, .gorevlendirme-table th, .gorevlendirme-table td {
-        border: 1px solid #666; /* Çizgiler daha belirgin hale getirildi */
+    .puantaj-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
     }
+    
+    .puantaj-table th, .puantaj-table td {
+        border: 1px solid #999 !important; /* Çizgiler daha görünür yapıldı */
+        padding: 4px 2px !important; /* Hücre içi boşluklar ayarlandı */
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+
+    /* İSTEK 1: Sütun başlıkları artık alta kayacak */
+    .puantaj-table thead th {
+        font-size: 8pt !important;
+        font-weight: bold !important;
+        white-space: normal !important; /* Bu kural uzun başlıkların alta kaymasını sağlar */
+        vertical-align: bottom !important; /* Alta kayan yazıları aşağıya hizalar */
+        padding-bottom: 6px !important;
+    }
+    
+    .puantaj-table .col-personel, .puantaj-table .col-unvan {
+    font-size: 9pt !important;
+    text-align: left !important;
+    padding-left: 5px !important;
+    white-space: normal !important; /* Uzun isimlerin ve unvanların alta kaymasını sağlar */
+    vertical-align: middle !important;
+}
+
+/* Personel adı sütunu için minimum genişlik ayarı */
+.puantaj-table .col-personel {
+    min-width: 120px !important;
+}
+
+/* Unvan sütunu için minimum genişlik ayarı */
+.puantaj-table .col-unvan {
+    min-width: 100px !important;
+}
+
+    /* İSTEK 2: Saat sayıları büyütüldü ve kalın yapıldı */
+    .puantaj-table .hour-cell {
+        font-size: 9pt !important;
+        font-weight: bold !important;
+        color: #000 !important;
+    }
+    
+    /* Okunabilirlik için puantaj kodları (N, R, I) da büyütüldü */
+    .puantaj-table .status-cell {
+        font-size: 10pt !important;
+        font-weight: bold !important;
+    }
+
+
+    /* ------------------------------------------------------------- */
+    /* 3. DİĞER MODÜLLERİN YAZDIRMA AYARLARI (KORUNUYOR)            */
+    /* ------------------------------------------------------------- */
     .gorevlendirme-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 9pt; /* Okunaklı bir boyut */
+        font-size: 9pt;
     }
     .gorevlendirme-table th, .gorevlendirme-table td {
-        padding: 8px; /* Hücre içi boşluklar artırıldı */
+        border: 1px solid #666;
+        padding: 8px;
         text-align: left;
     }
     .gorevlendirme-table th {
         background-color: #f0f0f0;
         font-weight: bold;
-    }
-    .gorevlendirme-table .ders-detaylari {
-        padding-left: 15px;
-        margin: 0;
-    }
-    
-    /* Puantaj tablosu için olan küçük font ayarları korunuyor, çünkü o tablo çok geniş */
-    #puantaj-table-container {
-        overflow: visible !important;
-    }
-    .puantaj-table {
-        font-size: 7px !important;
-    }
-    .puantaj-table th, .puantaj-table td {
-        padding: 3px 1px !important;
     }
 }
 /* EKLENECEK KOD BİTİŞİ */
@@ -492,7 +536,7 @@
 </style>
 </head>
 <body>
-<div id="login-panel" style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--light-gray-color);">
+<div id="login-panel" style="display: none; justify-content: center; align-items: center; height: 100vh; background-color: var(--light-gray-color);">
     <div style="width: 100%; max-width: 400px; padding: 40px; background: var(--white-color); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <h2 style="text-align: center; color: var(--theme-primary); margin-bottom: 30px;">Okul Puantaj Sistemi Giriş Paneli</h2>
         <div class="form-group">
@@ -508,7 +552,7 @@
     </div>
 </div>
     <div id="toast-container"></div>
-    <div class="app-container">
+    <div class="app-container" style="display: none;">
 
 
         <aside class="sidebar">
@@ -1304,7 +1348,31 @@ async function loadZamanCizelgesiAyarlari() {
         console.error("Zaman çizelgesi yüklenirken hata:", e);
     }
 }
-        
+      // YENİ EKLENECEK YARDIMCI FONKSİYON
+        function formatDateDDMMYYYY(dateString) {
+            // Eğer tarih boş veya tanımsız ise '---' döndür
+            if (!dateString) {
+                return '---';
+            }
+            try {
+                const parts = dateString.split('-'); // 'YYYY-MM-DD' formatını ayır
+                // Geçerli bir tarih formatı olup olmadığını kontrol et
+                if (parts.length !== 3) {
+                   return dateString; // Hatalı formatta ise orijinal veriyi döndür
+                }
+                const year = parts[0];
+                const month = parts[1];
+                const day = parts[2];
+                return `${day}.${month}.${year}`; // 'DD.MM.YYYY' formatında birleştir
+            } catch (error) {
+                // Herhangi bir hata olursa orijinal veriyi güvenli olarak geri döndür
+                return dateString;
+            }
+        }
+        // MEVCUT FONKSİYON BURADAN DEVAM EDİYOR
+
+
+          
         async function fetchStaff() {
             const listContainer = document.querySelector('#staff-list .panel-body');
             listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
@@ -1314,7 +1382,10 @@ async function loadZamanCizelgesiAyarlari() {
                 const gorevMap = Object.fromEntries(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
                 if (staffSnap.empty) { listContainer.innerHTML = '<p>Henüz kayıtlı personel bulunmamaktadır.</p>'; return; }
                 let tableHTML = `<table class="staff-table"><thead><tr><th>Adı Soyadı</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>`;
-                staffSnap.forEach(doc => { const s = doc.data(); tableHTML += `<tr><td>${s.ad_soyad || ''}</td><td>${neviMap[s.personel_nevisi] || 'Bilinmiyor'}</td><td>${gorevMap[s.gorevi_bransi] || 'Bilinmiyor'}</td><td>${s.ise_giris || '---'}</td><td>${s.isten_ayrilis || '---'}</td><td class="actions-cell"><button class="btn btn-edit" data-id="${doc.id}">Düzenle</button><button class="btn btn-delete" data-id="${doc.id}">Sil</button></td></tr>`; });
+                staffSnap.forEach(doc => { 
+                    const s = doc.data(); 
+                    tableHTML += `<tr><td>${s.ad_soyad || ''}</td><td>${neviMap[s.personel_nevisi] || 'Bilinmiyor'}</td><td>${gorevMap[s.gorevi_bransi] || 'Bilinmiyor'}</td><td>${formatDateDDMMYYYY(s.ise_giris)}</td><td>${formatDateDDMMYYYY(s.isten_ayrilis)}</td><td class="actions-cell"><button class="btn btn-edit" data-id="${doc.id}">Düzenle</button><button class="btn btn-delete" data-id="${doc.id}">Sil</button></td></tr>`; 
+                });
                 listContainer.innerHTML = tableHTML + `</tbody></table>`;
             } catch (e) { listContainer.innerHTML = '<p style="color:red;">Personel listesi yüklenemedi.</p>'; console.error(e); }
         }
@@ -2895,6 +2966,11 @@ const selectMonth = document.getElementById('select-month'), inputYear = documen
             savePuantajBtn = document.getElementById('btn-save-puantaj'), // Yeni buton
             lockPuantajBtn = document.getElementById('btn-lock-puantaj'); // Yeni buton
 
+        modalSaveBtn.addEventListener('click', saveModalChanges);
+        modalCancelBtn.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+        });
+
         const now = new Date(), months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
         selectMonth.innerHTML = '';
         months.forEach((m, i) => selectMonth.add(new Option(m, i)));
@@ -3533,10 +3609,12 @@ function attachCellListeners() {
             await signOut(auth);
             // Başarılı çıkış sonrası onAuthStateChanged tetiklenecek ve giriş ekranını gösterecek.
         } catch (error) {
-            console.error("Çıkış Hatası:", error);
+            ;
         }
     });
-});
+
+    });
+
     </script>
 <div id="edit-nobet-modal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
