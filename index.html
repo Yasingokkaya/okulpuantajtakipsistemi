@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Okul Puantaj Sistemi</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#192a56"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -607,6 +610,54 @@
 }
 .delete-lesson-btn:hover {
     background: var(--danger-color);
+}
+/* ================================================= */
+/* === MOBİL UYUMLULUK İÇİN EKLENECEK KODLAR === */
+/* ================================================= */
+
+@media (max-width: 768px) {
+    .app-container {
+        /* Elementleri alt alta sıralamak için */
+        flex-direction: column;
+    }
+
+    .sidebar {
+        /* Kenar çubuğunu ekrana sabitlemeyi kaldır */
+        position: relative;
+        width: 100%;
+        /* Yüksekliği içeriğe göre otomatik ayarla */
+        height: auto;
+        /* Menülerin alta taşmasını engellemek için */
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .main-content {
+        /* Sol menü için bırakılan boşluğu sıfırla */
+        margin-left: 0;
+        padding: 15px; /* Mobil için daha uygun bir padding */
+    }
+
+    /* Görevlendirme formunu mobil için düzenle */
+    #gorevlendirme .form-container .form-grid,
+    #gorevlendirme .gorevlendirme-layout,
+    .form-grid {
+        grid-template-columns: 1fr; /* Tüm form elemanlarını alt alta sırala */
+    }
+
+    /* Puantaj tablosundaki butonları alt alta getir */
+    .puantaj .controls {
+        flex-direction: column;
+        align-items: stretch; /* Butonların tam genişlik kaplamasını sağla */
+    }
+
+    .puantaj .controls-left, .puantaj .controls-right {
+        flex-direction: column;
+        width: 100%;
+    }
+    .puantaj .controls button, .puantaj .export-buttons button {
+        width: 100%;
+    }
 }
 </style>
 </head>
@@ -2770,6 +2821,7 @@ function calculateIzinSuresi(izin, staffList) {
         <head>
             <meta charset="UTF-8">
             <title>İzin İstek Formu - ${personel.ad_soyad}</title>
+           
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
                 body { font-family: 'Roboto', sans-serif; font-size: 11pt; margin: 2cm; line-height: 1.6; color: #333; }
@@ -4038,7 +4090,16 @@ function attachCellListeners() {
         </div>
     </div>
 </div>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, err => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+    });
+  }
+</script>
 </body>
-
 </html>
-
