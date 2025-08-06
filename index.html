@@ -205,7 +205,11 @@
         .radio-group input { width: auto; margin-right: 0; }
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 15px 20px; color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateX(100%); animation: slideIn 0.3s forwards; }
-        .toast.success { background-color: var(--success-color); } .toast.error { background-color: var(--danger-color); }
+        .toast.success { background-color: var(--success-color); }
+.toast.error { background-color: var(--danger-color); }
+
+/* YENİ EKLENEN BİLGİ UYARISI STİLİ */
+.toast.info { background-color: var(--info-color); }
         @keyframes slideIn { to { opacity: 1; transform: translateX(0); } } @keyframes slideOut { to { opacity: 0; transform: translateX(100%); } }
         .settings-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
         .settings-tab-button { padding: 10px 20px; cursor: pointer; border: none; background-color: transparent; font-size: 16px; border-bottom: 3px solid transparent; }
@@ -2928,14 +2932,14 @@ function renderPuantajTable(nobetVerisi) {
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
 
-    // Puantaj verisi yoksa kullanıcıyı bilgilendirir.
     if (!puantajData || Object.keys(puantajData).length === 0) {
-        container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4 style="color: var(--theme-primary);">Bu ay için görüntülenecek puantaj verisi bulunmuyor.</h4><p style="font-size: 16px;">Lütfen <strong>'Yeni Puantaj Oluştur'</strong> butonuna tıklayarak yeni bir cetvel oluşturun.</p></div>`;
-        document.getElementById('total-ekders').textContent = "0 Saat";
-        document.getElementById('total-nobet').textContent = "0 Saat";
-        document.getElementById('total-rehberlik').textContent = "0 Saat";
-        return;
-    }
+    // DÜZELTME: "container.innerHTML" içindeki <p> etiketine okunabilir bir renk stili eklendi.
+    container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4 style="color: var(--theme-primary);">Bu ay için görüntülenecek puantaj verisi bulunmuyor.</h4><p style="font-size: 16px; color: var(--dark-text-color);">Lütfen <strong>'Yeni Puantaj Oluştur'</strong> butonuna tıklayarak yeni bir cetvel oluşturun.</p></div>`;
+    document.getElementById('total-ekders').textContent = "0 Saat";
+    document.getElementById('total-nobet').textContent = "0 Saat";
+    document.getElementById('total-rehberlik').textContent = "0 Saat";
+    return;
+}
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
@@ -3290,7 +3294,7 @@ const selectMonth = document.getElementById('select-month'), inputYear = documen
 
 // MEVCUT renderPuantajTable FONKSİYONUNU TAMAMEN SİLİP YERİNE BU KODU YAPIŞTIRIN
 
-function renderPuantajTable(nobetVerisi) {
+function renderPuantajTable(nobetVerisi) { 
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
