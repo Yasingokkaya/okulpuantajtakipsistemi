@@ -612,7 +612,7 @@
     background: var(--danger-color);
 }
 /* ================================================= */
-/* === MOBİL UYUMLULUK İÇİN EKLENECEK KODLAR === */
+/* === MOBİL UYUMLULUK İÇİN GÜNCELLENMİŞ KODLAR === */
 /* ================================================= */
 
 @media (max-width: 768px) {
@@ -621,16 +621,16 @@
         flex-direction: column;
     }
 
+    /* --- DEĞİŞİKLİK BU BLOKTA YAPILDI --- */
     .sidebar {
         /* Kenar çubuğunu ekrana sabitlemeyi kaldır */
         position: relative;
         width: 100%;
         /* Yüksekliği içeriğe göre otomatik ayarla */
         height: auto;
-        /* Menülerin alta taşmasını engellemek için */
-        max-height: 400px;
-        overflow-y: auto;
+        /* Yükseklik sınırlaması kaldırıldı, böylece tüm menü sığıyor */
     }
+    /* --- DEĞİŞİKLİĞİN SONU --- */
 
     .main-content {
         /* Sol menü için bırakılan boşluğu sıfırla */
