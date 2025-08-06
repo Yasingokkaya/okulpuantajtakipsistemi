@@ -316,6 +316,20 @@
     font-weight: 500;
     height: 32px;
 }
+/* YENİ EKLENEN KOD BAŞLANGICI */
+
+        /* Adım 1: 'N' kodlu hücrelerin arka planını şeffaf yapar */
+        .puantaj-table .status-N {
+            background-color: transparent;
+            color: #37474f; /* Yazı rengi okunaklı kalsın */
+        }
+
+        /* Adım 2: Haftaları ayıran dikey çizgi stilini tanımlar */
+        .puantaj-table .week-divider {
+            border-right: 2px solid #6c757d; /* Daha kalın ve koyu bir çizgi */
+        }
+
+        /* YENİ EKLENEN KOD BİTİŞİ */
 
 /* Özet Sütunları Arka Plan Renkleri */
 .puantaj-table .summary-yellow { background-color: #FFECB3; font-weight: bold; }
@@ -414,6 +428,10 @@
         text-align: center !important;
         vertical-align: middle !important;
     }
+/* YAZDIRMA İÇİN HAFTALIK AYIRICI ÇİZGİ (YENİ EKLENEN KOD) */
+        .puantaj-table .week-divider {
+            border-right: 3px double #000 !important; /* Kalın, çift ve siyah bir çizgi */
+        }
 
     /* İSTEK 1: Sütun başlıkları artık alta kayacak */
     .puantaj-table thead th {
@@ -2714,7 +2732,9 @@ function renderPuantajTable(nobetVerisi) {
 
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
-            tableHTML += `<th class="col-day">${day}<br>${gunler[date.getDay()]}</th>`;
+            const isSunday = date.getDay() === 0;
+            const dividerClass = isSunday ? 'week-divider' : '';
+            tableHTML += `<th class="col-day ${dividerClass}">${day}<br>${gunler[date.getDay()]}</th>`;
         }
 
         tableHTML += `
@@ -2746,7 +2766,9 @@ function renderPuantajTable(nobetVerisi) {
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = new Date(year, month, day).toISOString().split('T')[0];
                 const dayData = personelPuantajData[dateString];
-                tableHTML += `<td class="status-cell status-${dayData.code}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || '?'}</td>`;
+                const isSunday = new Date(year, month, day).getDay() === 0;
+                const dividerClass = isSunday ? 'week-divider' : '';
+                tableHTML += `<td class="status-cell status-${dayData.code} ${dividerClass}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || ''}</td>`;
             }
 
             tableHTML += `
@@ -2775,9 +2797,11 @@ function renderPuantajTable(nobetVerisi) {
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = new Date(year, month, day).toISOString().split('T')[0];
                 const dayData = personelPuantajData[dateString];
+                const isSunday = new Date(year, month, day).getDay() === 0;
+                const dividerClass = isSunday ? 'week-divider' : '';
                 const hourContent = (dayData?.code === 'N' || dayData?.code === 'K' || dayData?.code === 'RTÇ') && dayData?.hours > 0 ? dayData.hours : '';
                 const cellClass = hourContent ? 'hour-cell has-hours' : 'hour-cell';
-                tableHTML += `<td class="${cellClass}">${hourContent}</td>`;
+                tableHTML += `<td class="${cellClass} ${dividerClass}">${hourContent}</td>`;
             }
             tableHTML += `</tr>`;
         });
@@ -2914,22 +2938,27 @@ async function initializePuantaj() {
         const gorevSnap = await getSettings('ayarlar_gorevler');
         const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
 
+        const neviSnap = await getSettings('ayarlar_personel_nevileri');
+        const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
+
         puantajPersonelList = personelSnap.docs.map(doc => {
-    const data = doc.data();
-    return {
-        id: doc.id,
-        ad: data.ad_soyad || 'İsimsiz',
-        unvan: gorevMap.get(data.gorevi_bransi) || 'Belirtilmemiş',
-        maasKarsiligi: parseInt(data.maas_karsiligi) || 20,
-        rehberlik_gorevi: data.rehberlik_gorevi || 'hayir',
-        esDurumu: data.es_durumu, // BU SATIRI EKLEYİN
-        cocuk0_6: data.cocuk_0_6, // BU SATIRI EKLEYİN
-        cocuk6_18: data.cocuk_6_ustu, // BU SATIRI EKLEYİN
-        sozlesme_turu: data.sozlesme_turu || 'Belirsiz Süreli', // BU SATIRI EKLEYİN
-        ise_giris: data.ise_giris || '---',
-        isten_ayrilis: data.isten_ayrilis || '---'
-    };
-});
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ad: data.ad_soyad || 'İsimsiz',
+                unvan: gorevMap.get(data.gorevi_bransi) || 'Belirtilmemiş',
+                neviAdi: neviMap.get(data.personel_nevisi) || 'Bilinmiyor', // YENİ EKLENDİ
+                maasKarsiligi: parseInt(data.maas_karsiligi) || 20,
+                rehberlik_gorevi: data.rehberlik_gorevi || 'hayir',
+                esDurumu: data.es_durumu, 
+                cocuk0_6: data.cocuk_0_6, 
+                cocuk6_18: data.cocuk_6_ustu, 
+                sozlesme_turu: data.sozlesme_turu || 'Belirsiz Süreli',
+                ise_giris: data.ise_giris || '---',
+                isten_ayrilis: data.isten_ayrilis || '---',
+                kismi_zamanli_calisma: data.kismi_zamanli_calisma || {}
+            };
+        });
 // =================================================================
 // KODUNUZDAKİ MEVCUT formatTextForWrapping VE renderPuantajTable
 // FONKSİYONLARINI SİLİP YERİNE BU BLOĞUN TAMAMINI YAPIŞTIRIN
@@ -2965,7 +2994,7 @@ const selectMonth = document.getElementById('select-month'), inputYear = documen
             modalSaveBtn = document.getElementById('modal-save'), modalCancelBtn = document.getElementById('modal-cancel'),
             savePuantajBtn = document.getElementById('btn-save-puantaj'), // Yeni buton
             lockPuantajBtn = document.getElementById('btn-lock-puantaj'); // Yeni buton
-
+ 
         modalSaveBtn.addEventListener('click', saveModalChanges);
         modalCancelBtn.addEventListener('click', () => {
             modalOverlay.style.display = 'none';
@@ -3263,27 +3292,52 @@ async function generateInitialPuantaj() {
                 const dayOfWeek = date.getDay();
                 const dayOfWeekTR = gunlerTR[dayOfWeek];
 
-                let code = 'N';
+                let code = '';
                 let hours = 0;
 
-                if (isResmiTatil(date)) {
-                    code = 'RT';
-                } else if (izinVerisi[personel.id]?.[dateString]) {
-                    code = izinVerisi[personel.id][dateString];
-                } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    code = 'HT';
+                // ANA KONTROL: Personel "Kısmi Süreli" ve "Eğitim Personeli DEĞİL" mi?
+                if (personel.sozlesme_turu === 'Kısmi Süreli' && !personel.neviAdi.includes('Eğitim Personeli')) {
+                    
+                    // --- SADECE KISMİ SÜRELİ DESTEK PERSONELİ İÇİN ÖZEL KURALLAR ---
+                    const scheduledHours = personel.kismi_zamanli_calisma?.[dayOfWeekTR] || 0;
+                    
+                    // Tanımlı saati varsa 'K' ata, yoksa HER DURUMDA (resmi tatil dahil) boş bırak.
+                    if (scheduledHours > 0) {
+                        code = 'K';
+                        hours = scheduledHours;
+                    } else {
+                        code = '';
+                        hours = 0;
+                    }
+
                 } else {
-                    code = 'N';
-                    hours = scheduleData[personel.id]?.[dayOfWeekTR] || 0;
+                    // --- DİĞER TÜM PERSONEL (Tüm Öğretmenler ve Tam Zamanlı Personel) İÇİN STANDART MANTIK ---
+                    if (isResmiTatil(date)) {
+                        code = 'RT';
+                    } else if (izinVerisi[personel.id]?.[dateString]) {
+                        code = izinVerisi[personel.id][dateString];
+                    } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+                        code = 'HT';
+                    } else {
+                        code = 'N';
+                        // Öğretmense saatini ders programından al, değilse varsayılan saat ata
+                        if (personel.neviAdi.includes('Eğitim Personeli')) {
+                            hours = scheduleData[personel.id]?.[dayOfWeekTR] || 0;
+                        } else {
+                            hours = 8;
+                        }
+                    }
                 }
-                puantajData[personel.id][dateString] = { code: code, hours: hours, notes: '' };
+        puantajData[personel.id][dateString] = { code: code, hours: hours, notes: '' };
             }
         });
 
-        renderPuantajTable(nobetVerisi); 
+        // Veri oluşturma işlemi tamamlandıktan sonra tabloyu çizdir.
+        renderPuantajTable(nobetVerisi);
         renderGrandTotals(nobetVerisi);
         renderLegend();
         attachCellListeners();
+
         showToast('Puantaj başarıyla oluşturuldu!', 'success');
 
     } catch (error) {
@@ -3291,7 +3345,6 @@ async function generateInitialPuantaj() {
         showToast('Puantaj oluşturulamadı. Lütfen verileri kontrol edin.', 'error');
     }
 }
-// =================== 2. ADIM BİTİŞİ ===================
 
 function calculateMonthlyHours(personelId) {
     const personel = puantajPersonelList.find(p => p.id == personelId);
