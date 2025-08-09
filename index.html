@@ -40,11 +40,7 @@
         overflow-y: auto;
         overflow-x: hidden;
     }
-    .sidebar-footer {
-        padding: 10px 0;
-        border-top: 1px solid var(--sidebar-hover-bg);
-        flex-shrink: 0;
-    }
+    
     .sidebar nav::-webkit-scrollbar {
         width: 8px;
     }
@@ -87,11 +83,7 @@
         .menu-item-group .accordion-trigger::after { content: '▶'; font-size: 0.7em; transition: transform 0.2s; }
         .menu-item-group.open > .accordion-trigger::after { transform: rotate(90deg); }
         .sub-menu { list-style: none; padding-left: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; background-color: rgba(0,0,0,0.2); }
-.sidebar-footer {
-    margin-top: auto; /* Bu sihirli satır, elemanı en alta iter */
-    padding: 10px 0;
-    border-top: 1px solid var(--sidebar-hover-bg);
-}
+
 .sidebar-footer a {
     display: flex;
     align-items: center;
@@ -110,8 +102,22 @@
         .sub-menu li a.active { color: var(--white-color); background-color: transparent; border-left-color: var(--theme-accent); }
 .sidebar-footer {
     margin-top: auto; /* Bu sihirli satır, elemanı en alta iter */
-    padding-top: 10px;
+    padding: 10px 0;
     border-top: 1px solid var(--sidebar-hover-bg);
+    flex-shrink: 0;
+}
+.sidebar-footer a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+.sidebar-footer a:hover {
+    background-color: var(--danger-color);
+    color: var(--white-color);
 }
 .sidebar-footer a {
     display: flex;
@@ -912,6 +918,31 @@
         Yeni Puantaj Oluştur
     </button>
 </div>
+<div class="bulk-update-container" style="display: flex; flex-direction: column; gap: 10px; padding: 15px; background-color: #e9ecef; border-radius: 8px; border: 1px solid #ced4da; margin-top: 15px; grid-column: 1 / -1;">
+    <h4 style="margin: 0 0 5px 0; color: var(--theme-primary);">Toplu Güncelleme</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: flex-end;">
+        <div>
+            <label for="bulk-update-day" style="font-size: 13px; font-weight: 500;">Uygulanacak Gün:</label>
+            <select id="bulk-update-day" class="form-control" style="padding: 8px;"></select>
+        </div>
+        <div>
+            <label for="bulk-update-group" style="font-size: 13px; font-weight: 500;">Personel Grubu:</label>
+            <select id="bulk-update-group" class="form-control" style="padding: 8px;">
+                <option value="Tümü">Tüm Personel</option>
+                <option value="Belirli Süreli">Belirli Süreli</option>
+                <option value="Belirsiz Süreli">Belirsiz Süreli</option>
+                <option value="Kısmi Süreli">Kısmi Süreli</option>
+            </select>
+        </div>
+        <div>
+            <label for="bulk-update-status" style="font-size: 13px; font-weight: 500;">Yeni Durum Kodu:</label>
+            <select id="bulk-update-status" class="form-control" style="padding: 8px;"></select>
+        </div>
+        <button id="btn-bulk-update" class="btn" style="background-color: #6f42c1; color: white; height: 38px;">Uygula</button>
+    </div>
+</div>
+
+
                             <div class="controls-right export-buttons">
     <button id="btn-save-puantaj" style="background-color: #28a745;">Kaydet</button>
     <button id="btn-lock-puantaj" style="background-color: #fd7e14;">Puantajı Kilitle</button>
@@ -1283,6 +1314,13 @@ const resmiTatiller = {
         ]
     }
 };
+function formatDateDDMMYYYY(dateString) {
+    if (!dateString || typeof dateString !== 'string') return '---';
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return dateString;
+    const [year, month, day] = parts;
+    return `${day}.${month}.${year}`;
+}
 
 // Belirtilen bir tarihin resmi tatil olup olmadığını kontrol eden yardımcı fonksiyon
 function isResmiTatil(date) {
@@ -2454,18 +2492,7 @@ async function copyNobetSchedule() {
         showToast('Nöbetler kopyalanırken bir hata oluştu.', 'error');
     }
 }
-// YENİ EKLENECEK KOD BLOKU BAŞLANGICI: Tarih Formatlama Fonksiyonu
-function formatDateDDMMYYYY(dateString) {
-    if (!dateString || typeof dateString !== 'string') {
-        return '---';
-    }
-    const parts = dateString.split('-');
-    if (parts.length !== 3) {
-        return dateString; // Hatalı formatta ise orijinali döndür
-    }
-    const [year, month, day] = parts;
-    return `${day}.${month}.${year}`;
-}
+
 let izinTakipInitialized = false;
 async function initializeIzinTakip() {
     if (izinTakipInitialized) return;
@@ -2946,7 +2973,7 @@ function renderPuantajTable(nobetVerisi) {
                 <td class="col-date vertical-divider" rowspan="2">${formatDateDDMMYYYY(personel.isten_ayrilis)}</td>`;
 
             for (let day = 1; day <= daysInMonth; day++) {
-                const dateString = new Date(year, month, day).toISOString().split('T')[0];
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = personelPuantajData[dateString] || { code: '', hours: 0, notes: '' };
                 const isDividerDay = (new Date(year, month, day).getDay() === 0 || day === daysInMonth);
                 const dividerClass = isDividerDay ? 'vertical-divider' : '';
@@ -2978,7 +3005,7 @@ function renderPuantajTable(nobetVerisi) {
             
             tableHTML += `<tr class="personel-row-hours horizontal-divider">`;
             for (let day = 1; day <= daysInMonth; day++) {
-                const dateString = new Date(year, month, day).toISOString().split('T')[0];
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = personelPuantajData[dateString] || { code: '', hours: 0, notes: '' };
                 const isDividerDay = (new Date(year, month, day).getDay() === 0 || day === daysInMonth);
                 const dividerClass = isDividerDay ? 'vertical-divider' : '';
@@ -3247,6 +3274,24 @@ if(!puantajInitialized) {
     deleteBtn.addEventListener('click', deleteCurrentPuantaj); // YENİ OLAY ATAMASI
     savePuantajBtn.addEventListener('click', savePuantajData);
     lockPuantajBtn.addEventListener('click', togglePuantajLock);
+ // YENİ EKLENECEK SATIR
+ document.getElementById('btn-bulk-update').addEventListener('click', applyBulkUpdate);
+
+    selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth);
+//...
+// Toplu güncelleme menülerini doldur
+    const bulkUpdateDaySelect = document.getElementById('bulk-update-day');
+    const bulkUpdateStatusSelect = document.getElementById('bulk-update-status');
+    const daysInMonth = new Date(inputYear.value, parseInt(selectMonth.value) + 1, 0).getDate();
+    bulkUpdateDaySelect.innerHTML = '';
+    for (let i = 1; i <= daysInMonth; i++) {
+        bulkUpdateDaySelect.add(new Option(i, i));
+    }
+    const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün' };
+    bulkUpdateStatusSelect.innerHTML = '';
+     for(const code in statusCodes) {
+        bulkUpdateStatusSelect.add(new Option(`${statusCodes[code]} (${code})`, code));
+    }
 
     selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth);
     inputYear.addEventListener('change', loadPuantajDataForCurrentMonth);
@@ -3397,7 +3442,7 @@ async function fetchAndProcessSchedules() {
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                const dateString = date.toISOString().split('T')[0];
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayOfWeek = date.getDay();
                 const dayOfWeekTR = gunlerTR[dayOfWeek];
 
@@ -3625,7 +3670,7 @@ function renderGrandTotals(nobetVerisi = {}) {
             const personel = puantajPersonelList.find(p => p.id == personelId);
             const dayData = puantajData[personelId]?.[date];
             if(!personel || !dayData) return;
-            document.getElementById('p-modal-title').textContent = `${personel.ad} - ${new Date(date).toLocaleDateString('tr-TR', {timeZone: 'UTC'})}`;
+            document.getElementById('p-modal-title').textContent = `${personel.ad} - ${formatDateDDMMYYYY(date)}`;
             document.getElementById('modal-status').value = dayData.code;
             document.getElementById('modal-hours').value = dayData.hours;
             document.getElementById('modal-notes').value = dayData.notes;
@@ -3699,6 +3744,64 @@ async function saveModalChanges() {
 // =================== 3. ADIM BİTİŞİ ===================
 function printPuantaj() {
     window.print();
+}
+
+/**
+ * Seçilen güne, seçilen personel grubuna toplu olarak yeni bir durum kodu atar.
+ */
+async function applyBulkUpdate() {
+    // Kullanıcının arayüzden seçtiği değerleri al
+    const day = document.getElementById('bulk-update-day').value;
+    const group = document.getElementById('bulk-update-group').value;
+    const newStatusCode = document.getElementById('bulk-update-status').value;
+    const year = document.getElementById('input-year').value;
+    const month = document.getElementById('select-month').value;
+
+    // Gerekli seçimlerin yapıldığından emin ol
+    if (!day || !group || !newStatusCode) {
+        return showToast('Lütfen Gün, Grup ve Durum Kodu seçin.', 'error');
+    }
+    
+    // Puantaj verisi yoksa işlemi durdur
+    if (!puantajData || Object.keys(puantajData).length === 0) {
+        return showToast('Önce bir puantaj oluşturmalı veya yüklemelisiniz.', 'error');
+    }
+
+    // Onay al (önemli!)
+    const confirmationMessage = `'${group}' grubundaki tüm personel için ayın ${day}. gününün durumunu '${newStatusCode}' olarak değiştirmek istediğinizden emin misiniz?`;
+    if (!confirm(confirmationMessage)) {
+        return;
+    }
+
+    // Hedef personel grubunu filtrele
+    const targetPersonnel = puantajPersonelList.filter(p => {
+        if (group === 'Tümü') return true;
+        return p.sozlesme_turu === group;
+    });
+
+    if (targetPersonnel.length === 0) {
+        return showToast('Seçilen grupta güncellenecek personel bulunamadı.', 'info');
+    }
+
+    // Tarih dizesini oluştur (YYYY-AA-GG formatında)
+    const dateString = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    // Ana puantaj verisi üzerinde döngüye gir ve güncelle
+    targetPersonnel.forEach(personel => {
+        // Personelin o aya ait puantaj verisi ve o güne ait kaydı var mı kontrol et
+        if (puantajData[personel.id] && puantajData[personel.id][dateString]) {
+            puantajData[personel.id][dateString].code = newStatusCode;
+        }
+    });
+
+    // Arayüzü güncellemek için tabloyu yeniden çiz
+    showToast('Güncelleme uygulanıyor...', 'info');
+    const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
+    renderPuantajTable(nobetVerisi);
+    renderGrandTotals(nobetVerisi);
+    attachCellListeners(); // Hücre olaylarını yeniden bağla
+
+    showToast('Toplu güncelleme başarıyla uygulandı!', 'success');
 }
 
 
