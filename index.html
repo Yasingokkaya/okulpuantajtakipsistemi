@@ -2753,7 +2753,7 @@ async function generateDilekce(izinId, dilekceTarihiStr) {
 .approval-section { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; }
         </style></head><body>
             <div>
-                <h2>${izinTipi.name.toUpperCase()} İSTEK FORMU</h2>
+                <h2>${izinTipi.name.toLocaleUpperCase('tr-TR')} İSTEK FORMU</h2>
                 <div class="header-section"><h3>ÖZEL İSABET ORTAOKULU MÜDÜRLÜĞÜNE</h3></div>
                 <p style="text-align:right;">TAVŞANLI</p>
                 
@@ -2763,7 +2763,7 @@ async function generateDilekce(izinId, dilekceTarihiStr) {
                     <tr><td>SGK NO</td><td>: ${personel.sgk_no || ''}</td></tr>
                     <tr><td>İŞE GİRİŞ TARİHİ</td><td>: ${iseGirisTR}</td></tr>
                     <tr><td>GÖREVİ</td><td>: ${gorevi}</td></tr>
-                    <tr><td>GÖREV YERİ ADRESİ</td><td>: Hanımçeşme Mah. Gündüz Sokakç No:13 TAVŞANLI/KÜTAHYA</td></tr>
+                    <tr><td>GÖREV YERİ ADRESİ</td><td>: Hanımçeşme Mah. Gündüz Sokak No:13 TAVŞANLI/KÜTAHYA</td></tr>
                 </table>
 
                 <p class="content">${izinIstekMetni}</p>
