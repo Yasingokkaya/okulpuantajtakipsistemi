@@ -1486,28 +1486,7 @@ async function loadZamanCizelgesiAyarlari() {
         console.error("Zaman çizelgesi yüklenirken hata:", e);
     }
 }
-      // YENİ EKLENECEK YARDIMCI FONKSİYON
-        function formatDateDDMMYYYY(dateString) {
-            // Eğer tarih boş veya tanımsız ise '---' döndür
-            if (!dateString) {
-                return '---';
-            }
-            try {
-                const parts = dateString.split('-'); // 'YYYY-MM-DD' formatını ayır
-                // Geçerli bir tarih formatı olup olmadığını kontrol et
-                if (parts.length !== 3) {
-                   return dateString; // Hatalı formatta ise orijinal veriyi döndür
-                }
-                const year = parts[0];
-                const month = parts[1];
-                const day = parts[2];
-                return `${day}.${month}.${year}`; // 'DD.MM.YYYY' formatında birleştir
-            } catch (error) {
-                // Herhangi bir hata olursa orijinal veriyi güvenli olarak geri döndür
-                return dateString;
-            }
-        }
-        // MEVCUT FONKSİYON BURADAN DEVAM EDİYOR
+      
 
 
           
@@ -2450,92 +2429,61 @@ async function copyNobetSchedule() {
         showToast('Nöbetler kopyalanırken bir hata oluştu.', 'error');
     }
 }
-      
-        let izinTakipInitialized = false;
+// YENİ EKLENECEK KOD BLOKU BAŞLANGICI: Tarih Formatlama Fonksiyonu
+function formatDateDDMMYYYY(dateString) {
+    if (!dateString || typeof dateString !== 'string') {
+        return '---';
+    }
+    const parts = dateString.split('-');
+    if (parts.length !== 3) {
+        return dateString; // Hatalı formatta ise orijinali döndür
+    }
+    const [year, month, day] = parts;
+    return `${day}.${month}.${year}`;
+}
+let izinTakipInitialized = false;
 async function initializeIzinTakip() {
     if (izinTakipInitialized) return;
     izinTakipInitialized = true;
 
+    // Elementleri seçme
     const personelSelect = document.getElementById('izin-personel');
     const izinTipiSelect = document.getElementById('izin-tipi');
     const baslangicInput = document.getElementById('izin-baslangic');
+    const bitisInput = document.getElementById('izin-bitis');
+    const kaydetBtn = document.getElementById('izin-kaydet-btn');
+    const tbody = document.getElementById('izin-kayitlari-tbody');
+    const izinHakkiDiv = document.getElementById('personel-izin-hakki');
+    const hesaplamaSonucuDiv = document.getElementById('izin-hesaplama-sonucu');
     const openTopluIzinBtn = document.getElementById('open-toplu-izin-modal-btn');
     const topluIzinModal = document.getElementById('toplu-izin-modal');
     const topluIzinKaydetBtn = document.getElementById('toplu-izin-kaydet-btn');
-    const bitisInput = document.getElementById('izin-bitis');
-    const izinHakkiDiv = document.getElementById('personel-izin-hakki');
-    const hesaplamaSonucuDiv = document.getElementById('izin-hesaplama-sonucu');
 
-    // --- Gerekli tüm verileri fonksiyonun başında çekiyoruz ---
-    izinHakkiDiv.innerHTML = '<em>Personel verileri yükleniyor...</em>';
+
+    // Yeni modal elementleri
+    const dilekceModal = document.getElementById('dilekce-date-modal');
+    const dilekceTarihInput = document.getElementById('dilekce-tarih-input');
+    const dilekceOlusturBtn = document.getElementById('generate-dilekce-with-date-btn');
+
+    // Gerekli verileri çek
     const [personelSnap, izinTipiSnap, neviSnap] = await Promise.all([
         getDocs(query(collection(db, 'personel'), orderBy('ad_soyad'))),
         getSettings('ayarlar_izin_tipleri'),
         getSettings('ayarlar_personel_nevileri')
     ]);
-
     const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
-    const staffListForLeave = personelSnap.docs.map(doc => ({
-        id: doc.id, ...doc.data(), neviAdi: neviMap.get(doc.data().personel_nevisi) || 'Bilinmiyor'
-    }));
-    
-    // --- Select menülerini doldur ---
+    const staffListForLeave = personelSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), neviAdi: neviMap.get(doc.data().personel_nevisi) || 'Bilinmiyor' }));
+
+    // Select'leri doldurma
     personelSelect.innerHTML = '<option value="">Personel Seçiniz...</option>';
     staffListForLeave.forEach(p => personelSelect.add(new Option(p.ad_soyad, p.id)));
-
     izinTipiSelect.innerHTML = '<option value="">İzin Tipi Seçiniz...</option>';
     izinTipiSnap.forEach(doc => izinTipiSelect.add(new Option(doc.data().name, doc.id)));
 
-    // --- Yeni Yardımcı Fonksiyon: Kıdeme göre yasal izin hakkını hesaplar ---
-    const getIzinHakki = (iseGirisTarihi) => {
-        if (!iseGirisTarihi) return { kidemStr: "İşe giriş tarihi yok", izinHakki: 0 };
-        const startDate = new Date(iseGirisTarihi);
-        const anlikTarih = new Date();
-        const yillar = anlikTarih.getFullYear() - startDate.getFullYear();
-        let hizmetSuresi = yillar;
-        if (anlikTarih.getMonth() < startDate.getMonth() || (anlikTarih.getMonth() === startDate.getMonth() && anlikTarih.getDate() < startDate.getDate())) {
-            hizmetSuresi--;
-        }
-        
-        let izinHakki = 0;
-        if (hizmetSuresi >= 15) { izinHakki = 26; }
-        else if (hizmetSuresi > 5) { izinHakki = 20; }
-        else if (hizmetSuresi >= 1) { izinHakki = 14; }
+    await renderIzinKayitlari();
 
-        return `<strong>Kıdem:</strong> ${hizmetSuresi} Yıl | <strong>Yasal İzin Hakkı:</strong> ${izinHakki} gün`;
-    };
-
-    // --- Yeni Ana Fonksiyon: Değişikliklerde tüm hesaplamaları günceller ---
-    const updateIzinHesaplamalari = () => {
-        const personelId = personelSelect.value;
-        const baslangic = baslangicInput.value;
-        const bitis = bitisInput.value;
-        
-        // 1. Personelin yasal izin hakkını göster
-        const seciliPersonel = staffListForLeave.find(p => p.id === personelId);
-        if (seciliPersonel) {
-            izinHakkiDiv.innerHTML = getIzinHakki(seciliPersonel.ise_giris);
-        } else {
-            izinHakkiDiv.innerHTML = '<em>Yasal izin hakkı için personel seçiniz.</em>';
-        }
-
-        // 2. Seçilen tarih aralığı için net izin süresini hesapla ve göster
-        if (personelId && baslangic && bitis && new Date(bitis) >= new Date(baslangic)) {
-            const sure = calculateIzinSuresi({ personelId, baslangicTarihi: baslangic, bitisTarihi: bitis }, staffListForLeave);
-            hesaplamaSonucuDiv.innerHTML = `Hesaplanan Süre: <strong>${sure} iş günü</strong>`;
-        } else {
-            hesaplamaSonucuDiv.innerHTML = '<em>Net süre için tarih aralığı seçiniz.</em>';
-        }
-    };
-
-    // --- Olay Dinleyicileri ---
-    personelSelect.addEventListener('change', updateIzinHesaplamalari);
-    baslangicInput.addEventListener('change', updateIzinHesaplamalari);
-    bitisInput.addEventListener('change', updateIzinHesaplamalari);
-    
-    // Mevcut diğer olay dinleyicileri (kaydetme, silme vb.)
-    document.getElementById('izin-kaydet-btn').addEventListener('click', async () => {
-        // ... (Bu kısımdaki kodunuz aynı kalacak, buraya dokunmayın)
+    // Olay Dinleyicileri
+    kaydetBtn.addEventListener('click', async () => {
         const personelId = document.getElementById('izin-personel').value;
         const izinTipiId = document.getElementById('izin-tipi').value;
         const baslangicTarihi = document.getElementById('izin-baslangic').value;
@@ -2553,41 +2501,50 @@ async function initializeIzinTakip() {
         showToast('İzin başarıyla kaydedildi.');
         await renderIzinKayitlari();
         
-        // Formu temizle
         document.getElementById('izin-personel').value = '';
         document.getElementById('izin-tipi').value = '';
         document.getElementById('izin-baslangic').value = '';
         document.getElementById('izin-bitis').value = '';
         document.getElementById('izin-aciklama').value = '';
-        updateIzinHesaplamalari(); // Hesaplama alanlarını sıfırla
+        izinHakkiDiv.innerHTML = '<em>Yasal izin hakkı için personel seçiniz.</em>';
+        hesaplamaSonucuDiv.innerHTML = '<em>Net süre için tarih aralığı seçiniz.</em>';
     });
-    openTopluIzinBtn.addEventListener('click', openTopluIzinModal);
-    topluIzinKaydetBtn.addEventListener('click', saveTopluIzin);
-    topluIzinModal.querySelector('.close-modal').addEventListener('click', () => topluIzinModal.classList.remove('open'));
-    
-    // --- DÜZELTİLMİŞ OLAY DİNLEYİCİSİ ---
-    document.getElementById('izin-kayitlari-tbody').addEventListener('click', async (e) => {
-        // Silme butonu kontrolü
-        if (e.target.classList.contains('btn-delete-izin')) {
+
+    tbody.addEventListener('click', async (e) => {
+        const target = e.target;
+        if (target.classList.contains('btn-delete-izin')) {
             if (confirm('Bu izin kaydını silmek istediğinizden emin misiniz?')) {
-                await deleteDoc(doc(db, 'izinler', e.target.dataset.id));
+                await deleteDoc(doc(db, 'izinler', target.dataset.id));
                 showToast('İzin kaydı silindi.');
                 await renderIzinKayitlari();
             }
         }
-        // Dilekçe butonu kontrolü (DOĞRU YERİ BURASI)
-        if (e.target.classList.contains('btn-print-dilekce')) {
-            const izinId = e.target.dataset.id;
-            generateDilekce(izinId);
+        if (target.classList.contains('btn-print-dilekce')) {
+            const izinId = target.dataset.id;
+            dilekceOlusturBtn.dataset.izinId = izinId;
+            dilekceTarihInput.valueAsDate = new Date();
+            dilekceModal.classList.add('open');
         }
     });
 
-    // --- Sayfa ilk açıldığında tabloyu ve başlangıç hesaplamasını yap ---
-    await renderIzinKayitlari();
-    updateIzinHesaplamalari(); 
+    dilekceModal.querySelector('.close-modal').addEventListener('click', () => dilekceModal.classList.remove('open'));
+    dilekceOlusturBtn.addEventListener('click', () => {
+        const izinId = dilekceOlusturBtn.dataset.izinId;
+        const dilekceTarihi = dilekceTarihInput.value;
+        if (!dilekceTarihi) {
+            return showToast('Lütfen geçerli bir dilekçe tarihi seçin.', 'error');
+        }
+        generateDilekce(izinId, dilekceTarihi);
+        dilekceModal.classList.remove('open');
+    });
+
+    openTopluIzinBtn.addEventListener('click', openTopluIzinModal);
+    topluIzinKaydetBtn.addEventListener('click', saveTopluIzin);
+    if(topluIzinModal) {
+        topluIzinModal.querySelector('.close-modal').addEventListener('click', () => topluIzinModal.classList.remove('open'));
+    }
 }
-        
-// YENİ FONKSİYON 1: Toplu İzin Modalını Açma ve Doldurma
+
 async function openTopluIzinModal() {
     const modal = document.getElementById('toplu-izin-modal');
     const personelListContainer = document.getElementById('toplu-personel-listesi');
@@ -2602,7 +2559,6 @@ async function openTopluIzinModal() {
             getSettings('ayarlar_izin_tipleri')
         ]);
 
-        // Personel Listesini Doldur
         personelListContainer.innerHTML = '';
         if(personelSnap.empty) {
             personelListContainer.innerHTML = '<p>Sistemde kayıtlı personel bulunamadı.</p>';
@@ -2619,7 +2575,6 @@ async function openTopluIzinModal() {
             });
         }
 
-        // İzin Tipi Listesini Doldur
         izinTipiSelect.innerHTML = '<option value="">İzin Tipi Seçiniz...</option>';
         if(!izinTipiSnap.empty) {
                 izinTipiSnap.forEach(doc => {
@@ -2635,7 +2590,6 @@ async function openTopluIzinModal() {
     }
 }
 
-// YENİ FONKSİYON 2: Toplu İzinleri Kaydetme
 async function saveTopluIzin() {
     const baslangicTarihi = document.getElementById('toplu-izin-baslangic').value;
     const bitisTarihi = document.getElementById('toplu-izin-bitis').value;
@@ -2653,8 +2607,7 @@ async function saveTopluIzin() {
     }
 
     const seciliPersonelIDs = Array.from(personelCheckboxes).map(cb => cb.value);
-
-    showToast(`${seciliPersonelIDs.length} personel için izinler kaydediliyor...`, 'success');
+    showToast(`${seciliPersonelIDs.length} personel için izinler kaydediliyor...`, 'info');
 
     const promises = seciliPersonelIDs.map(personelId => {
         const yeniIzin = {
@@ -2663,7 +2616,7 @@ async function saveTopluIzin() {
             baslangicTarihi: baslangicTarihi,
             bitisTarihi: bitisTarihi,
             aciklama: 'Toplu olarak eklendi.',
-            olusturmaTuru: 'toplu' // Raporlama için ayırt edici alan
+            olusturmaTuru: 'toplu'
         };
         return addDoc(collection(db, 'izinler'), yeniIzin);
     });
@@ -2672,61 +2625,49 @@ async function saveTopluIzin() {
         await Promise.all(promises);
         showToast(`${seciliPersonelIDs.length} personelin izin kaydı başarıyla oluşturuldu.`, 'success');
         document.getElementById('toplu-izin-modal').classList.remove('open');
-        await renderIzinKayitlari(); // Tabloyu anında güncelle
+        await renderIzinKayitlari();
     } catch (error) {
         console.error("Toplu izinler kaydedilirken hata:", error);
         showToast('Kayıt sırasında bir hata oluştu.', 'error');
     }
 }
 
-// =================================================================
-// === YENİ EKLENECEK İZİN SÜRESİ HESAPLAMA FONKSİYONU ===
-// =================================================================
 function calculateIzinSuresi(izin, staffList) {
     const personel = staffList.find(p => p.id === izin.personelId);
-    if (!personel) return 0; // Personel bulunamazsa 0 gün dön
+    if (!personel) return 0;
 
     let workDays = 0;
     const startDate = new Date(izin.baslangicTarihi + 'T00:00:00');
     const endDate = new Date(izin.bitisTarihi + 'T00:00:00');
 
-    // Başlangıç ve bitiş tarihleri arasındaki her günü kontrol et
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const currentDate = new Date(d);
-
-        // 1. Resmi Tatil mi? Kontrol et.
         if (isResmiTatil(currentDate)) {
-            continue; // Resmi tatil ise bu günü sayma, döngüde sonraki güne geç.
+            continue;
         }
-
-        // 2. Hafta Sonu mu? Personele göre kontrol et.
-        const dayOfWeek = currentDate.getDay(); // Pazar=0, Pzt=1, ..., Cmt=6
+        const dayOfWeek = currentDate.getDay();
         let isWeekend = false;
         
         if (personel.neviAdi.includes('Eğitim Personeli') || personel.neviAdi.includes('İdari Personel')) {
-            if (dayOfWeek === 6 || dayOfWeek === 0) { // Cumartesi veya Pazar
+            if (dayOfWeek === 6 || dayOfWeek === 0) {
                 isWeekend = true;
             }
-        } else { // Destek Personeli ve diğerleri
-            if (dayOfWeek === 0) { // Sadece Pazar
+        } else {
+            if (dayOfWeek === 0) {
                 isWeekend = true;
             }
         }
-
         if (isWeekend) {
-            continue; // Hafta sonu ise bu günü sayma, sonraki güne geç.
+            continue;
         }
-
-        // 3. Resmi tatil veya hafta sonu değilse, bu bir iş günüdür.
         workDays++;
     }
     return workDays;
 }
-        async function renderIzinKayitlari() {
+async function renderIzinKayitlari() {
     const tbody = document.getElementById('izin-kayitlari-tbody');
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">İzin kayıtları yükleniyor...</td></tr>`;
 
-    // Gerekli tüm verileri tek seferde ve paralel olarak çek
     const [izinSnap, personelSnap, izinTipiSnap, neviSnap] = await Promise.all([
         getDocs(query(collection(db, 'izinler'), orderBy('baslangicTarihi', 'desc'))),
         getDocs(collection(db, 'personel')),
@@ -2738,7 +2679,6 @@ function calculateIzinSuresi(izin, staffList) {
     const izinTipiMap = new Map(izinTipiSnap.docs.map(doc => [doc.id, doc.data().name]));
     const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
 
-    // Süre hesaplaması için gerekli personel nevi adını içeren geçici bir liste oluştur
     const staffListForLeave = personelSnap.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -2755,10 +2695,7 @@ function calculateIzinSuresi(izin, staffList) {
         const izin = doc.data();
         const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
         const bitis = new Date(izin.bitisTarihi + 'T00:00:00');
-        
-        // ESKİ HESAPLAMA YERİNE YENİ FONKSİYONU ÇAĞIR
         const sure = calculateIzinSuresi(izin, staffListForLeave);
-
         const row = tbody.insertRow();
         row.innerHTML = `
             <td>${personelMap.get(izin.personelId) || 'Bilinmiyor'}</td>
@@ -2775,7 +2712,8 @@ function calculateIzinSuresi(izin, staffList) {
     });
 }
 
-        async function generateDilekce(izinId) {
+
+async function generateDilekce(izinId, dilekceTarihiStr) {
     const izinDoc = await getDoc(doc(db, 'izinler', izinId));
     if (!izinDoc.exists()) {
         showToast('İzin kaydı bulunamadı.', 'error');
@@ -2797,81 +2735,53 @@ function calculateIzinSuresi(izin, staffList) {
     const personel = personelDoc.data();
     const izinTipi = izinTipiDoc.data();
     const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
-
-    const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
-    const bitis = new Date(izin.bitisTarihi + 'T00:00:00');
-    
-    const iseBaslama = new Date(bitis);
+    const iseBaslama = new Date(izin.bitisTarihi + 'T00:00:00');
     iseBaslama.setDate(iseBaslama.getDate() + 1);
 
-    const baslangicTR = baslangic.toLocaleDateString('tr-TR');
-    const bitisTR = bitis.toLocaleDateString('tr-TR');
-    const iseBaslamaTR = iseBaslama.toLocaleDateString('tr-TR');
+    const baslangicTR = formatDateDDMMYYYY(izin.baslangicTarihi);
+    const bitisTR = formatDateDDMMYYYY(izin.bitisTarihi);
+    const iseBaslamaTR = formatDateDDMMYYYY(iseBaslama.toISOString().split('T')[0]);
+    const iseGirisTR = formatDateDDMMYYYY(personel.ise_giris);
+    const dilekceTarihiTR = formatDateDDMMYYYY(dilekceTarihiStr);
     const gorevi = gorevMap.get(personel.gorevi_bransi) || 'Belirtilmemiş';
+    const baslangicYili = new Date(izin.baslangicTarihi + 'T00:00:00').getFullYear();
 
-    let izinIstekMetni = '';
-    const izinTipiAdi = izinTipi.name.toLowerCase();
-
-    if (izinTipiAdi.includes('yıllık')) {
-        izinIstekMetni = `Okulunuzdaki ${baslangic.getFullYear()} yılına ait yıllık ücretli iznimi, ${baslangicTR} tarihinden itibaren kullanmak istiyorum.`;
-    } else if (izinTipiAdi.includes('ücretsiz')) {
-        izinIstekMetni = `${izin.aciklama || 'Mazeretimden'} dolayı ${baslangicTR} tarihinden itibaren ${bitisTR} tarihine kadar ücretsiz izne ayrılmak istiyorum.`;
-    } else {
+    let izinIstekMetni = `Okulunuzdaki ${baslangicYili} yılına ait yıllık ücretli iznimi, ${baslangicTR} tarihinden itibaren kullanmak istiyorum.`;
+    if (!izinTipi.name.toLowerCase().includes('yıllık')) {
         izinIstekMetni = `${izin.aciklama || 'Mazeretimden'} dolayı ${baslangicTR} - ${bitisTR} tarihleri arasında izinli sayılmamı talep ediyorum.`;
     }
 
     const dilekceHTML = `
-        <!DOCTYPE html>
-        <html lang="tr">
-        <head>
-            <meta charset="UTF-8">
-            <title>İzin İstek Formu - ${personel.ad_soyad}</title>
-           
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-                body { font-family: 'Roboto', sans-serif; font-size: 11pt; margin: 2cm; line-height: 1.6; color: #333; }
-                .container { width: 100%; max-width: 800px; margin: auto; }
-                h2 { text-align: center; font-weight: 700; margin-bottom: 20px; }
-                .header-section { text-align: center; font-weight: 500; font-size: 12pt; margin-bottom: 30px; }
-                .info-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
-                .info-table td { padding: 8px; border: 1px solid #ccc; }
-                .info-table td:first-child { width: 180px; font-weight: 500; background-color: #f2f2f2; }
-                .content { text-indent: 1.5em; margin-bottom: 25px; }
-                .signature-section { margin-top: 40px; }
-                .approval-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; }
-                .date-signature-block { display: flex; justify-content: space-between; align-items: flex-end; }
-                .date-block { text-align: left; }
-                .signature-block { text-align: center; }
-                .footer-table { width: 100%; border-collapse: collapse; margin-top: 30px; text-align: left; }
-                .footer-table td { padding: 8px 0; }
-                .footer-table td:first-child { width: 180px; }
-                .imza-cizgi { border-bottom: 1px solid #333; display: inline-block; width: 150px; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
+        <!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>İzin Formu - ${personel.ad_soyad}</title>
+        <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 11pt; margin: 2cm; line-height: 1.6; }
+            h2, .header-section { text-align: center; }
+            .info-table, .footer-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+            .info-table td { padding: 8px; border: 1px solid #ccc; }
+            .info-table td:first-child { width: 180px; font-weight: bold; background-color: #f2f2f2; }
+            .footer-table td { padding: 8px 4px; }
+            .footer-table td:nth-child(2) { font-weight: bold; }
+            .content { text-indent: 1.5em; margin-bottom: 25px; }
+            .date-signature-block { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; }
+            .approval-section { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; }
+        </style></head><body>
+            <div>
                 <h2>${izinTipi.name.toUpperCase()} İSTEK FORMU</h2>
-                <div class="header-section"> ÖZEL İSABET ORTAOKULU MÜDÜRLÜĞÜNE</div>
+                <div class="header-section"><h3>ÖZEL İSABET ORTAOKULU MÜDÜRLÜĞÜNE</h3></div>
+                <p style="text-align:right;">TAVŞANLI</p>
                 
                 <table class="info-table">
                     <tr><td>ADI SOYADI</td><td>: ${personel.ad_soyad || ''}</td></tr>
-                    <tr><td>T.C. KİMLİK NO</td><td>: ${personel.tc_kimlik_no || ''}</td></tr>
-                    <tr><td>SGK NO</td><td>: ${personel.sgk_no || ''}</td></tr>
-                    <tr><td>İŞE GİRİŞ TARİHİ</td><td>: ${personel.ise_giris || ''}</td></tr>
+                    <tr><td>İŞE GİRİŞ TARİHİ</td><td>: ${iseGirisTR}</td></tr>
                     <tr><td>GÖREVİ</td><td>: ${gorevi}</td></tr>
-                    <tr><td>GÖREV YERİ ADRESİ</td><td>: HANIMÇEŞME MAHALLESİ GÜNDÜZ SOKAK NO:13 TAVŞANLI/KÜTAHYA</td></tr>
                 </table>
 
-                <p class="content">
-                    ${izinIstekMetni}
-                </p>
+                <p class="content">${izinIstekMetni}</p>
                 <p>Gereğini arz ederim.</p>
 
                 <div class="date-signature-block">
-                    <div class="date-block">
-                         Tarih: ${new Date().toLocaleDateString('tr-TR')}
-                    </div>
-                    <div class="signature-block">
+                    <div><b>Tarih: ${dilekceTarihiTR}</b></div>
+                    <div>
                         İzin Talep Eden<br><br>
                         ${personel.ad_soyad}<br>
                         (İmza)
@@ -2879,30 +2789,26 @@ function calculateIzinSuresi(izin, staffList) {
                 </div>
 
                 <div class="approval-section">
-                    <p style="text-align:center;">Yukarıda belirtilen tarihlerde ${izinTipi.name.toLowerCase()} kullanması uygundur.</p>
-                    <div style="text-align:center; margin-top: 50px;">
-                        Okul Müdürü<br><br>
-                        <span class="imza-cizgi"></span><br>
-                        (İmza)
-                    </div>
+                    <p>Yukarıda belirtilen tarihlerde ${izinTipi.name.toLowerCase()} kullanması uygundur.</p>
+                    <div style="margin-top: 50px;">Okul Müdürü<br>(İmza)</div>
                 </div>
 
+                <h4 style="margin-top: 50px; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 5px;">İzin Bölümünce Doldurulacak</h4>
                 <table class="footer-table">
-                    <tr><td>İzine Çıkış Tarihi</td><td>: ${baslangicTR}</td></tr>
-                    <tr><td>İzin Bitiş Tarihi</td><td>: ${bitisTR}</td></tr>
-                    <tr><td>İşe Başlama Tarihi</td><td>: ${iseBaslamaTR}</td></tr>
+                    <tr>
+                        <td>İzine Çıkış Tarihi</td><td>: ${baslangicTR}</td><td>İmza:</td>
+                    </tr>
+                    <tr>
+                        <td>İzin Bitiş Tarihi</td><td>: ${bitisTR}</td><td>İmza:</td>
+                    </tr>
+                    <tr>
+                        <td>İşe Başlama Tarihi</td><td>: ${iseBaslamaTR}</td><td>İmza:</td>
+                    </tr>
                 </table>
             </div>
-        </body>
-        </html>
-    `;
+        </body></html>`;
 
     const win = window.open('', '_blank');
-    if (!win) {
-        showToast('Yeni sekme açılamadı. Lütfen tarayıcıdaki pop-up engelleyiciyi kontrol edin.', 'error');
-        return;
-    }
-
     win.document.write(dilekceHTML);
     win.document.close();
     setTimeout(() => win.print(), 500);
@@ -3971,60 +3877,57 @@ function attachCellListeners() {
             personelForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     const editingId = e.target.dataset.editingId;
-
-    // DÜZELTME: FormData nesnesini önce bir değişkene atıyoruz.
     const formData = new FormData(e.target);
-    // Şimdi bu değişkeni kullanarak 'data' objesini oluşturuyoruz.
     const data = Object.fromEntries(formData.entries());
 
-    // Kısmi süreli çalışma verilerini işle ve ana veri objesine ekle
+    // Kısmi süreli çalışma verilerini güvenli bir şekilde işle
     if (data.sozlesme_turu === 'Kısmi Süreli') {
         data.kismi_zamanli_calisma = {};
-        // Hatanın olduğu yer burasıydı. Artık 'formData' tanımlı.
-        const gunler = formData.getAll('kismi_gunler');
+        const gunler = formData.getAll('kismi_gunler'); // Seçili tüm günler
+        const gunMap = {
+            'Pazartesi': 'pzts_saat',
+            'Salı': 'sali_saat',
+            'Çarşamba': 'crs_saat',
+            'Perşembe': 'prs_saat',
+            'Cuma': 'cuma_saat',
+            'Cumartesi': 'cmrts_saat',
+            'Pazar': 'pazar_saat'
+        };
 
-        gunler.forEach(gun => {
-            let saatKey = '';
-            if (gun === 'Pazartesi') saatKey = 'pzts_saat';
-            else if (gun === 'Salı') saatKey = 'sali_saat';       // DÜZELTİLDİ
-            else if (gun === 'Çarşamba') saatKey = 'crs_saat';   // DÜZELTİLDİ
-            else if (gun === 'Perşembe') saatKey = 'prs_saat'; // DÜZELTİLDİ
-            else if (gun === 'Cuma') saatKey = 'cuma_saat';
-            else if (gun === 'Cumartesi') saatKey = 'cmrts_saat';
-            else if (gun === 'Pazar') saatKey = 'pazar_saat';
-
-            if (saatKey && data[saatKey]) {
-                data.kismi_zamanli_calisma[gun] = parseInt(data[saatKey]);
+        gunler.forEach(gunAdi => {
+            const saatInputAdi = gunMap[gunAdi];
+            // Eğer gün haritada varsa ve ilgili saat input'u doluysa veriyi işle
+            if (saatInputAdi && data[saatInputAdi]) {
+                const saatDegeri = parseInt(data[saatInputAdi], 10);
+                if (!isNaN(saatDegeri)) { // Sayısal bir değer olduğundan emin ol
+                    data.kismi_zamanli_calisma[gunAdi] = saatDegeri;
+                }
             }
         });
 
-        // Ana 'data' objesinden gereksiz, geçici anahtarları temizle
+        // Ana 'data' objesinden artık gereksiz olan geçici anahtarları temizle
         delete data.kismi_gunler;
-        delete data.pzts_saat;
-        delete data.sali_saat;
-        delete data.crs_saat;
-        delete data.prs_saat;
-        delete data.cuma_saat;
-        delete data.cmrts_saat;
-        delete data.pazar_saat;
+        Object.values(gunMap).forEach(inputAdi => delete data[inputAdi]);
     }
 
     try {
         if (editingId) {
             await setDoc(doc(db, "personel", editingId), data, { merge: true });
-            showToast('Personel güncellendi.');
+            showToast('Personel başarıyla güncellendi.');
         } else {
             await addDoc(collection(db, "personel"), data);
-            showToast('Personel eklendi.');
+            showToast('Personel başarıyla eklendi.');
         }
         closeModal();
-        if (document.getElementById('staff-list').classList.contains('active')) fetchStaff();
+        // Eğer personel listesi ekranı aktifse, listeyi yenile
+        if (document.getElementById('staff-list').classList.contains('active')) {
+            fetchStaff();
+        }
     } catch (err) {
-        showToast('Bir hata oluştu.', 'error');
-        console.error(err);
+        showToast('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+        console.error("Personel kaydetme/güncelleme hatası:", err);
     }
 });
-
             document.getElementById('staff-list').addEventListener('click', async (e) => {
                 if(e.target.classList.contains('btn-delete')) { if (confirm('Bu personeli silmek istediğinizden emin misiniz?')) { await deleteDoc(doc(db, 'personel', e.target.dataset.id)); showToast('Personel silindi.'); fetchStaff(); } }
                 if(e.target.classList.contains('btn-edit')) { const docSnap = await getDoc(doc(db, 'personel', e.target.dataset.id)); if(docSnap.exists()) openModal(docSnap.id, docSnap.data()); }
@@ -4131,6 +4034,24 @@ function attachCellListeners() {
             </div>
             <div class="button-group" style="margin-top: 25px;">
                 <button id="toplu-izin-kaydet-btn" class="btn btn-save">Seçili Personellere İzin Ata</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="dilekce-date-modal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3>Dilekçe Tarihini Belirtin</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Lütfen dilekçenin üzerinde görünecek resmi tarihi seçiniz.</p>
+            <div class="form-group">
+                <label for="dilekce-tarih-input">Dilekçe Tarihi</label>
+                <input type="date" id="dilekce-tarih-input">
+            </div>
+            <div class="button-group">
+                <button id="generate-dilekce-with-date-btn" class="btn btn-save">Dilekçeyi Oluştur</button>
             </div>
         </div>
     </div>
