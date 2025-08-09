@@ -2633,36 +2633,20 @@ async function saveTopluIzin() {
 }
 
 function calculateIzinSuresi(izin, staffList) {
-    const personel = staffList.find(p => p.id === izin.personelId);
-    if (!personel) return 0;
-
-    let workDays = 0;
+    // Bu fonksiyon artık hafta sonu veya resmi tatil ayırmaksızın,
+    // iki tarih arasındaki toplam takvim gününü (başlangıç ve bitiş dahil) hesaplar.
+    
     const startDate = new Date(izin.baslangicTarihi + 'T00:00:00');
     const endDate = new Date(izin.bitisTarihi + 'T00:00:00');
 
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const currentDate = new Date(d);
-        if (isResmiTatil(currentDate)) {
-            continue;
-        }
-        const dayOfWeek = currentDate.getDay();
-        let isWeekend = false;
-        
-        if (personel.neviAdi.includes('Eğitim Personeli') || personel.neviAdi.includes('İdari Personel')) {
-            if (dayOfWeek === 6 || dayOfWeek === 0) {
-                isWeekend = true;
-            }
-        } else {
-            if (dayOfWeek === 0) {
-                isWeekend = true;
-            }
-        }
-        if (isWeekend) {
-            continue;
-        }
-        workDays++;
-    }
-    return workDays;
+    // Zaman farkını milisaniye olarak al
+    const timeDiff = endDate.getTime() - startDate.getTime();
+
+    // Milisaniyeyi güne çevir ve yuvarla
+    const dayDiff = Math.round(timeDiff / (1000 * 3600 * 24));
+
+    // Başlangıç gününü de saymak için 1 ekle
+    return dayDiff + 1;
 }
 async function renderIzinKayitlari() {
     const tbody = document.getElementById('izin-kayitlari-tbody');
@@ -2740,7 +2724,7 @@ async function generateDilekce(izinId, dilekceTarihiStr) {
 
     const baslangicTR = formatDateDDMMYYYY(izin.baslangicTarihi);
     const bitisTR = formatDateDDMMYYYY(izin.bitisTarihi);
-    const iseBaslamaTR = formatDateDDMMYYYY(iseBaslama.toISOString().split('T')[0]);
+    const iseBaslamaTR = iseBaslama.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const iseGirisTR = formatDateDDMMYYYY(personel.ise_giris);
     const dilekceTarihiTR = formatDateDDMMYYYY(dilekceTarihiStr);
     const gorevi = gorevMap.get(personel.gorevi_bransi) || 'Belirtilmemiş';
