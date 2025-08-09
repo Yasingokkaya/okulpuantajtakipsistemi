@@ -2754,16 +2754,19 @@ async function generateDilekce(izinId, dilekceTarihiStr) {
     const dilekceHTML = `
         <!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>İzin Formu - ${personel.ad_soyad}</title>
         <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 11pt; margin: 2cm; line-height: 1.6; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 11pt; margin: 1.0cm; line-height: 1.3; }
             h2, .header-section { text-align: center; }
             .info-table, .footer-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
             .info-table td { padding: 8px; border: 1px solid #ccc; }
             .info-table td:first-child { width: 180px; font-weight: bold; background-color: #f2f2f2; }
-            .footer-table td { padding: 8px 4px; }
+            .footer-table td { text-align: left; padding: 8px 4px; }
             .footer-table td:nth-child(2) { font-weight: bold; }
             .content { text-indent: 1.5em; margin-bottom: 25px; }
             .date-signature-block { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; }
-            .approval-section { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; }
+
+
+.date-signature-block { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; }
+.approval-section { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; }
         </style></head><body>
             <div>
                 <h2>${izinTipi.name.toUpperCase()} İSTEK FORMU</h2>
@@ -2772,8 +2775,11 @@ async function generateDilekce(izinId, dilekceTarihiStr) {
                 
                 <table class="info-table">
                     <tr><td>ADI SOYADI</td><td>: ${personel.ad_soyad || ''}</td></tr>
+                    <tr><td>T.C. KİMLİK NO</td><td>: ${personel.tc_kimlik_no || ''}</td></tr>
+                    <tr><td>SGK NO</td><td>: ${personel.sgk_no || ''}</td></tr>
                     <tr><td>İŞE GİRİŞ TARİHİ</td><td>: ${iseGirisTR}</td></tr>
                     <tr><td>GÖREVİ</td><td>: ${gorevi}</td></tr>
+                    <tr><td>GÖREV YERİ ADRESİ</td><td>: Hanımçeşme Mah. Gündüz Sokakç No:13 TAVŞANLI/KÜTAHYA</td></tr>
                 </table>
 
                 <p class="content">${izinIstekMetni}</p>
