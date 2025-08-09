@@ -1359,7 +1359,16 @@ function isResmiTatil(date) {
             const populateGorevNeviSelect = () => { const select = document.getElementById('gorev-nevi-select'); select.innerHTML = '<option value="">Personel Nevi Seçin</option>'; personelNevileri.forEach(nevi => select.add(new Option(nevi.name, nevi.id))); };
             await renderAll();
             populateGorevNeviSelect();
-            document.getElementById('add-nevi-btn').addEventListener('click', async () => { const input = document.getElementById('add-nevi-input'); if(input.value.trim()) { await addSetting('ayarlar_personel_nevileri', { name: input.value.trim() }); location.reload(); } });
+            document.getElementById('add-nevi-btn').addEventListener('click', async () => {
+    const input = document.getElementById('add-nevi-input');
+    const neviAdi = input.value.trim();
+    if (neviAdi) {
+        await addSetting('ayarlar_personel_nevileri', { name: neviAdi });
+        showToast('Personel nevisi başarıyla eklendi.');
+        input.value = ''; // Ekleme sonrası input alanını temizle
+        await renderSettingsList('ayarlar_personel_nevileri', 'nevi-list'); // Listeyi anında güncelle
+    }
+});
             document.getElementById('add-gorev-btn').addEventListener('click', async () => { const input = document.getElementById('add-gorev-input'); const neviSelect = document.getElementById('gorev-nevi-select'); if(input.value.trim() && neviSelect.value) { await addSetting('ayarlar_gorevler', { name: input.value.trim(), neviId: neviSelect.value }); input.value = ''; await renderSettingsList('ayarlar_gorevler', 'gorev-list', personelNevileri); } });
             document.getElementById('add-ders-btn').addEventListener('click', async () => { const input = document.getElementById('add-ders-input'); if(input.value.trim()) { await addSetting('ayarlar_dersler', { name: input.value.trim() }); input.value = ''; await renderSettingsList('ayarlar_dersler', 'ders-list'); } });
             document.getElementById('add-sinif-btn').addEventListener('click', async () => { const input = document.getElementById('add-sinif-input'); if(input.value.trim()) { await addSetting('ayarlar_siniflar', { name: input.value.trim() }); input.value = ''; await renderSettingsList('ayarlar_siniflar', 'sinif-list'); } });
