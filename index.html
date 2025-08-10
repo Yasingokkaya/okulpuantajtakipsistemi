@@ -564,6 +564,16 @@
         background-color: #f0f0f0;
         font-weight: bold;
     }
+/* YAZDIRMA İÇİN YENİ EKLENEN BAŞLIK STİLİ */
+            #puantaj-baslik {
+                display: block !important; /* Başlığın her zaman görünür olmasını sağlar */
+                text-align: center !important; /* Başlığı ortalar */
+                font-size: 14pt !important; /* Yazdırma için okunaklı bir boyut */
+                font-weight: bold;
+                margin-top: 20px; /* Sayfanın üstünden boşluk bırakır */
+                margin-bottom: 25px !important; /* Tablo ile arasına boşluk koyar */
+                color: black !important; /* Yazıcıda her zaman siyah görünmesini sağlar */
+            }
 }
 /* EKLENECEK KOD BİTİŞİ */
         
@@ -906,6 +916,7 @@
                     <div class="panel-header"><h3>Puantaj Cetveli</h3></div>
                     <div class="panel-body">
                         <div class="controls puantaj">
+                         
                             <div class="controls-left">
     <select id="select-month"></select>
     <input type="number" id="input-year" min="2020" max="2050">
@@ -2973,16 +2984,21 @@ function formatTextForWrapping(text) {
  */
 
 // BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
-function renderPuantajTable(nobetVerisi, aktifPersonelListesi) {
+function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
 
+    // GÜNCELLEME 1: Başlık artık burada, tüm tablonun bir parçası olarak oluşturuluyor.
+    let finalHTML = `<h2 id="puantaj-baslik" style="text-align: center; color: var(--theme-primary); margin-bottom: 25px;">${baslikMetni}</h2>`;
+
     if (!aktifPersonelListesi || aktifPersonelListesi.length === 0 || !puantajData) {
-        container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4 style="color: var(--theme-primary);">Bu ay için görüntülenecek puantaj verisi veya aktif personel bulunmuyor.</h4><p style="font-size: 16px;">Lütfen <strong>'Yeni Puantaj Oluştur'</strong> butonuna tıklayarak yeni bir cetvel oluşturun.</p></div>`;
+        container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4 style="color: var(--theme-primary);">Bu ay için görüntülenecek puantaj verisi veya aktif personel bulunmuyor.</h4></div>`;
         document.getElementById('total-ekders').textContent = "0 Saat";
         document.getElementById('total-nobet').textContent = "0 Saat";
         document.getElementById('total-rehberlik').textContent = "0 Saat";
+        // Başlık alanı boş kalmasın diye, "veri yok" durumunda bile başlığı gösteriyoruz.
+        document.getElementById('puantaj-baslik').textContent = baslikMetni;
         return;
     }
 
@@ -2995,10 +3011,7 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi) {
         'Kısmi Süreli': aktifPersonelListesi.filter(p => p.sozlesme_turu === 'Kısmi Süreli')
     };
     
-    // Not: Fonksiyonun geri kalanı (HTML oluşturma döngüleri) aynıdır ve önceki tüm düzeltmeleri içerir.
-    // ... Kodun geri kalanı değişmediği için kısaltılmıştır. Lütfen kendi dosyanızdaki ile karşılaştırarak
-    // bu fonksiyonun tamamını, yukarıdaki başlangıç kısmı güncellenmiş şekilde değiştirin.
-    let finalHTML = '';
+    // Fonksiyonun geri kalanı aynı şekilde `finalHTML` değişkenine ekleme yapmaya devam ediyor...
     for (const grupAdi in grupluPersonel) {
         const personelGrubu = grupluPersonel[grupAdi];
         if (personelGrubu.length === 0) continue;
@@ -3061,6 +3074,8 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi) {
         tableHTML += `</tbody></table>`;
         finalHTML += tableHTML;
     }
+    
+    // Oluşturulan tüm HTML'i tek seferde container'a bas.
     container.innerHTML = finalHTML;
     attachCellListeners();
 }
@@ -3077,13 +3092,17 @@ let isPuantajLocked = false;
 let currentPuantajDocRef = null;
 // =================== 1. ADIM: EKSİK FONKSİYONLARI BURAYA EKLEYİN ===================
 
-// BU FONKSİYONUN SADECE BİR TANE OLDUĞUNDAN EMİN OLUN
+// BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
 async function loadPuantajDataForCurrentMonth() {
     const year = document.getElementById('input-year').value;
     const month = document.getElementById('select-month').value;
     const docId = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}`;
     currentPuantajDocRef = doc(db, "kayitli_puantajlar", docId);
     try {
+        // GÜNCELLEME 2: Başlık metni bir değişkende oluşturuluyor.
+        const ayAdi = document.getElementById('select-month').options[month].text;
+        const baslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
+
         const docSnap = await getDoc(currentPuantajDocRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
@@ -3097,19 +3116,11 @@ async function loadPuantajDataForCurrentMonth() {
         }
         updateLockStatusUI();
 
-        // === GÜNCELLENMİŞ VE GÜVENLİ AKTİF PERSONEL FİLTRESİ ===
         const aktifPersonelList = puantajPersonelList.filter(personel => {
             const ayrilisStr = personel.isten_ayrilis;
-            // Eğer ayrılış tarihi hiç yoksa, boşluksa veya '---' ise, personeli aktif say.
-            if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') {
-                return true;
-            }
+            if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
             const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
-            // Eğer ayrılış tarihi geçersiz bir tarih ise, personeli yine de aktif say (veri hatasına karşı koruma).
-            if (isNaN(ayrilisDate.getTime())) {
-                return true;
-            }
-            
+            if (isNaN(ayrilisDate.getTime())) return true;
             const ayrilisYear = ayrilisDate.getUTCFullYear();
             const ayrilisMonth = ayrilisDate.getUTCMonth();
             if (ayrilisYear > year) return true;
@@ -3118,7 +3129,8 @@ async function loadPuantajDataForCurrentMonth() {
         });
 
         const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
-        renderPuantajTable(nobetVerisi, aktifPersonelList);
+        // GÜNCELLEME 3: Başlık metni, tablo çizim fonksiyonuna gönderiliyor.
+        renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni);
         renderGrandTotals(nobetVerisi);
         renderLegend();
         attachCellListeners();
@@ -3494,7 +3506,7 @@ async function fetchAndProcessSchedules() {
         return {};
     }
 }
-     // YENİ generateInitialPuantaj FONKSİYONU
+     // BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
 async function generateInitialPuantaj() {
     if (isPuantajLocked) {
         showToast('Puantaj kilitli...', 'error');
@@ -3508,21 +3520,17 @@ async function generateInitialPuantaj() {
         const month = parseInt(document.getElementById('select-month').value);
         showToast('Puantaj oluşturuluyor...');
 
-        // === GÜNCELLENMİŞ VE DAHA GÜVENLİ AKTİF PERSONEL FİLTRESİ ===
+        // GÜNCELLEME 2: Başlık metni bir değişkende oluşturuluyor.
+        const ayAdi = document.getElementById('select-month').options[month].text;
+        const baslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
+        
         const aktifPersonelList = puantajPersonelList.filter(personel => {
             const ayrilisStr = personel.isten_ayrilis;
-            // Eğer ayrılış tarihi hiç yoksa, boşluksa veya '---' ise, personeli aktif say.
-            if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') {
-                return true;
-            }
+            if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
             const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
-            // Eğer ayrılış tarihi geçersiz bir tarih ise, personeli yine de aktif say (veri hatasına karşı koruma).
-            if (isNaN(ayrilisDate.getTime())) {
-                return true;
-            }
-            
+            if (isNaN(ayrilisDate.getTime())) return true;
             const ayrilisYear = ayrilisDate.getUTCFullYear();
-            const ayrilisMonth = ayrilisDate.getUTCMonth(); // 0-11
+            const ayrilisMonth = ayrilisDate.getUTCMonth();
             if (ayrilisYear > year) return true;
             if (ayrilisYear === year && ayrilisMonth >= month) return true;
             return false;
@@ -3543,7 +3551,6 @@ async function generateInitialPuantaj() {
                 const dateUTC = new Date(Date.UTC(year, month, day));
                 const dateString = dateUTC.toISOString().split('T')[0];
                 let code = '', hours = 0;
-
                 if (personel.isten_ayrilis) {
                     const ayrilisTarihiUTC = new Date(personel.isten_ayrilis + 'T00:00:00Z');
                     if (dateUTC > ayrilisTarihiUTC) {
@@ -3551,15 +3558,12 @@ async function generateInitialPuantaj() {
                         continue;
                     }
                 }
-
                 const leaveCodeForDay = izinVerisi[personel.id]?.[dateString];
                 const dayOfWeek = dateUTC.getDay();
                 const dayOfWeekTR = gunlerTR[dayOfWeek];
-                
                 if (leaveCodeForDay && (leaveCodeForDay === 'R' || leaveCodeForDay === 'Üİ')) {
                     code = leaveCodeForDay;
                 }
-                
                 if (code === '') {
                     if (personel.sozlesme_turu === 'Kısmi Süreli') {
                         if (isResmiTatil(dateUTC)) { code = 'E'; } 
@@ -3568,7 +3572,7 @@ async function generateInitialPuantaj() {
                             code = (scheduledHours > 0) ? 'Y' : 'E';
                             hours = scheduledHours;
                         }
-                    } else { // Tam zamanlı
+                    } else {
                         if (isResmiTatil(dateUTC)) { code = 'RT'; } 
                         else {
                             let isWeekend = (personel.sozlesme_turu === 'Belirli Süreli') ? (dayOfWeek === 6 || dayOfWeek === 0) : (dayOfWeek === 0);
@@ -3588,7 +3592,8 @@ async function generateInitialPuantaj() {
             }
         });
 
-        renderPuantajTable(nobetVerisi, aktifPersonelList);
+        // GÜNCELLEME 3: Başlık metni, tablo çizim fonksiyonuna gönderiliyor.
+        renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni);
         renderGrandTotals(nobetVerisi);
         renderLegend();
         attachCellListeners();
@@ -3598,8 +3603,6 @@ async function generateInitialPuantaj() {
         showToast('Puantaj oluşturulamadı.', 'error');
     }
 }
-
-
 
 function calculateMonthlyHours(personelId) {
     const personel = puantajPersonelList.find(p => p.id == personelId);
@@ -3786,7 +3789,7 @@ function renderGrandTotals(nobetVerisi = {}) {
             XLSX.writeFile(wb, `Puantaj_${month}_${year}.xlsx`);
         }
         
-// =================== 3. ADIM: İYİLEŞTİRİLMİŞ FONKSİYONU EKLEYİN ===================
+// BU YENİ VE GÜNCELLENMİŞ FONKSİYONU EKLEYİN
 async function saveModalChanges() {
     const modalSaveBtn = document.getElementById('modal-save');
     const personelId = modalSaveBtn.dataset.personelId;
@@ -3798,7 +3801,7 @@ async function saveModalChanges() {
     }
 
     const newCode = document.getElementById('modal-status').value;
-    const newHours = parseInt(document.getElementById('modal-hours').value) || 0;
+    const newHours = parseFloat(document.getElementById('modal-hours').value) || 0;
     const newNotes = document.getElementById('modal-notes').value;
 
     if (puantajData[personelId] && puantajData[personelId][date]) {
@@ -3811,15 +3814,33 @@ async function saveModalChanges() {
 
     document.getElementById('edit-modal-overlay').style.display = 'none';
 
-    // Sadece tabloyu yeniden çizerek değişikliği yansıt, her şeyi sıfırlama!
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
-    const nobetVerisi = await fetchAndCalculateNobetData(year, month);
-    renderPuantajTable(nobetVerisi);
-    renderGrandTotals(nobetVerisi);
-    attachCellListeners(); // Hücrelere tıklama olaylarını yeniden bağla
 
-    showToast('Değişiklikler kaydedildi. Tamamen kalıcı olması için "Kaydet" butonuna tıklamayı unutmayın.', 'success');
+    // DÜZELTME 1: Tabloyu yeniden çizmeden önce aktif personel listesini ve başlığı hazırlıyoruz.
+    const ayAdi = document.getElementById('select-month').options[month].text;
+    const baslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
+
+    const aktifPersonelList = puantajPersonelList.filter(personel => {
+        const ayrilisStr = personel.isten_ayrilis;
+        if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
+        const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
+        if (isNaN(ayrilisDate.getTime())) return true;
+        const ayrilisYear = ayrilisDate.getUTCFullYear();
+        const ayrilisMonth = ayrilisDate.getUTCMonth();
+        if (ayrilisYear > year) return true;
+        if (ayrilisYear === year && ayrilisMonth >= month) return true;
+        return false;
+    });
+
+    const nobetVerisi = await fetchAndCalculateNobetData(year, month);
+    
+    // DÜZELTME 2: Tablo çizim fonksiyonunu artık 3 parametre ile doğru şekilde çağırıyoruz.
+    renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni);
+    renderGrandTotals(nobetVerisi);
+    attachCellListeners();
+
+    showToast('Değişiklikler kaydedildi. Kalıcı olması için "Kaydet" butonuna tıklamayı unutmayın.', 'success');
 }
 // =================== 3. ADIM BİTİŞİ ===================
 function printPuantaj() {
