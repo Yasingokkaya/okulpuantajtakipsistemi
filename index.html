@@ -2758,7 +2758,8 @@ function calculateNetIzinSuresi(startDateStr, endDateStr, personel, izinTipiKodu
     
     // YENİ KURAL: Eğer izin tipi Raporlu (R) veya Ücretsiz İzin (UI) ise,
     // hafta sonu/resmi tatil dinlemeden tüm takvim günlerini say.
-    if (izinTipiKodu === 'R' || izinTipiKodu === 'UI') {
+    // Düzeltme: 'UI' kontrolü, 'Üİ' olarak güncellendi.
+    if (izinTipiKodu === 'R' || izinTipiKodu === 'Üİ') {
         const diffTime = Math.abs(endDate - startDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
         return diffDays;
@@ -2786,8 +2787,7 @@ function calculateNetIzinSuresi(startDateStr, endDateStr, personel, izinTipiKodu
         return netGunSayisi;
     }
 }
-// SİLDİĞİNİZ FONKSİYONUN YERİNE BU GÜNCEL VERSİYONU YAPIŞTIRIN
-// === BAŞLANGIÇ: MEVCUT renderIzinKayitlari FONKSİYONUNU BU BLOKLA DEĞİŞTİRİN ===
+// BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
 async function renderIzinKayitlari() {
     const tbody = document.getElementById('izin-kayitlari-tbody');
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">İzin kayıtları yükleniyor...</td></tr>`;
@@ -2798,9 +2798,9 @@ async function renderIzinKayitlari() {
         getSettings('ayarlar_izin_tipleri')
     ]);
     
-    // DEĞİŞİKLİK BURADA: Personel ID'sinden tüm personel verisine ulaşmak için bir harita oluşturuyoruz.
+    // GÜNCELLEME 1: Artık sadece izin adını değil, kodunu da içeren tüm veriyi saklıyoruz.
+    const izinTipiDataMap = new Map(izinTipiSnap.docs.map(doc => [doc.id, doc.data()]));
     const personelDataMap = new Map(personelSnap.docs.map(doc => [doc.id, { id: doc.id, ...doc.data() }]));
-    const izinTipiMap = new Map(izinTipiSnap.docs.map(doc => [doc.id, doc.data().name]));
 
     if (izinSnap.empty) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Kayıtlı izin bulunamadı.</td></tr>`;
@@ -2810,9 +2810,8 @@ async function renderIzinKayitlari() {
     tbody.innerHTML = '';
     izinSnap.forEach(doc => {
         const izin = doc.data();
-        const personel = personelDataMap.get(izin.personelId); // İzin kaydına ait personelin tüm verisini al.
+        const personel = personelDataMap.get(izin.personelId);
         
-        // Eğer izin kaydına bağlı personel silinmişse veya bulunamıyorsa, bu kaydı atla.
         if (!personel) {
             console.warn(`ID'si ${doc.id} olan izin kaydına bağlı personel (${izin.personelId}) bulunamadı. Listede gösterilmeyecek.`);
             return;
@@ -2821,17 +2820,22 @@ async function renderIzinKayitlari() {
         const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
         const bitis = new Date(izin.bitisTarihi + 'T00:00:00');
         
-        // DEĞİŞİKLİK BURADA: Süre hesaplanırken artık ilgili 'personel' nesnesini de gönderiyoruz.
-        const sure = calculateNetIzinSuresi(izin.baslangicTarihi, izin.bitisTarihi, personel);
+        // GÜNCELLEME 2: İzin tipinin kodunu haritadan alıyoruz.
+        const izinTipi = izinTipiDataMap.get(izin.izinTipiId);
+        const izinTipiKodu = izinTipi ? izinTipi.kod : '';
+        // Süre hesaplanırken izin kodunu da gönderiyoruz.
+        const sure = calculateNetIzinSuresi(izin.baslangicTarihi, izin.bitisTarihi, personel, izinTipiKodu);
+        
+        // GÜNCELLEME 3: İzin koduna göre doğru etiketi ("gün" veya "iş günü") seçiyoruz.
+        const sureEtiketi = (izinTipiKodu === 'R' || izinTipiKodu === 'Üİ') ? 'gün' : 'iş günü';
         
         const row = tbody.insertRow();
         row.innerHTML = `
             <td>${personel.ad_soyad || 'Bilinmiyor'}</td>
-            <td>${izinTipiMap.get(izin.izinTipiId) || 'Bilinmiyor'}</td>
+            <td>${izinTipi ? izinTipi.name : 'Bilinmiyor'}</td>
             <td>${baslangic.toLocaleDateString('tr-TR')}</td>
             <td>${bitis.toLocaleDateString('tr-TR')}</td>
-            <td>${sure} iş günü</td> 
-            <td>${izin.aciklama || '-'}</td>
+            <td>${sure} ${sureEtiketi}</td> <td>${izin.aciklama || '-'}</td>
             <td class="actions-cell">
                 <button class="btn btn-print-dilekce" data-id="${doc.id}" style="background-color:#0dcaf0;">Dilekçe</button>
                 <button class="btn btn-delete-izin btn-delete" data-id="${doc.id}">Sil</button>
@@ -2839,7 +2843,6 @@ async function renderIzinKayitlari() {
         `;
     });
 }
-// === BİTİŞ: DEĞİŞTİRME İŞLEMİ BURADA BİTER ===
 
 
 async function generateDilekce(izinId, dilekceTarihiStr) {
@@ -3823,35 +3826,41 @@ function printPuantaj() {
     window.print();
 }
 
-/**
- * Seçilen güne, seçilen personel grubuna toplu olarak yeni bir durum kodu atar.
- */
+// BU YENİ VE GÜNCELLENMİŞ FONKSİYONU EKLEYİN
 async function applyBulkUpdate() {
-    // Kullanıcının arayüzden seçtiği değerleri al
     const day = document.getElementById('bulk-update-day').value;
     const group = document.getElementById('bulk-update-group').value;
     const newStatusCode = document.getElementById('bulk-update-status').value;
-    const year = document.getElementById('input-year').value;
-    const month = document.getElementById('select-month').value;
+    const year = parseInt(document.getElementById('input-year').value);
+    const month = parseInt(document.getElementById('select-month').value);
 
-    // Gerekli seçimlerin yapıldığından emin ol
     if (!day || !group || !newStatusCode) {
         return showToast('Lütfen Gün, Grup ve Durum Kodu seçin.', 'error');
     }
-    
-    // Puantaj verisi yoksa işlemi durdur
     if (!puantajData || Object.keys(puantajData).length === 0) {
         return showToast('Önce bir puantaj oluşturmalı veya yüklemelisiniz.', 'error');
     }
 
-    // Onay al (önemli!)
     const confirmationMessage = `'${group}' grubundaki tüm personel için ayın ${day}. gününün durumunu '${newStatusCode}' olarak değiştirmek istediğinizden emin misiniz?`;
     if (!confirm(confirmationMessage)) {
         return;
     }
 
-    // Hedef personel grubunu filtrele
-    const targetPersonnel = puantajPersonelList.filter(p => {
+    // DÜZELTME 1: Önce o ay için aktif olan tüm personeli buluyoruz.
+    const aktifPersonelList = puantajPersonelList.filter(personel => {
+        const ayrilisStr = personel.isten_ayrilis;
+        if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
+        const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
+        if (isNaN(ayrilisDate.getTime())) return true;
+        const ayrilisYear = ayrilisDate.getUTCFullYear();
+        const ayrilisMonth = ayrilisDate.getUTCMonth();
+        if (ayrilisYear > year) return true;
+        if (ayrilisYear === year && ayrilisMonth >= month) return true;
+        return false;
+    });
+
+    // Şimdi, aktif personel listesinden kullanıcının seçtiği grubu filtreliyoruz.
+    const targetPersonnel = aktifPersonelList.filter(p => {
         if (group === 'Tümü') return true;
         return p.sozlesme_turu === group;
     });
@@ -3860,23 +3869,21 @@ async function applyBulkUpdate() {
         return showToast('Seçilen grupta güncellenecek personel bulunamadı.', 'info');
     }
 
-    // Tarih dizesini oluştur (YYYY-AA-GG formatında)
-    const dateString = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-    // Ana puantaj verisi üzerinde döngüye gir ve güncelle
     targetPersonnel.forEach(personel => {
-        // Personelin o aya ait puantaj verisi ve o güne ait kaydı var mı kontrol et
         if (puantajData[personel.id] && puantajData[personel.id][dateString]) {
             puantajData[personel.id][dateString].code = newStatusCode;
         }
     });
 
-    // Arayüzü güncellemek için tabloyu yeniden çiz
     showToast('Güncelleme uygulanıyor...', 'info');
-    const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
-    renderPuantajTable(nobetVerisi);
+    const nobetVerisi = await fetchAndCalculateNobetData(year, month);
+
+    // DÜZELTME 2: Tabloyu çizen fonksiyona artık aktif personel listesini de gönderiyoruz.
+    renderPuantajTable(nobetVerisi, aktifPersonelList);
     renderGrandTotals(nobetVerisi);
-    attachCellListeners(); // Hücre olaylarını yeniden bağla
+    attachCellListeners();
 
     showToast('Toplu güncelleme başarıyla uygulandı!', 'success');
 }
