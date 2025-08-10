@@ -634,44 +634,79 @@
 .delete-lesson-btn:hover {
     background: var(--danger-color);
 }
-/* ================================================= */
-/* === MOBİL UYUMLULUK İÇİN GÜNCELLENMİŞ KODLAR === */
-/* ================================================= */
+.mobile-header {
+    display: none; /* Varsayılan olarak (masaüstünde) gizli */
+    background-color: var(--theme-primary);
+    color: var(--white-color);
+    padding: 10px 15px;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 101; /* Kenar menüsünün üzerinde kalması için */
+}
+
+#hamburger-btn {
+    background: none;
+    border: none;
+    color: var(--white-color);
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0 15px 0 0;
+}
+
+.mobile-title {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+/* === MOBİL LOGO İÇİN YENİ EKLENEN STİL === */
+.mobile-logo {
+    height: 35px; /* Mobil üst bar için uygun bir yükseklik */
+    width: auto;
+    margin-right: 15px; /* Yazı ile arasına boşluk koyar */
+}
+/* === GÜNCELLENMİŞ MOBİL GÖRÜNÜM KURALLARI === */
 
 @media (max-width: 768px) {
-    .app-container {
-        /* Elementleri alt alta sıralamak için */
-        flex-direction: column;
+    .mobile-header {
+        display: flex; /* Mobilde görünür yap */
     }
 
-    /* --- DEĞİŞİKLİK BU BLOKTA YAPILDI --- */
-    .sidebar {
-        /* Kenar çubuğunu ekrana sabitlemeyi kaldır */
-        position: relative;
-        width: 100%;
-        /* Yüksekliği içeriğe göre otomatik ayarla */
-        height: auto;
-        /* Yükseklik sınırlaması kaldırıldı, böylece tüm menü sığıyor */
+    .app-container {
+        flex-direction: column;
+        height: auto; /* Yüksekliği içeriğe göre ayarla */
     }
-    /* --- DEĞİŞİKLİĞİN SONU --- */
+
+    .sidebar {
+        position: fixed; /* Ekrana göre sabitlenir */
+        left: -250px; /* Ekranın solunda gizli başlar */
+        top: 0;
+        height: 100vh; /* Tüm ekran yüksekliğini kaplar */
+        width: 250px; /* Genişliği sabitliyoruz */
+        z-index: 100;
+        transition: left 0.3s ease-in-out; /* Yumuşak açılma/kapanma efekti */
+        border-right: 1px solid var(--sidebar-hover-bg);
+    }
+    
+    .sidebar.open {
+        left: 0; /* 'open' class'ı eklendiğinde görünür olur */
+    }
 
     .main-content {
-        /* Sol menü için bırakılan boşluğu sıfırla */
-        margin-left: 0;
-        padding: 15px; /* Mobil için daha uygun bir padding */
+        margin-left: 0; /* Ana içeriğin soldan boşluğunu sıfırla */
+        width: 100%;
+        padding: 15px;
     }
-
-    /* Görevlendirme formunu mobil için düzenle */
+    
+    /* Eski mobil kurallarınız korunuyor */
     #gorevlendirme .form-container .form-grid,
     #gorevlendirme .gorevlendirme-layout,
     .form-grid {
-        grid-template-columns: 1fr; /* Tüm form elemanlarını alt alta sırala */
+        grid-template-columns: 1fr;
     }
 
-    /* Puantaj tablosundaki butonları alt alta getir */
     .puantaj .controls {
         flex-direction: column;
-        align-items: stretch; /* Butonların tam genişlik kaplamasını sağla */
+        align-items: stretch;
     }
 
     .puantaj .controls-left, .puantaj .controls-right {
@@ -685,6 +720,11 @@
 </style>
 </head>
 <body>
+<header class="mobile-header">
+        <button id="hamburger-btn">☰</button>
+        <img src="logo.png" alt="Okul Logosu" class="mobile-logo">
+        <span class="mobile-title">Okul Puantaj Sistemi</span>
+    </header>
 <div id="login-panel" style="display: none; justify-content: center; align-items: center; height: 100vh; background-color: var(--light-gray-color);">
     <div style="width: 100%; max-width: 400px; padding: 40px; background: var(--white-color); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <h2 style="text-align: center; color: var(--theme-primary); margin-bottom: 30px;">Okul Puantaj Sistemi Giriş Paneli</h2>
@@ -2983,48 +3023,46 @@ function formatTextForWrapping(text) {
  * @param {object} nobetVerisi - Personellerin aylık nöbet saatlerini içeren nesne.
  */
 
-// BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
+// BU FONKSİYONUN TAMAMINI MEVCUT OLANLA DEĞİŞTİRİN
 function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
 
-    // GÜNCELLEME 1: Başlık artık burada, tüm tablonun bir parçası olarak oluşturuluyor.
     let finalHTML = `<h2 id="puantaj-baslik" style="text-align: center; color: var(--theme-primary); margin-bottom: 25px;">${baslikMetni}</h2>`;
 
     if (!aktifPersonelListesi || aktifPersonelListesi.length === 0 || !puantajData) {
+        // Bu bölüm aynı kalıyor...
         container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4 style="color: var(--theme-primary);">Bu ay için görüntülenecek puantaj verisi veya aktif personel bulunmuyor.</h4></div>`;
         document.getElementById('total-ekders').textContent = "0 Saat";
         document.getElementById('total-nobet').textContent = "0 Saat";
         document.getElementById('total-rehberlik').textContent = "0 Saat";
-        // Başlık alanı boş kalmasın diye, "veri yok" durumunda bile başlığı gösteriyoruz.
-        document.getElementById('puantaj-baslik').textContent = baslikMetni;
+        try { document.getElementById('puantaj-baslik').textContent = baslikMetni; } catch(e){}
         return;
     }
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-
     const grupluPersonel = {
         'Belirsiz Süreli': aktifPersonelListesi.filter(p => p.sozlesme_turu === 'Belirsiz Süreli'),
         'Belirli Süreli': aktifPersonelListesi.filter(p => p.sozlesme_turu === 'Belirli Süreli'),
         'Kısmi Süreli': aktifPersonelListesi.filter(p => p.sozlesme_turu === 'Kısmi Süreli')
     };
     
-    // Fonksiyonun geri kalanı aynı şekilde `finalHTML` değişkenine ekleme yapmaya devam ediyor...
     for (const grupAdi in grupluPersonel) {
         const personelGrubu = grupluPersonel[grupAdi];
         if (personelGrubu.length === 0) continue;
-        const isBelirsizSüreli = (grupAdi === 'Belirsiz Süreli');
-        finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${grupAdi.toUpperCase()} PERSONEL PUANTAJ CETVELİ</h3>`;
-        let tableHTML = `<table class="puantaj-table"><thead><tr><th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2">İşe Giriş</th><th rowspan="2" class="vertical-divider">İşten Çıkış</th><th colspan="${daysInMonth}">Aylık Puantaj Durumu</th><th colspan="${isBelirsizSüreli ? 1 : 4}" class="vertical-divider">Aylık Saat Toplamları</th><th colspan="9" class="vertical-divider">Aylık Gün Toplamları</th><th rowspan="2" class="vertical-divider">Sgk Prim Günü</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th></tr><tr>`;
+        const ayAdi = document.getElementById('select-month').options[month].text;
+        const yeniGrupBasligi = `${ayAdi} ${year} Ayı Personel Puantaj Kayıtları ( ${grupAdi.toLocaleUpperCase('tr-TR')} )`;
+        finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${yeniGrupBasligi}</h3>`;
+        let tableHTML = `<table class="puantaj-table"><thead><tr><th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2">İşe Giriş</th><th rowspan="2" class="vertical-divider">İşten Çıkış</th><th colspan="${daysInMonth}">Aylık Puantaj Durumu</th><th colspan="${(grupAdi === 'Belirsiz Süreli') ? 1 : 4}" class="vertical-divider">Aylık Saat Toplamları</th><th colspan="9" class="vertical-divider">Aylık Gün Toplamları</th><th rowspan="2" class="vertical-divider">Sgk Prim Günü</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th></tr><tr>`;
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
             const isDividerDay = (date.getDay() === 0 || day === daysInMonth);
             const dividerClass = isDividerDay ? 'vertical-divider' : '';
             tableHTML += `<th class="col-day ${dividerClass}">${day}<br>${gunler[date.getDay()]}</th>`;
         }
-        tableHTML += `<th>Aylık Toplam</th>${!isBelirsizSüreli ? `<th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>` : ''}<th>N</th><th>HT</th><th>RT</th><th>I</th><th>R</th><th>UI</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th><th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th></tr></thead><tbody>`;
+        tableHTML += `<th>Aylık Toplam</th>${!(grupAdi === 'Belirsiz Süreli') ? `<th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>` : ''}<th>N</th><th>HT</th><th>RT</th><th>I</th><th>R</th><th>UI</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th><th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th></tr></thead><tbody>`;
         personelGrubu.forEach(personel => {
             const personelPuantajData = puantajData[personel.id];
             if (!personelPuantajData) { return; }
@@ -3041,33 +3079,31 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
             const statusCounts = calculateStatusCounts(personel.id);
             let sgkPrimGunu;
             if (personel.sozlesme_turu === 'Kısmi Süreli') {
-                const hesaplananGun = Math.round(monthlyHours.genelToplam / 7.5);
-                sgkPrimGunu = hesaplananGun;
-                statusCounts.N = hesaplananGun;
+                sgkPrimGunu = Math.round(monthlyHours.genelToplam / 7.5);
+                statusCounts.N = sgkPrimGunu;
                 statusCounts.Y = 0; statusCounts.E = 0; statusCounts.HT = 0; statusCounts.RT = 0;
             } else {
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const eksikGunler = (statusCounts.R || 0) + (statusCounts.UI || 0);
-                sgkPrimGunu = daysInMonth - eksikGunler;
+                sgkPrimGunu = new Date(year, month + 1, 0).getDate() - ((statusCounts.R || 0) + (statusCounts.UI || 0));
             }
             tableHTML += `<tr class="personel-row-status"><td class="col-personel" rowspan="2">${personel.ad}</td><td class="col-unvan" rowspan="2">${personel.unvan}</td><td class="col-date" rowspan="2">${formatDateDDMMYYYY(personel.ise_giris)}</td><td class="col-date vertical-divider" rowspan="2">${ayrilisTarihiGoster}</td>`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayData = personelPuantajData[dateString] || { code: '', hours: 0, notes: '' };
-                const isDividerDay = (new Date(year, month, day).getDay() === 0 || day === daysInMonth);
-                const dividerClass = isDividerDay ? 'vertical-divider' : '';
+                const dayData = personelPuantajData[dateString] || { code: '', hours: 0 };
+                const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
                 tableHTML += `<td class="status-cell status-${dayData.code} ${dividerClass}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || ''}</td>`;
             }
-            tableHTML += `<td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>${!isBelirsizSüreli ? `<td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td><td class="summary-nobet" rowspan="2">${nobetSaat}</td><td class="summary-rehberlik vertical-divider" rowspan="2">${rehberlikSaat}</td>` : ''}<td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.I || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.UI || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td><td class="col-summary-count vertical-divider" rowspan="2">${statusCounts.RTÇ || 0}</td><td class="total-worked-day vertical-divider" rowspan="2">${sgkPrimGunu}</td><td class="social-section" rowspan="2">${personel.esDurumu === 'calismiyor' ? 'Çalışmıyor' : (personel.esDurumu === 'calisiyor' ? 'Çalışıyor' : 'Bekar')}</td><td class="social-section" rowspan="2">${personel.cocuk0_6 || ''}</td><td class="social-section" rowspan="2">${personel.cocuk6_18 || ''}</td><td class="col-imza" rowspan="2"></td></tr>`;
+            tableHTML += `<td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>${!(grupAdi === 'Belirsiz Süreli') ? `<td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td><td class="summary-nobet" rowspan="2">${nobetSaat}</td><td class="summary-rehberlik vertical-divider" rowspan="2">${rehberlikSaat}</td>` : ''}<td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.I || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.UI || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td><td class="col-summary-count vertical-divider" rowspan="2">${statusCounts.RTÇ || 0}</td><td class="total-worked-day vertical-divider" rowspan="2">${sgkPrimGunu}</td><td class="social-section" rowspan="2">${personel.esDurumu === 'calismiyor' ? 'Çalışmıyor' : (personel.esDurumu === 'calisiyor' ? 'Çalışıyor' : 'Bekar')}</td><td class="social-section" rowspan="2">${personel.cocuk0_6 || ''}</td><td class="social-section" rowspan="2">${personel.cocuk6_18 || ''}</td><td class="col-imza" rowspan="2"></td></tr>`;
             tableHTML += `<tr class="personel-row-hours horizontal-divider">`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayData = personelPuantajData[dateString] || { code: '', hours: 0, notes: '' };
-                const isDividerDay = (new Date(year, month, day).getDay() === 0 || day === daysInMonth);
-                const dividerClass = isDividerDay ? 'vertical-divider' : '';
+                const dayData = personelPuantajData[dateString] || { code: '', hours: 0 };
+                const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
                 const hourContent = (dayData?.code === 'N' || dayData?.code === 'RTÇ' || dayData?.code === 'Y') && dayData?.hours > 0 ? dayData.hours : '';
                 const cellClass = hourContent ? 'hour-cell has-hours' : 'hour-cell';
-                tableHTML += `<td class="${cellClass} ${dividerClass}">${hourContent}</td>`;
+                
+                // === SAAT/TARİH SORUNUNU GİDEREN GÜNCELLEME BURADA ===
+                // Hücreye, Excel'in içeriği metin olarak algılamasını sağlayan özel bir stil ekliyoruz.
+                tableHTML += `<td class="${cellClass} ${dividerClass}" style="mso-number-format:'\\@'">${hourContent}</td>`;
             }
             tableHTML += `</tr>`;
         });
@@ -3075,7 +3111,6 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         finalHTML += tableHTML;
     }
     
-    // Oluşturulan tüm HTML'i tek seferde container'a bas.
     container.innerHTML = finalHTML;
     attachCellListeners();
 }
@@ -3239,12 +3274,10 @@ function updateLockStatusUI() {
     }
 }
 
-// MEVCUT renderPuantajTable FONKSİYONUNU SİLİP YERİNE BUNU YAPIŞTIRIN
-
-
+// BU FONKSİYONUN TAMAMINI MEVCUT OLANLA DEĞİŞTİRİN
 async function initializePuantaj() {
+    // Fonksiyonun bu kısmı zaten güncel ve doğru.
     if (puantajInitialized) {
-        // Eğer zaten başlatıldıysa, sadece mevcut ayın verisini yükle
         await loadPuantajDataForCurrentMonth();
         return;
     }
@@ -3253,7 +3286,6 @@ async function initializePuantaj() {
         const personelSnap = await getDocs(collection(db, "personel"));
         const gorevSnap = await getSettings('ayarlar_gorevler');
         const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
-
         const neviSnap = await getSettings('ayarlar_personel_nevileri');
         const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
 
@@ -3263,55 +3295,34 @@ async function initializePuantaj() {
                 id: doc.id,
                 ad: data.ad_soyad || 'İsimsiz',
                 unvan: gorevMap.get(data.gorevi_bransi) || 'Belirtilmemiş',
-                neviAdi: neviMap.get(data.personel_nevisi) || 'Bilinmiyor', // YENİ EKLENDİ
+                neviAdi: neviMap.get(data.personel_nevisi) || 'Bilinmiyor',
                 maasKarsiligi: parseInt(data.maas_karsiligi) || 20,
                 rehberlik_gorevi: data.rehberlik_gorevi || 'hayir',
-                esDurumu: data.es_durumu, 
-                cocuk0_6: data.cocuk_0_6, 
-                cocuk6_18: data.cocuk_6_ustu, 
+                esDurumu: data.es_durumu,
+                cocuk0_6: data.cocuk_0_6,
+                cocuk6_18: data.cocuk_6_ustu,
                 sozlesme_turu: data.sozlesme_turu || 'Belirsiz Süreli',
                 ise_giris: data.ise_giris || '---',
                 isten_ayrilis: data.isten_ayrilis || '---',
                 kismi_zamanli_calisma: data.kismi_zamanli_calisma || {}
             };
         });
-// =================================================================
-// KODUNUZDAKİ MEVCUT formatTextForWrapping VE renderPuantajTable
-// FONKSİYONLARINI SİLİP YERİNE BU BLOĞUN TAMAMINI YAPIŞTIRIN
-// =================================================================
 
-/**
- * Verilen metni (isim, unvan vb.) boşluk karakterlerinden bölerek
- * HTML'de alt satıra geçmeyi sağlayan <br> etiketi ile birleştirir.
- * @param {string} text - Biçimlendirilecek metin.
- * @returns {string} HTML formatında alt alta yazılmış metin.
- */
-function formatTextForWrapping(text) {
-    if (!text) return '';
-    return text.replace(/ /g, '<br>');
-}
-
-/**
- * Puantaj verilerini kullanarak HTML tablosunu oluşturur ve ekranda gösterir.
- * Her personel için tek bir satır oluşturur ve gün hücrelerinde hem durum kodunu
- * hem de çalışılan saati gösterir.
- * @param {object} nobetVerisi - Personellerin aylık nöbet saatlerini içeren nesne.
- */
-
-
-       // =================== 2. ADIM (A): YENİ BUTONU TANIMLAYIN ===================
-const selectMonth = document.getElementById('select-month'), inputYear = document.getElementById('input-year'),
-    showBtn = document.getElementById('btn-show-puantaj'), // YENİ BUTON
-    generateBtn = document.getElementById('btn-generate'), // MEVCUT BUTON
-    printBtn = document.getElementById('btn-print'),
-    deleteBtn = document.getElementById('btn-delete-puantaj'), // YENİ BUTON TANIMLANDI
-// =================== 2. ADIM (A) BİTİŞİ ===================
-            pdfBtn = document.getElementById('btn-pdf'), excelBtn = document.getElementById('btn-excel'),
+        // Buton ve form elemanlarını seçme
+        const selectMonth = document.getElementById('select-month'),
+            inputYear = document.getElementById('input-year'),
+            showBtn = document.getElementById('btn-show-puantaj'),
+            generateBtn = document.getElementById('btn-generate'),
+            printBtn = document.getElementById('btn-print'),
+            deleteBtn = document.getElementById('btn-delete-puantaj'),
+            pdfBtn = document.getElementById('btn-pdf'),
+            excelBtn = document.getElementById('btn-excel'),
             modalOverlay = document.getElementById('edit-modal-overlay'),
-            modalSaveBtn = document.getElementById('modal-save'), modalCancelBtn = document.getElementById('modal-cancel'),
-            savePuantajBtn = document.getElementById('btn-save-puantaj'), // Yeni buton
-            lockPuantajBtn = document.getElementById('btn-lock-puantaj'); // Yeni buton
- 
+            modalSaveBtn = document.getElementById('modal-save'),
+            modalCancelBtn = document.getElementById('modal-cancel'),
+            savePuantajBtn = document.getElementById('btn-save-puantaj'),
+            lockPuantajBtn = document.getElementById('btn-lock-puantaj');
+
         modalSaveBtn.addEventListener('click', saveModalChanges);
         modalCancelBtn.addEventListener('click', () => {
             modalOverlay.style.display = 'none';
@@ -3328,44 +3339,37 @@ const selectMonth = document.getElementById('select-month'), inputYear = documen
         modalStatusSelect.innerHTML = '';
         for(const code in statusCodes) modalStatusSelect.add(new Option(statusCodes[code], code));
 
+        // === DÜZELTME BURADA: EKSİK OLAN BUTON ATAMALARI EKLENDİ ===
+        if(!puantajInitialized) {
+            showBtn.addEventListener('click', loadPuantajDataForCurrentMonth); 
+            generateBtn.addEventListener('click', generateInitialPuantaj);
+            deleteBtn.addEventListener('click', deleteCurrentPuantaj);
+            savePuantajBtn.addEventListener('click', savePuantajData);
+            lockPuantajBtn.addEventListener('click', togglePuantajLock);
+            document.getElementById('btn-bulk-update').addEventListener('click', applyBulkUpdate);
 
+            // "YAZDIR", "PDF İNDİR" ve "EXCEL İNDİR" BUTONLARI İÇİN EKSİK OLAN KODLAR
+            printBtn.addEventListener('click', printPuantaj);
+            pdfBtn.addEventListener('click', downloadPdf);
+            excelBtn.addEventListener('click', downloadExcel); // BU SATIR SORUNU ÇÖZECEK
 
-       // =================== 2. ADIM (B): YENİ BUTONA İŞLEV ATAYIN ===================
-if(!puantajInitialized) {
-    showBtn.addEventListener('click', loadPuantajDataForCurrentMonth); 
-    generateBtn.addEventListener('click', generateInitialPuantaj);
-    deleteBtn.addEventListener('click', deleteCurrentPuantaj); // YENİ OLAY ATAMASI
-    savePuantajBtn.addEventListener('click', savePuantajData);
-    lockPuantajBtn.addEventListener('click', togglePuantajLock);
- // YENİ EKLENECEK SATIR
- document.getElementById('btn-bulk-update').addEventListener('click', applyBulkUpdate);
+            selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth);
+            inputYear.addEventListener('change', loadPuantajDataForCurrentMonth);
 
-    selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth);
-//...
-// Toplu güncelleme menülerini doldur
-    const bulkUpdateDaySelect = document.getElementById('bulk-update-day');
-    const bulkUpdateStatusSelect = document.getElementById('bulk-update-status');
-    const daysInMonth = new Date(inputYear.value, parseInt(selectMonth.value) + 1, 0).getDate();
-    bulkUpdateDaySelect.innerHTML = '';
-    for (let i = 1; i <= daysInMonth; i++) {
-        bulkUpdateDaySelect.add(new Option(i, i));
-    }
-    const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün' };
-    bulkUpdateStatusSelect.innerHTML = '';
-     for(const code in statusCodes) {
-        bulkUpdateStatusSelect.add(new Option(`${statusCodes[code]} (${code})`, code));
-    }
-
-    selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth);
-    inputYear.addEventListener('change', loadPuantajDataForCurrentMonth);
-
-    printBtn.addEventListener('click', printPuantaj);
-    // ... diğer olay atamaları
-}
-// =================== 2. ADIM (B) BİTİŞİ ===================
+            const bulkUpdateDaySelect = document.getElementById('bulk-update-day');
+            const bulkUpdateStatusSelect = document.getElementById('bulk-update-status');
+            const daysInMonth = new Date(inputYear.value, parseInt(selectMonth.value) + 1, 0).getDate();
+            bulkUpdateDaySelect.innerHTML = '';
+            for (let i = 1; i <= daysInMonth; i++) {
+                bulkUpdateDaySelect.add(new Option(i, i));
+            }
+            bulkUpdateStatusSelect.innerHTML = '';
+             for(const code in statusCodes) {
+                bulkUpdateStatusSelect.add(new Option(`${statusCodes[code]} (${code})`, code));
+            }
+        }
 
         puantajInitialized = true;
-        // OTOMATİK OLUŞTURMA YERİNE, KAYITLI VERİYİ YÜKLE
         await loadPuantajDataForCurrentMonth();
 
     } catch (error) {
@@ -3766,29 +3770,114 @@ function renderGrandTotals(nobetVerisi = {}) {
 
 
 
-        function downloadPdf() {
-    showToast('PDF oluşturuluyor, lütfen bekleyin...');
-    const table = document.getElementById('puantaj-table-container');
-    html2canvas(table, { scale: 2, useCORS: true }).then(canvas => {
+        // MEVCUT downloadPdf FONKSİYONUNU SİLİP BUNU EKLEYİN
+function downloadPdf() {
+    const year = document.getElementById('input-year').value;
+    const monthName = document.getElementById('select-month').options[document.getElementById('select-month').selectedIndex].text;
+    const puantajTabloAlani = document.getElementById('puantaj-table-container');
+
+    if (!puantajData || Object.keys(puantajData).length === 0) {
+        showToast('PDF\'e aktarılacak puantaj verisi bulunmuyor.', 'error');
+        return;
+    }
+
+    showToast('PDF oluşturuluyor, lütfen bekleyin...', 'info');
+
+    // html2canvas kütüphanesi ile puantaj alanının resmini çekiyoruz
+    html2canvas(puantajTabloAlani, {
+        scale: 2, // Görüntü kalitesini artırmak için ölçeği 2 katına çıkar
+        useCORS: true,
+        logging: false
+    }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a3' });
-        const imgProps= doc.getImageProperties(imgData);
-        const pdfWidth = doc.internal.pageSize.getWidth() - 40;
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, 'PNG', 20, 20, pdfWidth, pdfHeight);
-        doc.save('puantaj.pdf');
+        
+        // PDF'i A3 boyutunda ve yatay olarak oluşturuyoruz ki tablo sığsın
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'pt',
+            format: 'a3'
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+
+        // Resmin oranını koruyarak PDF'e sığdır
+        let imgWidth = pdfWidth - 40; // Kenarlardan 20'şer puan boşluk
+        let imgHeight = imgWidth / ratio;
+
+        // Eğer yükseklik sayfaya sığmazsa, yüksekliğe göre yeniden ölçekle
+        if (imgHeight > pdfHeight - 40) {
+            imgHeight = pdfHeight - 40;
+            imgWidth = imgHeight * ratio;
+        }
+
+        const x = (pdfWidth - imgWidth) / 2;
+        const y = (pdfHeight - imgHeight) / 2;
+
+        pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+        pdf.save(`Puantaj_${monthName}_${year}.pdf`);
+        showToast('PDF başarıyla indirildi.', 'success');
     });
 }
 
-        function downloadExcel() {
-            const table = document.getElementById('puantaj-table');
-            const wb = XLSX.utils.table_to_book(table, { sheet: "Puantaj" });
-            const year = document.getElementById('input-year').value;
-            const month = parseInt(document.getElementById('select-month').value) + 1;
-            XLSX.writeFile(wb, `Puantaj_${month}_${year}.xlsx`);
-        }
-        
+// MEVCUT downloadExcel FONKSİYONUNU SİLİP BUNU EKLEYİN
+function downloadExcel() {
+    const year = document.getElementById('input-year').value;
+    const monthName = document.getElementById('select-month').options[document.getElementById('select-month').selectedIndex].text;
+    const puantajTabloAlani = document.getElementById('puantaj-table-container');
+
+    if (!puantajData || Object.keys(puantajData).length === 0) {
+        showToast('Dışa aktarılacak puantaj verisi bulunmuyor.', 'error');
+        return;
+    }
+    
+    showToast('HTML tabanlı Excel dosyası hazırlanıyor...', 'info');
+
+    // 1. Gerekli CSS stillerini bir değişkene alıyoruz
+    const styles = Array.from(document.styleSheets)
+        .map(sheet => {
+            try {
+                return Array.from(sheet.cssRules)
+                    .map(rule => rule.cssText)
+                    .join('');
+            } catch (e) {
+                // Dışarıdan yüklenen stiller için CORS hatasını engelle
+                return '';
+            }
+        })
+        .join('');
+
+    // 2. HTML içeriğini ve stilleri birleştiriyoruz
+    const htmlContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="UTF-8">
+            <style>${styles}</style>
+        </head>
+        <body>
+            ${puantajTabloAlani.innerHTML}
+        </body>
+        </html>
+    `;
+
+    // 3. Blob oluşturup indirme işlemini tetikliyoruz
+    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Puantaj_${monthName}_${year}.xls`; // Uzantının .xls olduğuna dikkat edin
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Excel dosyası başarıyla indirildi.', 'success');
+}
+
+
 // BU YENİ VE GÜNCELLENMİŞ FONKSİYONU EKLEYİN
 async function saveModalChanges() {
     const modalSaveBtn = document.getElementById('modal-save');
@@ -3924,6 +4013,30 @@ function attachCellListeners() {
 
 
         document.addEventListener('DOMContentLoaded', () => {
+// === MOBİL HAMBURGER MENÜ MANTIĞI ===
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebar = document.querySelector('.sidebar');
+        
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Diğer tıklama olaylarını engelle
+                sidebar.classList.toggle('open');
+            });
+        }
+        
+        // Menüdeki bir linke tıklandığında menünün otomatik kapanmasını sağla
+        sidebar.addEventListener('click', (e) => {
+            if (e.target.closest('a')) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // Menü dışına tıklandığında menüyü kapat
+        document.body.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('open') && !sidebar.contains(e.target)) {
+                 sidebar.classList.remove('open');
+            }
+        });
     // KULLANICI DURUMUNU KONTROL EDEN ANA YAPI
     onAuthStateChanged(auth, (user) => {
         if (user) {
