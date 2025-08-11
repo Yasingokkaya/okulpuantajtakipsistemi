@@ -2297,6 +2297,45 @@ function renderDuzenlenenDetayListesi() {
                 showToast('Güncelleme sırasında bir hata oluştu.', 'error');
             }
         }
+// YENİ EKLENECEK KOD
+async function addNobet() {
+    const tarihInput = document.getElementById('nobet-tarih');
+    const personelSelect = document.getElementById('nobet-personel');
+    const yerSelect = document.getElementById('nobet-yeri');
+
+    const tarih = tarihInput.value;
+    const personelId = personelSelect.value;
+    const nobetYeriId = yerSelect.value;
+
+    if (!tarih || !personelId || !nobetYeriId) {
+        showToast('Lütfen Tarih, Personel ve Nöbet Yeri seçin.', 'error');
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, 'nobetler'), {
+            tarih: tarih,
+            personelId: personelId,
+            nobetYeriId: nobetYeriId
+        });
+
+        showToast('Nöbet başarıyla eklendi.', 'success');
+        
+        // Formu temizle
+        tarihInput.value = '';
+        personelSelect.value = '';
+        yerSelect.value = '';
+        
+        // Raporu yenile
+        const year = parseInt(document.getElementById('rapor-yil-gir').value);
+        const month = parseInt(document.getElementById('rapor-ay-sec').value);
+        await renderNobetRaporu(year, month);
+
+    } catch (error) {
+        console.error("Nöbet eklenirken hata: ", error);
+        showToast('Nöbet eklenirken bir hata oluştu.', 'error');
+    }
+}
 
 let nobetTakipInitialized = false;
 async function initializeNobetTakip() {
@@ -2361,7 +2400,8 @@ async function initializeNobetTakip() {
     raporYilGir.addEventListener('change', renderRapor);
     copyBtn.addEventListener('click', copyNobetSchedule);
     yazdirBtn.addEventListener('click', () => window.print());
-    nobetEkleBtn.addEventListener('click', async () => { /* Ekleme kodu aynı kalıyor */ });
+    // Yeni Eklenecek Satır
+nobetEkleBtn.addEventListener('click', addNobet);
     editModal.querySelector('.close-modal').addEventListener('click', () => editModal.classList.remove('open'));
     editForm.addEventListener('submit', async (e) => {
         e.preventDefault();
