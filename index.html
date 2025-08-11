@@ -1750,7 +1750,8 @@ async function loadZamanCizelgesiAyarlari() {
     updatePersonelFormVisibility();
 }
         
-        let scheduleInitialized = false;
+        // YENİ EKLENECEK GÜNCEL FONKSİYON
+let scheduleInitialized = false;
 async function initializeSchedule() {
     if (scheduleInitialized) return;
 
@@ -1765,19 +1766,19 @@ async function initializeSchedule() {
 
         const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.includes('Eğitim Personeli'));
         const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
-        const rehberOgretmenGorev = gorevSnap.docs.find(doc => doc.data().name.includes('Rehber Öğretmen'));
-        const rehberOgretmenGorevId = rehberOgretmenGorev ? rehberOgretmenGorev.id : null;
-
-        // Hatanın kaynağı olan 'siniflar' değişkeni burada doğru şekilde tanımlanıyor.
+        
+        // Rehber Öğretmen filtresi için kullanılan değişkenler kaldırıldı.
+        
         const siniflar = siniflarSnap.docs.map(d => d.data().name);
         const dersler = derslerSnap.docs.map(d => d.data().name);
 
         const personeller = personelSnap.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(p => {
+                // FİLTRE DEĞİŞİKLİĞİ: Artık sadece personelin "Eğitim Personeli" olup olmadığı kontrol ediliyor.
+                // Rehber öğretmen olup olmaması listeye eklenmesine engel değil.
                 const isEgitimPersoneli = p.personel_nevisi === egitimPersoneliNeviId;
-                const isRehberOgretmen = p.gorevi_bransi === rehberOgretmenGorevId;
-                return isEgitimPersoneli && !isRehberOgretmen;
+                return isEgitimPersoneli;
             })
             .map(p => p.ad_soyad);
 
@@ -1793,21 +1794,18 @@ async function initializeSchedule() {
             document.getElementById('schedule-display-area').innerHTML = '<p>Lütfen "Ayarlar" menüsünden en az bir sınıf ekleyin.</p>';
             return;
         }
-
-        // Önceki adımlarda yaptığımız tüm güncellemeler burada yer alıyor.
+        
         window.aktifSinif = siniflar[0];
         window.tumProgramlar = {};
 
         await generateTimeSlots();
         createTabs(siniflar);
         
-        // Aktif sınıfın programını veritabanından yüklüyoruz.
         await loadScheduleForClass(window.aktifSinif);
 
         scheduleInitialized = true;
 
     } catch (error) {
-        // Hata yakalama bloğu.
         console.error("Ders programı başlatılırken hata:", error);
         showToast('Ders programı yüklenemedi. Ayarlarınızı kontrol edin.', 'error');
     }
@@ -2586,7 +2584,9 @@ async function saveNobetChanges() {
         showToast('Güncelleme sırasında bir hata oluştu.', 'error');
     }
 }
-// YENİ EKLENECEK AKILLI KOPYALAMA FONKSİYONU
+// ==========================================================
+// YERİNE EKLENECEK YENİ VE DOĞRU ÇALIŞAN FONKSİYON
+// ==========================================================
 async function copyNobetSchedule() {
     const sourceYear = parseInt(document.getElementById('copy-source-year').value);
     const sourceMonth = parseInt(document.getElementById('copy-source-month').value);
@@ -2596,18 +2596,17 @@ async function copyNobetSchedule() {
     if (sourceYear === destYear && sourceMonth === destMonth) {
         return showToast('Kaynak ve hedef ay aynı olamaz.', 'error');
     }
-
     const kaynakAyAdi = document.getElementById('copy-source-month').options[sourceMonth].text;
     const hedefAyAdi = document.getElementById('copy-dest-month').options[destMonth].text;
-    if (!confirm(`${kaynakAyAdi} ${sourceYear} ayındaki hafta içi nöbetlerini, ${hedefAyAdi} ${destYear} ayındaki ilgili hafta içi günlerine kopyalamak istediğinizden emin misiniz?`)) {
+    if (!confirm(`${kaynakAyAdi} ${sourceYear} ayındaki nöbet düzenini, ${hedefAyAdi} ${destYear} ayına kopyalamak istediğinizden emin misiniz?`)) {
         return;
     }
     
-    showToast('Kopyalama işlemi başlatıldı...', 'info');
+    showToast('Akıllı kopyalama işlemi başlatıldı...', 'info');
 
-    // 1. Kaynak aydaki tüm nöbetleri çek ve günlere göre grupla
-    const sourceStartDate = new Date(sourceYear, sourceMonth, 1).toISOString().split('T')[0];
-    const sourceEndDate = new Date(sourceYear, sourceMonth + 1, 1).toISOString().split('T')[0];
+    // Adım 1: Kaynak aydaki nöbetleri çek ve hafta günlerine göre BENZERSİZ bir şablon oluştur.
+    const sourceStartDate = new Date(Date.UTC(sourceYear, sourceMonth, 1)).toISOString().split('T')[0];
+    const sourceEndDate = new Date(Date.UTC(sourceYear, sourceMonth + 1, 1)).toISOString().split('T')[0];
     const q = query(collection(db, 'nobetler'), where('tarih', '>=', sourceStartDate), where('tarih', '<', sourceEndDate));
     
     const nobetSnap = await getDocs(q);
@@ -2615,37 +2614,44 @@ async function copyNobetSchedule() {
         return showToast('Kaynak ayda kopyalanacak nöbet kaydı bulunamadı.', 'error');
     }
 
-    const sourceDayMap = { 1: [], 2: [], 3: [], 4: [], 5: [] }; // Pzt=1, Salı=2... Cuma=5
+    // rosterTemplate[1] -> Pazartesi görevlileri, rosterTemplate[5] -> Cuma görevlileri
+    const rosterTemplate = { 1: new Set(), 2: new Set(), 3: new Set(), 4: new Set(), 5: new Set() };
+
     nobetSnap.forEach(doc => {
         const nobet = doc.data();
-        const tarih = new Date(nobet.tarih + 'T00:00:00');
-        const dayOfWeek = tarih.getDay();
-        if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Sadece hafta içi günleri al
-            sourceDayMap[dayOfWeek].push({ personelId: nobet.personelId, nobetYeriId: nobet.nobetYeriId });
+        // Saat dilimi sorunlarını önlemek için tarihi UTC olarak ele alıyoruz.
+        const tarihUTC = new Date(nobet.tarih + 'T00:00:00Z');
+        const dayOfWeek = tarihUTC.getUTCDay(); // 0=Pazar, 1=Pazartesi, ..., 6=Cumartesi
+
+        // Sadece hafta içi (Pzt-Cuma) nöbetlerini dikkate al
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+            // Mükerrer kaydı önlemek için Set'e personel ve yer bilgisini ekle
+            const dutyIdentifier = JSON.stringify({ p: nobet.personelId, y: nobet.nobetYeriId });
+            rosterTemplate[dayOfWeek].add(dutyIdentifier);
         }
     });
 
-    // 2. Hedef aydaki günleri döngüye al ve eşleşen günlere yeni nöbet ekle
+    // Adım 2: Hedef aydaki tüm günleri gez ve şablonu uygula
     let kopyalananKayitSayisi = 0;
     const promises = [];
     const daysInDestMonth = new Date(destYear, destMonth + 1, 0).getDate();
 
     for (let day = 1; day <= daysInDestMonth; day++) {
-        const yeniTarih = new Date(destYear, destMonth, day);
-        const dayOfWeek = yeniTarih.getDay();
+        const hedefTarihUTC = new Date(Date.UTC(destYear, destMonth, day));
+        const dayOfWeek = hedefTarihUTC.getUTCDay();
 
-        // Hedef gün hafta sonu ise veya kaynakta o güne ait nöbet yoksa atla
-        if (dayOfWeek === 0 || dayOfWeek === 6 || sourceDayMap[dayOfWeek].length === 0) {
+        // Eğer gün hafta sonuysa (Pazar veya Cumartesi) veya o güne ait şablon boşsa atla
+        if (dayOfWeek === 0 || dayOfWeek === 6 || !rosterTemplate[dayOfWeek] || rosterTemplate[dayOfWeek].size === 0) {
             continue;
         }
 
-        // Kaynak günle eşleşen tüm nöbetleri hedef güne kopyala
-        sourceDayMap[dayOfWeek].forEach(nobetDetay => {
-            const yeniTarihString = yeniTarih.toISOString().split('T')[0];
+        // Şablondaki her bir nöbetçiyi bu güne ata
+        rosterTemplate[dayOfWeek].forEach(dutyJson => {
+            const dutyInfo = JSON.parse(dutyJson);
             const yeniNobet = {
-                personelId: nobetDetay.personelId,
-                nobetYeriId: nobetDetay.nobetYeriId,
-                tarih: yeniTarihString
+                personelId: dutyInfo.p,
+                nobetYeriId: dutyInfo.y,
+                tarih: hedefTarihUTC.toISOString().split('T')[0]
             };
             promises.push(addDoc(collection(db, 'nobetler'), yeniNobet));
             kopyalananKayitSayisi++;
@@ -2653,12 +2659,13 @@ async function copyNobetSchedule() {
     }
 
     if (kopyalananKayitSayisi === 0) {
-        return showToast('Kaynak aydaki hafta içi nöbetleriyle eşleşen, hedef ayda uygun bir gün bulunamadı.', 'info');
+        return showToast('Kaynak aydaki nöbetlerle eşleşen, hedef ayda uygun bir gün bulunamadı.', 'info');
     }
 
     try {
         await Promise.all(promises);
         showToast(`${kopyalananKayitSayisi} nöbet kaydı başarıyla kopyalandı!`, 'success');
+        // Raporu kopyalanan aya ayarla ve yenile
         document.getElementById('rapor-ay-sec').value = destMonth;
         document.getElementById('rapor-yil-gir').value = destYear;
         renderNobetRaporu(destYear, destMonth);
