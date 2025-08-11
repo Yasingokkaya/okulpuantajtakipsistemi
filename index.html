@@ -2459,11 +2459,9 @@ async function initializeNobetTakip() {
         }
     });
 }
- 
-// YENİ EKLENECEK GÜNCEL FONKSİYON
+ // YERİNE EKLENECEK DÜZELTİLMİŞ FONKSİYON
 async function renderNobetRaporu(year, month) {
     const tbody = document.getElementById('nobet-rapor-tbody');
-    // Tablo başlığına "Tümünü Seç" checkbox'ını ekliyoruz.
     const thead = tbody.closest('table').querySelector('thead tr');
     thead.innerHTML = `
         <th class="no-print" style="width: 40px;"><input type="checkbox" id="select-all-nobet" title="Tümünü Seç"></th>
@@ -2475,9 +2473,28 @@ async function renderNobetRaporu(year, month) {
     `;
 
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Rapor oluşturuluyor...</td></tr>`;
-    const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 1);
-    const q = query(collection(db, 'nobetler'), where('tarih', '>=', startDate.toISOString().split('T')[0]), where('tarih', '<', endDate.toISOString().split('T')[0]), orderBy('tarih'));
+
+    // --- SAAT DİLİMİ SORUNUNU GİDEREN DEĞİŞİKLİK ---
+    // Sorgu için gereken tarih metinlerini, saat dilimi hatalarını önlemek için doğrudan oluşturuyoruz.
+    // Başlangıç tarihi, seçilen ayın 1. günüdür.
+    const startDateString = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+
+    // Bitiş tarihi, bir sonraki ayın 1. günüdür (sorgu < olduğu için o gün dahil edilmez).
+    let endYear = year;
+    let endMonth = month + 2; // month 0-index'li olduğu için sonraki ayı bulmak için 2 ekliyoruz.
+    if (endMonth > 12) {
+        endMonth = 1;
+        endYear++;
+    }
+    const endDateString = `${endYear}-${String(endMonth).padStart(2, '0')}-01`;
+    
+    const q = query(
+        collection(db, 'nobetler'), 
+        where('tarih', '>=', startDateString), 
+        where('tarih', '<', endDateString), 
+        orderBy('tarih')
+    );
+    // --- DEĞİŞİKLİK SONU ---
 
     const [nobetSnap, personelSnap, yerSnap] = await Promise.all([
         getDocs(q),
@@ -2502,7 +2519,8 @@ async function renderNobetRaporu(year, month) {
 
     nobetSnap.forEach(doc => {
         const nobet = doc.data();
-        const tarih = new Date(nobet.tarih + 'T00:00:00');
+        // Tarihi UTC olarak ele alarak saat dilimi sorunlarını engelliyoruz.
+        const tarih = new Date(nobet.tarih + 'T00:00:00Z');
         
         if (sonTarih !== nobet.tarih) {
             sonTarih = nobet.tarih;
@@ -2512,13 +2530,12 @@ async function renderNobetRaporu(year, month) {
         const row = tbody.insertRow();
         row.className = renkler[renkIndex];
 
-        // Her satırın başına seçim kutusu (checkbox) eklendi.
         row.innerHTML = `
             <td class="no-print" style="text-align: center;">
                 <input type="checkbox" class="nobet-checkbox" data-id="${doc.id}">
             </td>
-            <td>${tarih.toLocaleDateString('tr-TR')}</td>
-            <td>${gunlerTR[tarih.getDay()]}</td>
+            <td>${tarih.toLocaleDateString('tr-TR', { timeZone: 'UTC' })}</td>
+            <td>${gunlerTR[tarih.getUTCDay()]}</td>
             <td>${personelMap.get(nobet.personelId) || 'Bilinmiyor'}</td>
             <td>${yerMap.get(nobet.nobetYeriId) || 'Bilinmiyor'}</td>
             <td class="actions-cell no-print">
@@ -2528,13 +2545,13 @@ async function renderNobetRaporu(year, month) {
         `;
     });
 
-    // "Tümünü Seç" checkbox'ının işlevselliğini ekliyoruz.
     document.getElementById('select-all-nobet').addEventListener('change', (e) => {
         document.querySelectorAll('.nobet-checkbox').forEach(checkbox => {
             checkbox.checked = e.target.checked;
         });
     });
 }
+
 
 async function openNobetEditModal(id) {
     const modal = document.getElementById('edit-nobet-modal');
