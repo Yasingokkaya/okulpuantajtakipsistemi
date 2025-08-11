@@ -889,10 +889,13 @@
                 </div>
             </div>
             <div id="nobet-rapor-alani">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="margin-top: 40px;">Aylık Nöbet Raporu</h3>
-                    <button id="btn-nobet-yazdir" class="btn btn-header-add" style="background-color: var(--info-color);">Yazdır</button>
-                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <h3 style="margin-top: 40px; margin-bottom: 10px;">Aylık Nöbet Raporu</h3>
+    <div class="no-print" style="display: flex; gap: 10px;">
+        <button id="btn-nobet-toplu-sil" class="btn btn-header-add" style="background-color: var(--danger-color);">Seçilenleri Sil</button>
+        <button id="btn-nobet-yazdir" class="btn btn-header-add" style="background-color: var(--info-color);">Yazdır</button>
+    </div>
+</div>
                 <div class="controls" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
                     <div class="controls-left" style="display: flex; align-items: center; gap: 10px;">
                         <select id="rapor-ay-sec"></select>
@@ -2337,7 +2340,42 @@ async function addNobet() {
     }
 }
 
+
+// BU YENİ FONKSİYONU OLDUĞU GİBİ EKLEYİN
+async function deleteSelectedNobetler() {
+    const selectedCheckboxes = document.querySelectorAll('.nobet-checkbox:checked');
+
+    if (selectedCheckboxes.length === 0) {
+        showToast('Lütfen silmek için en az bir nöbet seçin.', 'error');
+        return;
+    }
+
+    if (!confirm(`${selectedCheckboxes.length} adet nöbet kaydını silmek istediğinizden emin misiniz?`)) {
+        return;
+    }
+
+    const deletePromises = [];
+    selectedCheckboxes.forEach(checkbox => {
+        const nobetId = checkbox.dataset.id;
+        deletePromises.push(deleteDoc(doc(db, 'nobetler', nobetId)));
+    });
+
+    try {
+        await Promise.all(deletePromises);
+        showToast(`${selectedCheckboxes.length} nöbet kaydı başarıyla silindi.`, 'success');
+        
+        // Raporu yenile
+        const year = parseInt(document.getElementById('rapor-yil-gir').value);
+        const month = parseInt(document.getElementById('rapor-ay-sec').value);
+        await renderNobetRaporu(year, month);
+    } catch (error) {
+        console.error("Toplu nöbet silme hatası:", error);
+        showToast('Nöbetler silinirken bir hata oluştu.', 'error');
+    }
+}
+
 let nobetTakipInitialized = false;
+// YENİ EKLENECEK GÜNCEL FONKSİYON
 async function initializeNobetTakip() {
     if (nobetTakipInitialized) return;
     nobetTakipInitialized = true;
@@ -2350,6 +2388,8 @@ async function initializeNobetTakip() {
     const nobetEkleBtn = document.getElementById('nobet-ekle-btn');
     const nobetRaporTbody = document.getElementById('nobet-rapor-tbody');
     const yazdirBtn = document.getElementById('btn-nobet-yazdir');
+    // Yeni butonlar eklendi
+    const topluSilBtn = document.getElementById('btn-nobet-toplu-sil');
 
     // Kopyalama Formu Elementleri
     const copySourceMonth = document.getElementById('copy-source-month');
@@ -2362,35 +2402,30 @@ async function initializeNobetTakip() {
     const editModal = document.getElementById('edit-nobet-modal');
     const editForm = document.getElementById('edit-nobet-form');
     
-    // Select'leri Doldurma
+    // Select'leri Doldurma (Bu kısım aynı kalıyor)
     const personelSnap = await getDocs(collection(db, 'personel'));
     const nobetYeriSnap = await getSettings('ayarlar_nobet_yerleri');
-
-    // Personel select'lerini doldur (ana form ve modal için)
     const personelOptions = personelSnap.docs.map(doc => `<option value="${doc.id}">${doc.data().ad_soyad}</option>`).join('');
     personelSelect.innerHTML = '<option value="">Personel Seçiniz...</option>' + personelOptions;
     document.getElementById('edit-nobet-personel').innerHTML = personelOptions;
-    
-    // Nöbet yeri select'lerini doldur
     const yerOptions = nobetYeriSnap.docs.map(doc => `<option value="${doc.id}">${doc.data().name}</option>`).join('');
     yerSelect.innerHTML = '<option value="">Nöbet Yeri Seçiniz...</option>' + yerOptions;
     document.getElementById('edit-nobet-yeri').innerHTML = yerOptions;
 
-    // Ay Select'lerini Doldurma
+    // Ay Select'lerini Doldurma (Bu kısım aynı kalıyor)
     const now = new Date();
     const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
     [raporAySec, copySourceMonth, copyDestMonth].forEach(select => {
         select.innerHTML = '';
         aylar.forEach((ay, index) => select.add(new Option(ay, index)));
     });
-
     raporAySec.value = now.getMonth();
     raporYilGir.value = now.getFullYear();
-    copySourceMonth.value = now.getMonth();
-    copySourceYear.value = now.getFullYear();
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    copyDestMonth.value = nextMonth.getMonth();
-    copyDestYear.value = nextMonth.getFullYear();
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0); // Bir önceki ay için
+    copySourceMonth.value = prevMonth.getMonth();
+    copySourceYear.value = prevMonth.getFullYear();
+    copyDestMonth.value = now.getMonth();
+    copyDestYear.value = now.getFullYear();
 
     const renderRapor = () => renderNobetRaporu(parseInt(raporYilGir.value), parseInt(raporAySec.value));
     renderRapor();
@@ -2400,8 +2435,11 @@ async function initializeNobetTakip() {
     raporYilGir.addEventListener('change', renderRapor);
     copyBtn.addEventListener('click', copyNobetSchedule);
     yazdirBtn.addEventListener('click', () => window.print());
-    // Yeni Eklenecek Satır
-nobetEkleBtn.addEventListener('click', addNobet);
+    nobetEkleBtn.addEventListener('click', addNobet); // Bu satır bir önceki adımda düzeltilmişti
+    
+    // Yeni toplu silme butonu için olay dinleyici eklendi
+    topluSilBtn.addEventListener('click', deleteSelectedNobetler);
+    
     editModal.querySelector('.close-modal').addEventListener('click', () => editModal.classList.remove('open'));
     editForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -2410,6 +2448,7 @@ nobetEkleBtn.addEventListener('click', addNobet);
 
     nobetRaporTbody.addEventListener('click', async (e) => {
         const target = e.target;
+        // Checkbox'lara tıklama olayını dışarıda tutuyoruz çünkü o "Tümünü Seç" ile yönetiliyor.
         if (target.classList.contains('btn-delete-nobet')) {
             if (confirm('Bu nöbet kaydını silmek istediğinizden emin misiniz?')) {
                 await deleteDoc(doc(db, 'nobetler', target.dataset.id));
@@ -2422,10 +2461,22 @@ nobetEkleBtn.addEventListener('click', addNobet);
         }
     });
 }
-
+ 
+// YENİ EKLENECEK GÜNCEL FONKSİYON
 async function renderNobetRaporu(year, month) {
     const tbody = document.getElementById('nobet-rapor-tbody');
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Rapor oluşturuluyor...</td></tr>`;
+    // Tablo başlığına "Tümünü Seç" checkbox'ını ekliyoruz.
+    const thead = tbody.closest('table').querySelector('thead tr');
+    thead.innerHTML = `
+        <th class="no-print" style="width: 40px;"><input type="checkbox" id="select-all-nobet" title="Tümünü Seç"></th>
+        <th>Tarih</th>
+        <th>Gün</th>
+        <th>Nöbetçi Personel</th>
+        <th>Nöbet Yeri</th>
+        <th class="no-print">İşlemler</th>
+    `;
+
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Rapor oluşturuluyor...</td></tr>`;
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month + 1, 1);
     const q = query(collection(db, 'nobetler'), where('tarih', '>=', startDate.toISOString().split('T')[0]), where('tarih', '<', endDate.toISOString().split('T')[0]), orderBy('tarih'));
@@ -2440,7 +2491,7 @@ async function renderNobetRaporu(year, month) {
     const yerMap = new Map(yerSnap.docs.map(doc => [doc.id, doc.data().name]));
 
     if (nobetSnap.empty) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Seçili ay için nöbet kaydı bulunamadı.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Seçili ay için nöbet kaydı bulunamadı.</td></tr>`;
         return;
     }
 
@@ -2463,7 +2514,11 @@ async function renderNobetRaporu(year, month) {
         const row = tbody.insertRow();
         row.className = renkler[renkIndex];
 
+        // Her satırın başına seçim kutusu (checkbox) eklendi.
         row.innerHTML = `
+            <td class="no-print" style="text-align: center;">
+                <input type="checkbox" class="nobet-checkbox" data-id="${doc.id}">
+            </td>
             <td>${tarih.toLocaleDateString('tr-TR')}</td>
             <td>${gunlerTR[tarih.getDay()]}</td>
             <td>${personelMap.get(nobet.personelId) || 'Bilinmiyor'}</td>
@@ -2474,7 +2529,15 @@ async function renderNobetRaporu(year, month) {
             </td>
         `;
     });
+
+    // "Tümünü Seç" checkbox'ının işlevselliğini ekliyoruz.
+    document.getElementById('select-all-nobet').addEventListener('change', (e) => {
+        document.querySelectorAll('.nobet-checkbox').forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+        });
+    });
 }
+
 async function openNobetEditModal(id) {
     const modal = document.getElementById('edit-nobet-modal');
     try {
@@ -2523,70 +2586,79 @@ async function saveNobetChanges() {
         showToast('Güncelleme sırasında bir hata oluştu.', 'error');
     }
 }
+// YENİ EKLENECEK AKILLI KOPYALAMA FONKSİYONU
 async function copyNobetSchedule() {
     const sourceYear = parseInt(document.getElementById('copy-source-year').value);
     const sourceMonth = parseInt(document.getElementById('copy-source-month').value);
     const destYear = parseInt(document.getElementById('copy-dest-year').value);
     const destMonth = parseInt(document.getElementById('copy-dest-month').value);
 
-    if (isNaN(sourceYear) || isNaN(sourceMonth) || isNaN(destYear) || isNaN(destMonth)) {
-        return showToast('Lütfen tüm yıl ve ay alanlarını doldurun.', 'error');
-    }
-
     if (sourceYear === destYear && sourceMonth === destMonth) {
         return showToast('Kaynak ve hedef ay aynı olamaz.', 'error');
     }
 
-    if (!confirm(`${sourceYear} yılının ${document.getElementById('copy-source-month').options[sourceMonth].text} ayındaki nöbet çizelgesini ${destYear} yılının ${document.getElementById('copy-dest-month').options[destMonth].text} ayına kopyalamak istediğinizden emin misiniz? Hedef aydaki mevcut nöbetler silinmez, üzerine eklenir.`)) {
+    const kaynakAyAdi = document.getElementById('copy-source-month').options[sourceMonth].text;
+    const hedefAyAdi = document.getElementById('copy-dest-month').options[destMonth].text;
+    if (!confirm(`${kaynakAyAdi} ${sourceYear} ayındaki hafta içi nöbetlerini, ${hedefAyAdi} ${destYear} ayındaki ilgili hafta içi günlerine kopyalamak istediğinizden emin misiniz?`)) {
         return;
     }
     
-    showToast('Kopyalama işlemi başlatıldı...', 'success');
+    showToast('Kopyalama işlemi başlatıldı...', 'info');
 
-    // 1. Kaynak aydaki tüm nöbetleri çek
-    const startDate = new Date(sourceYear, sourceMonth, 1);
-    const endDate = new Date(sourceYear, sourceMonth + 1, 1);
-    const q = query(collection(db, 'nobetler'), where('tarih', '>=', startDate.toISOString().split('T')[0]), where('tarih', '<', endDate.toISOString().split('T')[0]));
+    // 1. Kaynak aydaki tüm nöbetleri çek ve günlere göre grupla
+    const sourceStartDate = new Date(sourceYear, sourceMonth, 1).toISOString().split('T')[0];
+    const sourceEndDate = new Date(sourceYear, sourceMonth + 1, 1).toISOString().split('T')[0];
+    const q = query(collection(db, 'nobetler'), where('tarih', '>=', sourceStartDate), where('tarih', '<', sourceEndDate));
     
     const nobetSnap = await getDocs(q);
-
     if (nobetSnap.empty) {
         return showToast('Kaynak ayda kopyalanacak nöbet kaydı bulunamadı.', 'error');
     }
 
+    const sourceDayMap = { 1: [], 2: [], 3: [], 4: [], 5: [] }; // Pzt=1, Salı=2... Cuma=5
+    nobetSnap.forEach(doc => {
+        const nobet = doc.data();
+        const tarih = new Date(nobet.tarih + 'T00:00:00');
+        const dayOfWeek = tarih.getDay();
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Sadece hafta içi günleri al
+            sourceDayMap[dayOfWeek].push({ personelId: nobet.personelId, nobetYeriId: nobet.nobetYeriId });
+        }
+    });
+
+    // 2. Hedef aydaki günleri döngüye al ve eşleşen günlere yeni nöbet ekle
     let kopyalananKayitSayisi = 0;
     const promises = [];
+    const daysInDestMonth = new Date(destYear, destMonth + 1, 0).getDate();
 
-    // 2. Her bir nöbeti hedef aya göre yeniden tarihle
-    nobetSnap.forEach(doc => {
-        const eskiNobet = doc.data();
-        const eskiTarih = new Date(eskiNobet.tarih + 'T00:00:00');
-        const gun = eskiTarih.getDate();
+    for (let day = 1; day <= daysInDestMonth; day++) {
+        const yeniTarih = new Date(destYear, destMonth, day);
+        const dayOfWeek = yeniTarih.getDay();
 
-        // Hedef ayda bu günün var olup olmadığını kontrol et
-        const hedefAydakiGunSayisi = new Date(destYear, destMonth + 1, 0).getDate();
-        if (gun > hedefAydakiGunSayisi) {
-            // Örn: 31 Ocak'ı Şubat'a kopyalarken atla
-            return;
+        // Hedef gün hafta sonu ise veya kaynakta o güne ait nöbet yoksa atla
+        if (dayOfWeek === 0 || dayOfWeek === 6 || sourceDayMap[dayOfWeek].length === 0) {
+            continue;
         }
 
-        const yeniTarih = new Date(destYear, destMonth, gun);
-        const yeniTarihString = yeniTarih.toISOString().split('T')[0];
+        // Kaynak günle eşleşen tüm nöbetleri hedef güne kopyala
+        sourceDayMap[dayOfWeek].forEach(nobetDetay => {
+            const yeniTarihString = yeniTarih.toISOString().split('T')[0];
+            const yeniNobet = {
+                personelId: nobetDetay.personelId,
+                nobetYeriId: nobetDetay.nobetYeriId,
+                tarih: yeniTarihString
+            };
+            promises.push(addDoc(collection(db, 'nobetler'), yeniNobet));
+            kopyalananKayitSayisi++;
+        });
+    }
 
-        const yeniNobet = {
-            personelId: eskiNobet.personelId,
-            nobetYeriId: eskiNobet.nobetYeriId,
-            tarih: yeniTarihString
-        };
-        
-        promises.push(addDoc(collection(db, 'nobetler'), yeniNobet));
-        kopyalananKayitSayisi++;
-    });
+    if (kopyalananKayitSayisi === 0) {
+        return showToast('Kaynak aydaki hafta içi nöbetleriyle eşleşen, hedef ayda uygun bir gün bulunamadı.', 'info');
+    }
 
     try {
         await Promise.all(promises);
         showToast(`${kopyalananKayitSayisi} nöbet kaydı başarıyla kopyalandı!`, 'success');
-        // Rapor tablosunu yeni kopyalanan aya göre güncelle
         document.getElementById('rapor-ay-sec').value = destMonth;
         document.getElementById('rapor-yil-gir').value = destYear;
         renderNobetRaporu(destYear, destMonth);
