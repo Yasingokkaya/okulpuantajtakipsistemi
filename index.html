@@ -4109,7 +4109,9 @@ function downloadPdf() {
     html2canvas(puantajTabloAlani, {
         scale: 2, // Görüntü kalitesini artırmak için ölçeği 2 katına çıkar
         useCORS: true,
-        logging: false
+        logging: false,
+        // YENİ EKLENEN ÖNEMLİ AYAR: Arka plan renklerinin çizilmesini sağlar.
+        backgroundColor: '#ffffff' // Beyaz bir arka plan belirleyerek şeffaflığı önler
     }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
         const { jsPDF } = window.jspdf;
@@ -4146,52 +4148,134 @@ function downloadPdf() {
     });
 }
 
-// MEVCUT downloadExcel FONKSİYONUNU SİLİP BUNU EKLEYİN
-function downloadExcel() {
+// MEVCUT KODU SİLİP, YERİNE BU GÜNCELLENMİŞ VERSİYONU YAPIŞTIRIN
+async function downloadExcel() {
     const year = document.getElementById('input-year').value;
-    const monthName = document.getElementById('select-month').options[document.getElementById('select-month').selectedIndex].text;
-    const puantajTabloAlani = document.getElementById('puantaj-table-container');
+    const month = parseInt(document.getElementById('select-month').value);
+    const monthName = document.getElementById('select-month').options[month].text;
 
     if (!puantajData || Object.keys(puantajData).length === 0) {
         showToast('Dışa aktarılacak puantaj verisi bulunmuyor.', 'error');
         return;
     }
+    showToast('Görsel Excel dosyası hazırlanıyor, lütfen bekleyin...', 'info');
+
+    const anaBaslik = `ÖZEL İSABET ORTAOKULU ${year} YILI ${monthName.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
+    const nobetVerisi = await fetchAndCalculateNobetData(year, month);
+
+    const styleMap = {
+        'status-N': 'background-color:#E8F5E9; color:#1B5E20; font-weight:bold;', 'status-S': 'background-color:#FFF9C4; color:#AF6000; font-weight:bold;',
+        'status-HT': 'background-color:#FFEBCC; color:#B85B00; font-weight:bold;', 'status-RT': 'background-color:#D1EAFE; color:#0D47A1; font-weight:bold;',
+        'status-R': 'background-color:#FFEBEE; color:#B71C1C; font-weight:bold;', 'status-UI': 'background-color:#EAECEE; color:#566573; font-weight:bold;',
+        'status-Üİ': 'background-color:#EAECEE; color:#566573; font-weight:bold;', 'status-İ': 'background-color: #E6E6FA; color: #483D8B; font-weight:bold;',
+        'status-Y': 'background-color:#D7F9E9; color:#1B5E20; font-weight:bold;', 'status-K': 'background-color:#D7F9E9; color:#1B5E20; font-weight:bold;',
+        'status-E': 'background-color:#EEEEEE; color:#424242;', 'status-RTÇ': 'background-color: #E1BEE7; color: #4A148C; font-weight:bold;',
+        'summary-yellow': 'background-color:#FFECB3; font-weight:bold;', 'summary-green': 'background-color:#C8E6C9; font-weight:bold;',
+        'summary-nobet': 'background-color:#FFE0B2; font-weight:bold;', 'summary-rehberlik': 'background-color:#C5CAE9; font-weight:bold;',
+        'summary-overtime': 'background-color:#FFCDD2; font-weight:bold;', 'summary-count': 'background-color:#E3F2FD; font-weight:bold;',
+        'total-worked-day': 'background-color:#E3F2FD; font-weight:bold;', 'social-section': 'background-color:#E3F2FD;',
+        'header': 'background-color:#343a40; color:white; font-weight:600; text-align:center; vertical-align:middle; border:0.5pt solid #888888;',
+        'group-header': 'background-color:#495057; color:white; font-weight:bold; text-align:left; padding-left:10px;',
+        'main-title': 'text-align:center; font-size:16pt; font-weight:bold; vertical-align:middle;',
+        'hour-cell': 'font-size:10pt; color:#192a56; font-weight:500; text-align:center; vertical-align:middle;',
+        'default-cell': 'text-align:center; vertical-align:middle; font-size:9pt;',
+        'personel-cell': 'text-align:left; vertical-align:middle; font-weight:bold; font-size:9pt;',
+        'unvan-cell': 'text-align:left; vertical-align:middle; font-size:9pt;',
+        'v-divider': 'border-right:1.5pt solid #333333;', 'h-divider': 'border-bottom:1.5pt solid #333333;',
+    };
+
+    let excelHtml = `<table width="100%"><tr><td colspan="50" style="${styleMap['main-title']}">${anaBaslik}</td></tr></table><br/>`;
     
-    showToast('HTML tabanlı Excel dosyası hazırlanıyor...', 'info');
+    const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+    const gunBasliklari = ["N", "HT", "RT", "İ", "R", "Üİ", "S", "K", "RTÇ"];
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    const grupluPersonel = {
+        'Belirsiz Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Belirsiz Süreli'),
+        'Belirli Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Belirli Süreli'),
+        'Kısmi Süreli': puantajPersonelList.filter(p => p.sozlesme_turu === 'Kısmi Süreli')
+    };
+    const saatBasliklariConfig = {
+        'Belirsiz Süreli': { headers: ["Aylık\nToplam", "Fazla\nMesai"], keys: ["genelToplam", "fazlaMesai"], styleKeys: ["summary-yellow", "summary-overtime"] },
+        'Belirli Süreli': { headers: ["Ek\nDers", "Nöbet", "Rehberlik"], keys: ["ekDers", "nobet", "rehberlik"], styleKeys: ["summary-green", "summary-nobet", "summary-rehberlik"] },
+        'Kısmi Süreli': { headers: ["Ders", "HT"], keys: ["genelToplam", "ht_saat"], styleKeys: ["summary-green", "summary-yellow"] }
+    };
+    
+    excelHtml += '<table style="border-collapse:collapse;">';
+    for (const grupAdi in grupluPersonel) {
+        const personelGrubu = grupluPersonel[grupAdi];
+        if (personelGrubu.length === 0) continue;
 
-    // 1. Gerekli CSS stillerini bir değişkene alıyoruz
-    const styles = Array.from(document.styleSheets)
-        .map(sheet => {
-            try {
-                return Array.from(sheet.cssRules)
-                    .map(rule => rule.cssText)
-                    .join('');
-            } catch (e) {
-                // Dışarıdan yüklenen stiller için CORS hatasını engelle
-                return '';
+        const saatConfig = saatBasliklariConfig[grupAdi];
+        const colspan = 4 + daysInMonth + saatConfig.headers.length + gunBasliklari.length + 4;
+
+        excelHtml += `<tr><td colspan="${colspan}" style="${styleMap['group-header']} border:0.5pt solid #888888;">${grupAdi} Puantaj Kayıtları</td></tr>`;
+        
+        excelHtml += `<tr><th rowspan="2" style="${styleMap['header']}">Personel</th><th rowspan="2" style="${styleMap['header']}">Unvan</th><th rowspan="2" style="${styleMap['header']}">İşe Giriş</th><th rowspan="2" style="${styleMap['header']} ${styleMap['v-divider']}">İşten Çıkış</th><th colspan="${daysInMonth}" style="${styleMap['header']}">Aylık Puantaj Durumu</th><th colspan="${saatConfig.headers.length}" style="${styleMap['header']} ${styleMap['v-divider']}">Aylık Saat Toplamları</th><th colspan="${gunBasliklari.length}" style="${styleMap['header']} ${styleMap['v-divider']}">Aylık Gün Toplamları</th><th rowspan="2" style="${styleMap['header']} ${styleMap['v-divider']}">Sgk Prim Günü</th><th colspan="3" style="${styleMap['header']}">Sosyal Yardımlar</th><th rowspan="2" style="${styleMap['header']}">İmza</th></tr><tr>`;
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dividerStyle = (date.getDay() === 0 || day === daysInMonth) ? styleMap['v-divider'] : '';
+            excelHtml += `<th style="${styleMap['header']} ${dividerStyle}">${day}<br>${gunler[date.getDay()]}</th>`;
+        }
+        saatConfig.headers.forEach(h => excelHtml += `<th style="${styleMap['header']} ${styleMap['v-divider']}">${h.replace('\n', '<br>')}</th>`);
+        gunBasliklari.forEach(h => excelHtml += `<th style="${styleMap['header']} ${styleMap['v-divider']}">${h}</th>`);
+        excelHtml += `<th style="${styleMap['header']}">Eş Durumu</th><th style="${styleMap['header']}">Çocuk 0-6</th><th style="${styleMap['header']}">Çocuk 6-18</th></tr>`;
+
+        personelGrubu.forEach(personel => {
+            const pData = puantajData[personel.id] || {};
+            const monthlyHours = calculateMonthlyHours(personel.id);
+            const nobetSaat = nobetVerisi[personel.id] || 0;
+            const rehberlikSaat = calculateEffectiveRehberlikHours(personel.id, year, month, puantajData);
+            const fazlaMesaiSaat = calculateFazlaMesai(personel.id);
+            const statusCounts = calculateStatusCounts(personel.id);
+            let sgkPrimGunu = new Date(year, month + 1, 0).getDate() - ((statusCounts.R || 0) + (statusCounts.Üİ || 0));
+            if(personel.sozlesme_turu === 'Kısmi Süreli') { sgkPrimGunu = Math.round(monthlyHours.genelToplam / 7.5); }
+            
+            let statusRowHtml = `<td rowspan="2" style="${styleMap['personel-cell']} border:0.5pt solid #888888;">${(personel.ad || '').replace('\n', '<br>')}</td><td rowspan="2" style="${styleMap['unvan-cell']} border:0.5pt solid #888888;">${(personel.unvan || '').replace('\n', '<br>')}</td><td rowspan="2" style="${styleMap['default-cell']} border:0.5pt solid #888888;">${formatDateDDMMYYYY(personel.ise_giris)}</td><td rowspan="2" style="${styleMap['default-cell']} ${styleMap['v-divider']} border:0.5pt solid #888888;">${formatDateDDMMYYYY(personel.isten_ayrilis)}</td>`;
+            let hoursRowHtml = '';
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayData = pData[dateString] || {};
+                const dayStyle = styleMap[`status-${dayData.code}`] || '';
+                const dividerStyle = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? styleMap['v-divider'] : '';
+                statusRowHtml += `<td style="${styleMap['default-cell']} ${dayStyle} ${dividerStyle} border:0.5pt solid #888888;">${dayData.code || ''}</td>`;
+                
+                const hourContent = (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') && dayData.hours > 0 ? dayData.hours : '';
+                
+                // *** BURASI DEĞİŞTİRİLDİ ***
+                // Saat hücresinin stiline mso-number-format:'\@' eklenerek hücrenin Metin olarak formatlanması sağlandı.
+                hoursRowHtml += `<td style="mso-number-format:'\\@'; ${styleMap['hour-cell']} ${dividerStyle} ${styleMap['h-divider']} border:0.5pt solid #888888;">${hourContent}</td>`;
             }
-        })
-        .join('');
+            
+            const saatDegerleri = { genelToplam: monthlyHours.genelToplam, fazlaMesai: fazlaMesaiSaat, ekDers: monthlyHours.ekDers, nobet: nobetSaat, rehberlik: rehberlikSaat, ht_saat: 0 };
+            saatConfig.keys.forEach((key, index) => {
+                 statusRowHtml += `<td rowspan="2" style="${styleMap['default-cell']} ${styleMap[saatConfig.styleKeys[index]]} ${styleMap['v-divider']} border:0.5pt solid #888888;">${saatDegerleri[key]}</td>`;
+            });
+            gunBasliklari.forEach(h => {
+                statusRowHtml += `<td rowspan="2" style="${styleMap['summary-count']} ${styleMap['v-divider']} border:0.5pt solid #888888;">${statusCounts[h] || 0}</td>`;
+            });
+            
+            statusRowHtml += `<td rowspan="2" style="${styleMap['total-worked-day']} ${styleMap['v-divider']} border:0.5pt solid #888888;">${sgkPrimGunu}</td><td rowspan="2" style="${styleMap['social-section']} border:0.5pt solid #888888;">${personel.esDurumu || ''}</td><td rowspan="2" style="${styleMap['social-section']} border:0.5pt solid #888888;">${personel.cocuk0_6 || ''}</td><td rowspan="2" style="${styleMap['social-section']} border:0.5pt solid #888888;">${personel.cocuk6_18 || ''}</td><td rowspan="2" style="border:0.5pt solid #888888;"></td>`;
 
-    // 2. HTML içeriğini ve stilleri birleştiriyoruz
-    const htmlContent = `
+            excelHtml += `<tr>${statusRowHtml}</tr><tr>${hoursRowHtml}</tr>`;
+        });
+    }
+
+    excelHtml += '</table>';
+    
+    const fullHtml = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-            <meta charset="UTF-8">
-            <style>${styles}</style>
-        </head>
-        <body>
-            ${puantajTabloAlani.innerHTML}
-        </body>
-        </html>
-    `;
+        <head><meta charset="UTF-8">
+            </head>
+        <body>${excelHtml}</body>
+        </html>`;
 
-    // 3. Blob oluşturup indirme işlemini tetikliyoruz
-    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' });
+    const blob = new Blob([fullHtml], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Puantaj_${monthName}_${year}.xls`; // Uzantının .xls olduğuna dikkat edin
+    a.download = `Puantaj_${monthName}_${year}.xls`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
