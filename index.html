@@ -425,7 +425,10 @@
         .puantaj-table tbody tr:hover + .personel-row-hours > td {
              background-color: #f1f9ff;
         }
-        .status-RT { background-color: #D1EAFE; color: #0D47A1; } .status-I { background-color: #FFF4CC; color: #B26A00; }
+        .status-İ {
+    background-color: #E6E6FA; /* Açık Lavanta */
+    color: #483D8B;      /* Koyu Eflatun Yazı Rengi */
+}
         .status-K { background-color: #D7F9E9; color: #1B5E20; } /* Yarım Gün (Tam zamanlı için) */
         .status-R { background-color: #FFEBEE; color: #B71C1C; } .status-UI { background-color: #E4E7EB; color: #37474f; }
         .status-S { background-color: #FFF9C4; color: #AF6000; } /* Yıllık İzin */
@@ -2691,7 +2694,43 @@ async function copyNobetSchedule() {
         showToast('Nöbetler kopyalanırken bir hata oluştu.', 'error');
     }
 }
+async function openIzinEditModal(izinId) {
+    const modal = document.getElementById('edit-izin-modal');
+    const form = document.getElementById('edit-izin-form');
+    
+    try {
+        const izinDoc = await getDoc(doc(db, 'izinler', izinId));
+        if (!izinDoc.exists()) {
+            showToast('Düzenlenecek izin kaydı bulunamadı.', 'error');
+            return;
+        }
+        const izinData = izinDoc.data();
 
+        // Formu doldur
+        form.querySelector('#edit-izin-id').value = izinId;
+        form.querySelector('#edit-izin-baslangic').value = izinData.baslangicTarihi;
+        form.querySelector('#edit-izin-bitis').value = izinData.bitisTarihi;
+        form.querySelector('#edit-izin-aciklama').value = izinData.aciklama || '';
+
+        const personelSelect = form.querySelector('#edit-izin-personel');
+        const izinTipiSelect = form.querySelector('#edit-izin-tipi');
+
+        // Personel adını getir ve seçili yap (değiştirilemez)
+        const personelDoc = await getDoc(doc(db, 'personel', izinData.personelId));
+        personelSelect.innerHTML = `<option>${personelDoc.exists() ? personelDoc.data().ad_soyad : 'Bilinmeyen Personel'}</option>`;
+        
+        // İzin tiplerini doldur ve mevcut olanı seçili yap
+        const izinTipiSnap = await getSettings('ayarlar_izin_tipleri');
+        izinTipiSelect.innerHTML = '<option value="">İzin Tipi Seçiniz...</option>';
+        izinTipiSnap.forEach(doc => izinTipiSelect.add(new Option(doc.data().name, doc.id)));
+        izinTipiSelect.value = izinData.izinTipiId;
+
+        modal.classList.add('open');
+    } catch (error) {
+        console.error("İzin düzenleme penceresi açılırken hata:", error);
+        showToast('Veriler yüklenirken bir hata oluştu.', 'error');
+    }
+}
 let izinTakipInitialized = false;
 // MEVCUT initializeIzinTakip FONKSİYONUNU BU BLOK İLE KOMPLE DEĞİŞTİRİN
 async function initializeIzinTakip() {
@@ -2781,9 +2820,17 @@ async function initializeIzinTakip() {
     tbody.addEventListener('click', async (e) => {
         const target = e.target;
         if (!target.dataset.id) return;
-
         const id = target.dataset.id;
+        
+        // =======================================================
+        // YENİ DÜZENLEME KODU BURADA OLMALI
+        // =======================================================
+        if (target.classList.contains('btn-edit-izin')) {
+            openIzinEditModal(id);
+        }
+        // =======================================================
 
+        // SİZİN PAYLAŞTIĞINIZ VE SİLİNMEYECEK OLAN "SİL" KODU
         if (target.classList.contains('btn-delete-izin')) {
             if (confirm('Bu izin kaydını kalıcı olarak silmek istediğinizden emin misiniz?')) {
                 try {
@@ -2828,6 +2875,42 @@ async function initializeIzinTakip() {
         }
     });
 }
+
+
+const editForm = document.getElementById('edit-izin-form');
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = editForm.querySelector('#edit-izin-id').value;
+        const updatedData = {
+            izinTipiId: editForm.querySelector('#edit-izin-tipi').value,
+            baslangicTarihi: editForm.querySelector('#edit-izin-baslangic').value,
+            bitisTarihi: editForm.querySelector('#edit-izin-bitis').value,
+            aciklama: editForm.querySelector('#edit-izin-aciklama').value.trim()
+        };
+
+        if (!updatedData.izinTipiId || !updatedData.baslangicTarihi || !updatedData.bitisTarihi) {
+            return showToast('Lütfen tüm zorunlu alanları doldurun.', 'error');
+        }
+        
+        try {
+            const izinRef = doc(db, 'izinler', id);
+            await setDoc(izinRef, updatedData, { merge: true }); // merge:true ile personelId korunur
+            showToast('İzin kaydı başarıyla güncellendi.');
+            document.getElementById('edit-izin-modal').classList.remove('open');
+            await renderIzinKayitlari();
+        } catch (error) {
+            console.error("İzin güncelleme hatası:", error);
+            showToast('Güncelleme sırasında bir hata oluştu.', 'error');
+        }
+    });
+    
+    // Düzenleme penceresi kapatma butonları
+    const editModal = document.getElementById('edit-izin-modal');
+    editModal.querySelector('.close-modal').addEventListener('click', () => editModal.classList.remove('open'));
+    editModal.addEventListener('click', (e) => {
+        if (e.target === editModal) editModal.classList.remove('open');
+    });
+
     
 
 async function openTopluIzinModal() {
@@ -3036,9 +3119,11 @@ async function renderIzinKayitlari() {
             <td>${bitis.toLocaleDateString('tr-TR')}</td>
             <td>${sure} ${sureEtiketi}</td> <td>${izin.aciklama || '-'}</td>
             <td class="actions-cell">
-                <button class="btn btn-print-dilekce" data-id="${doc.id}" style="background-color:#0dcaf0;">Dilekçe</button>
-                <button class="btn btn-delete-izin btn-delete" data-id="${doc.id}">Sil</button>
-            </td>
+    <td class="actions-cell">
+    <button class="btn btn-print-dilekce" data-id="${doc.id}" style="background-color:#0dcaf0;">Dilekçe</button>
+    <button class="btn btn-edit btn-edit-izin" data-id="${doc.id}">Düzenle</button>
+    <button class="btn btn-delete-izin btn-delete" data-id="${doc.id}">Sil</button>
+</td>
         `;
     });
 }
@@ -3171,7 +3256,115 @@ function formatTextForWrapping(text) {
  * @param {object} nobetVerisi - Personellerin aylık nöbet saatlerini içeren nesne.
  */
 
-// BU FONKSİYONUN TAMAMINI MEVCUT OLANLA DEĞİŞTİRİN
+// LÜTFEN MEVCUT ÜÇ FONKSİYONU SİLİP, YERİNE BU BLOĞUN TAMAMINI YAPIŞTIRIN
+
+// --- 1. FONKSİYON: PUANTAJ DÜZENLEME PENCERESİ ---
+// Bu fonksiyon, manuel düzenleme yaptığınızda açılan pencerenin doğru çalışmasını sağlar.
+function initializePuantaj() {
+    if (puantajInitialized) {
+        loadPuantajDataForCurrentMonth();
+        return;
+    }
+
+    try {
+        const personelSnap = getDocs(collection(db, "personel"));
+        const gorevSnap = getSettings('ayarlar_gorevler');
+        const neviSnap = getSettings('ayarlar_personel_nevileri');
+
+        Promise.all([personelSnap, gorevSnap, neviSnap]).then(async ([personelDocs, gorevDocs, neviDocs]) => {
+            const gorevMap = new Map(gorevDocs.docs.map(doc => [doc.id, doc.data().name]));
+            const neviMap = new Map(neviDocs.docs.map(doc => [doc.id, doc.data().name]));
+            puantajPersonelList = personelDocs.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id, ad: data.ad_soyad || 'İsimsiz', unvan: gorevMap.get(data.gorevi_bransi) || 'Belirtilmemiş',
+                    neviAdi: neviMap.get(data.personel_nevisi) || 'Bilinmiyor', maasKarsiligi: parseInt(data.maas_karsiligi) || 20,
+                    rehberlik_gorevi: data.rehberlik_gorevi || 'hayir', esDurumu: data.es_durumu, cocuk0_6: data.cocuk_0_6,
+                    cocuk6_18: data.cocuk_6_ustu, sozlesme_turu: data.sozlesme_turu || 'Belirsiz Süreli', ise_giris: data.ise_giris || '---',
+                    isten_ayrilis: data.isten_ayrilis || '---', kismi_zamanli_calisma: data.kismi_zamanli_calisma || {}
+                };
+            });
+
+            const selectMonth = document.getElementById('select-month'),
+                inputYear = document.getElementById('input-year'),
+                showBtn = document.getElementById('btn-show-puantaj'),
+                generateBtn = document.getElementById('btn-generate'),
+                printBtn = document.getElementById('btn-print'),
+                deleteBtn = document.getElementById('btn-delete-puantaj'),
+                pdfBtn = document.getElementById('btn-pdf'),
+                excelBtn = document.getElementById('btn-excel'),
+                modalOverlay = document.getElementById('edit-modal-overlay'),
+                modalSaveBtn = document.getElementById('modal-save'),
+                modalCancelBtn = document.getElementById('modal-cancel'),
+                savePuantajBtn = document.getElementById('btn-save-puantaj'),
+                lockPuantajBtn = document.getElementById('btn-lock-puantaj');
+
+            modalSaveBtn.addEventListener('click', saveModalChanges);
+            modalCancelBtn.addEventListener('click', () => { modalOverlay.style.display = 'none'; });
+
+            const now = new Date(), months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            selectMonth.innerHTML = '';
+            months.forEach((m, i) => selectMonth.add(new Option(m, i)));
+            selectMonth.value = now.getMonth();
+            inputYear.value = now.getFullYear();
+
+            // NİHAİ DÜZELTME: "İzinli (Ücretli)" için kod artık noktalı büyük 'İ'.
+            const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün' };
+            const modalStatusSelect = document.getElementById('modal-status');
+            modalStatusSelect.innerHTML = '';
+            for(const code in statusCodes) modalStatusSelect.add(new Option(statusCodes[code], code));
+
+            if(!puantajInitialized) {
+                showBtn.addEventListener('click', loadPuantajDataForCurrentMonth); generateBtn.addEventListener('click', generateInitialPuantaj);
+                deleteBtn.addEventListener('click', deleteCurrentPuantaj); savePuantajBtn.addEventListener('click', savePuantajData);
+                lockPuantajBtn.addEventListener('click', togglePuantajLock); document.getElementById('btn-bulk-update').addEventListener('click', applyBulkUpdate);
+                printBtn.addEventListener('click', printPuantaj); pdfBtn.addEventListener('click', downloadPdf); excelBtn.addEventListener('click', downloadExcel);
+                selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth); inputYear.addEventListener('change', loadPuantajDataForCurrentMonth);
+                const bulkUpdateDaySelect = document.getElementById('bulk-update-day');
+                const bulkUpdateStatusSelect = document.getElementById('bulk-update-status');
+                const daysInMonth = new Date(inputYear.value, parseInt(selectMonth.value) + 1, 0).getDate();
+                bulkUpdateDaySelect.innerHTML = '';
+                for (let i = 1; i <= daysInMonth; i++) { bulkUpdateDaySelect.add(new Option(i, i)); }
+                bulkUpdateStatusSelect.innerHTML = '';
+                for(const code in statusCodes) { bulkUpdateStatusSelect.add(new Option(`${statusCodes[code]} (${code})`, code)); }
+            }
+            puantajInitialized = true;
+            await loadPuantajDataForCurrentMonth();
+        });
+    } catch (error) {
+        console.error("Puantaj başlatılırken kritik hata:", error);
+        showToast('Puantaj modülü başlatılamadı. Lütfen Ayarlarınızı kontrol edin.', 'error');
+    }
+}
+
+
+// --- 2. FONKSİYON: GÜN SAYIMI ---
+// Bu fonksiyon, tüm 'i' ve 'I' harflerini 'İ' olarak sayar.
+function calculateStatusCounts(personelId) {
+    const personelData = puantajData[personelId];
+    if (!personelData) return {};
+
+    // NİHAİ DÜZELTME: Toplamlar artık noktalı büyük 'İ' harfine göre başlatılıyor.
+    const counts = { N: 0, HT: 0, RT: 0, İ: 0, R: 0, UI: 0, S: 0, K: 0, RTÇ: 0 };
+    
+    for (const date in personelData) {
+        let dayCode = personelData[date].code;
+
+        // NİHAİ DÜZELTME: Hücredeki kod küçük 'i' veya standart büyük 'I' ise, sayım için onu noktalı 'İ' yap.
+        if (dayCode === 'i' || dayCode === 'I') {
+            dayCode = 'İ';
+        }
+
+        if (counts.hasOwnProperty(dayCode)) {
+            counts[dayCode]++;
+        }
+    }
+    return counts;
+}
+
+
+// --- 3. FONKSİYON: TABLO ÇİZİMİ ---
+// Bu fonksiyon, tablonun başlığını ve toplamlar sütununu 'İ' harfine göre çizer.
 function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
@@ -3180,7 +3373,6 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     let finalHTML = `<h2 id="puantaj-baslik" style="text-align: center; color: var(--theme-primary); margin-bottom: 25px;">${baslikMetni}</h2>`;
 
     if (!aktifPersonelListesi || aktifPersonelListesi.length === 0 || !puantajData) {
-        // Bu bölüm aynı kalıyor...
         container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4 style="color: var(--theme-primary);">Bu ay için görüntülenecek puantaj verisi veya aktif personel bulunmuyor.</h4></div>`;
         document.getElementById('total-ekders').textContent = "0 Saat";
         document.getElementById('total-nobet').textContent = "0 Saat";
@@ -3203,14 +3395,19 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         const ayAdi = document.getElementById('select-month').options[month].text;
         const yeniGrupBasligi = `${ayAdi} ${year} Ayı Personel Puantaj Kayıtları ( ${grupAdi.toLocaleUpperCase('tr-TR')} )`;
         finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${yeniGrupBasligi}</h3>`;
+        
         let tableHTML = `<table class="puantaj-table"><thead><tr><th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2">İşe Giriş</th><th rowspan="2" class="vertical-divider">İşten Çıkış</th><th colspan="${daysInMonth}">Aylık Puantaj Durumu</th><th colspan="${(grupAdi === 'Belirsiz Süreli') ? 1 : 4}" class="vertical-divider">Aylık Saat Toplamları</th><th colspan="9" class="vertical-divider">Aylık Gün Toplamları</th><th rowspan="2" class="vertical-divider">Sgk Prim Günü</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th></tr><tr>`;
+        
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
             const isDividerDay = (date.getDay() === 0 || day === daysInMonth);
             const dividerClass = isDividerDay ? 'vertical-divider' : '';
             tableHTML += `<th class="col-day ${dividerClass}">${day}<br>${gunler[date.getDay()]}</th>`;
         }
-        tableHTML += `<th>Aylık Toplam</th>${!(grupAdi === 'Belirsiz Süreli') ? `<th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>` : ''}<th>N</th><th>HT</th><th>RT</th><th>I</th><th>R</th><th>UI</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th><th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th></tr></thead><tbody>`;
+        
+        // NİHAİ DÜZELTME: Başlık artık 'İ'.
+        tableHTML += `<th>Aylık Toplam</th>${!(grupAdi === 'Belirsiz Süreli') ? `<th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>` : ''}<th>N</th><th>HT</th><th>RT</th><th>İ</th><th>R</th><th>UI</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th><th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th></tr></thead><tbody>`;
+
         personelGrubu.forEach(personel => {
             const personelPuantajData = puantajData[personel.id];
             if (!personelPuantajData) { return; }
@@ -3240,7 +3437,10 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
                 const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
                 tableHTML += `<td class="status-cell status-${dayData.code} ${dividerClass}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || ''}</td>`;
             }
-            tableHTML += `<td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>${!(grupAdi === 'Belirsiz Süreli') ? `<td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td><td class="summary-nobet" rowspan="2">${nobetSaat}</td><td class="summary-rehberlik vertical-divider" rowspan="2">${rehberlikSaat}</td>` : ''}<td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.I || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.UI || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td><td class="col-summary-count vertical-divider" rowspan="2">${statusCounts.RTÇ || 0}</td><td class="total-worked-day vertical-divider" rowspan="2">${sgkPrimGunu}</td><td class="social-section" rowspan="2">${personel.esDurumu === 'calismiyor' ? 'Çalışmıyor' : (personel.esDurumu === 'calisiyor' ? 'Çalışıyor' : 'Bekar')}</td><td class="social-section" rowspan="2">${personel.cocuk0_6 || ''}</td><td class="social-section" rowspan="2">${personel.cocuk6_18 || ''}</td><td class="col-imza" rowspan="2"></td></tr>`;
+
+            // NİHAİ DÜZELTME: Toplam verisi 'statusCounts.İ'den çekiliyor.
+            tableHTML += `<td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>${!(grupAdi === 'Belirsiz Süreli') ? `<td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td><td class="summary-nobet" rowspan="2">${nobetSaat}</td><td class="summary-rehberlik vertical-divider" rowspan="2">${rehberlikSaat}</td>` : ''}<td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.İ || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.UI || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td><td class="col-summary-count vertical-divider" rowspan="2">${statusCounts.RTÇ || 0}</td><td class="total-worked-day vertical-divider" rowspan="2">${sgkPrimGunu}</td><td class="social-section" rowspan="2">${personel.esDurumu === 'calismiyor' ? 'Çalışmıyor' : (personel.esDurumu === 'calisiyor' ? 'Çalışıyor' : 'Bekar')}</td><td class="social-section" rowspan="2">${personel.cocuk0_6 || ''}</td><td class="social-section" rowspan="2">${personel.cocuk6_18 || ''}</td><td class="col-imza" rowspan="2"></td></tr>`;
+            
             tableHTML += `<tr class="personel-row-hours horizontal-divider">`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -3248,9 +3448,6 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
                 const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
                 const hourContent = (dayData?.code === 'N' || dayData?.code === 'RTÇ' || dayData?.code === 'Y') && dayData?.hours > 0 ? dayData.hours : '';
                 const cellClass = hourContent ? 'hour-cell has-hours' : 'hour-cell';
-                
-                // === SAAT/TARİH SORUNUNU GİDEREN GÜNCELLEME BURADA ===
-                // Hücreye, Excel'in içeriği metin olarak algılamasını sağlayan özel bir stil ekliyoruz.
                 tableHTML += `<td class="${cellClass} ${dividerClass}" style="mso-number-format:'\\@'">${hourContent}</td>`;
             }
             tableHTML += `</tr>`;
@@ -3258,7 +3455,6 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         tableHTML += `</tbody></table>`;
         finalHTML += tableHTML;
     }
-    
     container.innerHTML = finalHTML;
     attachCellListeners();
 }
@@ -3422,109 +3618,7 @@ function updateLockStatusUI() {
     }
 }
 
-// BU FONKSİYONUN TAMAMINI MEVCUT OLANLA DEĞİŞTİRİN
-async function initializePuantaj() {
-    // Fonksiyonun bu kısmı zaten güncel ve doğru.
-    if (puantajInitialized) {
-        await loadPuantajDataForCurrentMonth();
-        return;
-    }
 
-    try {
-        const personelSnap = await getDocs(collection(db, "personel"));
-        const gorevSnap = await getSettings('ayarlar_gorevler');
-        const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
-        const neviSnap = await getSettings('ayarlar_personel_nevileri');
-        const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
-
-        puantajPersonelList = personelSnap.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ad: data.ad_soyad || 'İsimsiz',
-                unvan: gorevMap.get(data.gorevi_bransi) || 'Belirtilmemiş',
-                neviAdi: neviMap.get(data.personel_nevisi) || 'Bilinmiyor',
-                maasKarsiligi: parseInt(data.maas_karsiligi) || 20,
-                rehberlik_gorevi: data.rehberlik_gorevi || 'hayir',
-                esDurumu: data.es_durumu,
-                cocuk0_6: data.cocuk_0_6,
-                cocuk6_18: data.cocuk_6_ustu,
-                sozlesme_turu: data.sozlesme_turu || 'Belirsiz Süreli',
-                ise_giris: data.ise_giris || '---',
-                isten_ayrilis: data.isten_ayrilis || '---',
-                kismi_zamanli_calisma: data.kismi_zamanli_calisma || {}
-            };
-        });
-
-        // Buton ve form elemanlarını seçme
-        const selectMonth = document.getElementById('select-month'),
-            inputYear = document.getElementById('input-year'),
-            showBtn = document.getElementById('btn-show-puantaj'),
-            generateBtn = document.getElementById('btn-generate'),
-            printBtn = document.getElementById('btn-print'),
-            deleteBtn = document.getElementById('btn-delete-puantaj'),
-            pdfBtn = document.getElementById('btn-pdf'),
-            excelBtn = document.getElementById('btn-excel'),
-            modalOverlay = document.getElementById('edit-modal-overlay'),
-            modalSaveBtn = document.getElementById('modal-save'),
-            modalCancelBtn = document.getElementById('modal-cancel'),
-            savePuantajBtn = document.getElementById('btn-save-puantaj'),
-            lockPuantajBtn = document.getElementById('btn-lock-puantaj');
-
-        modalSaveBtn.addEventListener('click', saveModalChanges);
-        modalCancelBtn.addEventListener('click', () => {
-            modalOverlay.style.display = 'none';
-        });
-
-        const now = new Date(), months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-        selectMonth.innerHTML = '';
-        months.forEach((m, i) => selectMonth.add(new Option(m, i)));
-        selectMonth.value = now.getMonth();
-        inputYear.value = now.getFullYear();
-
-        const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün' };
-        const modalStatusSelect = document.getElementById('modal-status');
-        modalStatusSelect.innerHTML = '';
-        for(const code in statusCodes) modalStatusSelect.add(new Option(statusCodes[code], code));
-
-        // === DÜZELTME BURADA: EKSİK OLAN BUTON ATAMALARI EKLENDİ ===
-        if(!puantajInitialized) {
-            showBtn.addEventListener('click', loadPuantajDataForCurrentMonth); 
-            generateBtn.addEventListener('click', generateInitialPuantaj);
-            deleteBtn.addEventListener('click', deleteCurrentPuantaj);
-            savePuantajBtn.addEventListener('click', savePuantajData);
-            lockPuantajBtn.addEventListener('click', togglePuantajLock);
-            document.getElementById('btn-bulk-update').addEventListener('click', applyBulkUpdate);
-
-            // "YAZDIR", "PDF İNDİR" ve "EXCEL İNDİR" BUTONLARI İÇİN EKSİK OLAN KODLAR
-            printBtn.addEventListener('click', printPuantaj);
-            pdfBtn.addEventListener('click', downloadPdf);
-            excelBtn.addEventListener('click', downloadExcel); // BU SATIR SORUNU ÇÖZECEK
-
-            selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth);
-            inputYear.addEventListener('change', loadPuantajDataForCurrentMonth);
-
-            const bulkUpdateDaySelect = document.getElementById('bulk-update-day');
-            const bulkUpdateStatusSelect = document.getElementById('bulk-update-status');
-            const daysInMonth = new Date(inputYear.value, parseInt(selectMonth.value) + 1, 0).getDate();
-            bulkUpdateDaySelect.innerHTML = '';
-            for (let i = 1; i <= daysInMonth; i++) {
-                bulkUpdateDaySelect.add(new Option(i, i));
-            }
-            bulkUpdateStatusSelect.innerHTML = '';
-             for(const code in statusCodes) {
-                bulkUpdateStatusSelect.add(new Option(`${statusCodes[code]} (${code})`, code));
-            }
-        }
-
-        puantajInitialized = true;
-        await loadPuantajDataForCurrentMonth();
-
-    } catch (error) {
-        console.error("Puantaj başlatılırken kritik hata:", error);
-        showToast('Puantaj modülü başlatılamadı. Lütfen Ayarlarınızı kontrol edin.', 'error');
-    }
-}
 // MEVCUT fetchIzinDataForPuantaj FONKSİYONUNU SİLİP, BU NİHAİ VERSİYONU YAPIŞTIRIN
 // === BAŞLANGIÇ: MEVCUT FONKSİYONU BU BLOK İLE DEĞİŞTİRİN ===
 async function fetchIzinDataForPuantaj(year, month) {
@@ -3813,22 +3907,7 @@ function calculateMonthlyHours(personelId) {
     return { genelToplam, ekDers: Math.round(ekDers) };
 }
 
-// Arada fazladan bir şey olmadan diğer fonksiyon başlar
-function calculateStatusCounts(personelId) {
-    const personelData = puantajData[personelId];
-    if (!personelData) return {};
 
-   
-const counts = { N: 0, HT: 0, RT: 0, I: 0, R: 0, UI: 0, S: 0, K: 0, RTÇ: 0 };
-    
-    for (const date in personelData) {
-        const dayCode = personelData[date].code;
-        if (counts.hasOwnProperty(dayCode)) {
-            counts[dayCode]++;
-        }
-    }
-    return counts;
-}
 
 // YENİ EKLENECEK FONKSİYON
 function calculateEffectiveRehberlikHours(personelId, year, month, allPuantajData) {
@@ -3867,7 +3946,7 @@ function renderLegend() {
     if(!legendContainer) return;
     legendContainer.innerHTML = '';
     
-     const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'I': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün' };
+     const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün' };
     for (const code in statusCodes) {
         const item = document.createElement('div'); item.className = 'legend-item';
         item.innerHTML = `<span class="legend-color-box status-${code}"></span><b>(${code})</b>: ${statusCodes[code]}`;
@@ -4405,6 +4484,45 @@ function attachCellListeners() {
         </div>
     </div>
 </div>
+<div id="edit-izin-modal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3>İzin Kaydını Düzenle</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="edit-izin-form">
+                <input type="hidden" id="edit-izin-id">
+                <div class="form-grid" style="grid-template-columns: 2fr 1.5fr 1fr 1fr; align-items: flex-end;">
+                    <div class="form-group">
+                        <label for="edit-izin-personel">Personel</label>
+                        <select id="edit-izin-personel" disabled></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-izin-tipi">İzin Tipi</label>
+                        <select id="edit-izin-tipi"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-izin-baslangic">Başlangıç Tarihi</label>
+                        <input type="date" id="edit-izin-baslangic">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-izin-bitis">Bitiş Tarihi</label>
+                        <input type="date" id="edit-izin-bitis">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="edit-izin-aciklama">Açıklama / Not</label>
+                        <input type="text" id="edit-izin-aciklama" placeholder="İzinle ilgili kısa bir not...">
+                    </div>
+                </div>
+                <div class="button-group" style="margin-top: 25px;">
+                    <button type="submit" class="btn btn-save">Değişiklikleri Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
