@@ -990,6 +990,11 @@
         Yeni Puantaj Oluştur
     </button>
 </div>
+<div class="personel-filter-container" style="display: flex; align-items: center; gap: 10px; border-left: 2px solid #ced4da; padding-left: 15px; margin-left: 5px; margin-top: 20px;">
+    <select id="personel-filter-select" style="padding: 9px; border-radius: 6px; border: 1px solid #ced4da; min-width: 200px;"></select>
+    <button id="btn-filter-personel" class="btn" style="background-color: #17a2b8;">Filtrele</button>
+    <button id="btn-clear-filter" class="btn" style="background-color: #6c757d;">Temizle</button>
+</div>
 <div class="bulk-update-container" style="display: flex; flex-direction: column; gap: 10px; padding: 15px; background-color: #e9ecef; border-radius: 8px; border: 1px solid #ced4da; margin-top: 15px; grid-column: 1 / -1;">
     <h4 style="margin: 0 0 5px 0; color: var(--theme-primary);">Toplu Güncelleme</h4>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: flex-end;">
@@ -3332,6 +3337,18 @@ function initializePuantaj() {
                 for(const code in statusCodes) { bulkUpdateStatusSelect.add(new Option(`${statusCodes[code]} (${code})`, code)); }
             }
             puantajInitialized = true;
+const personelFilterSelect = document.getElementById('personel-filter-select');
+        personelFilterSelect.innerHTML = '<option value="all">Tüm Personeli Göster</option>';
+        puantajPersonelList.forEach(personel => {
+            personelFilterSelect.add(new Option(personel.ad, personel.id));
+        });
+
+        // Filtrele ve Temizle butonlarına tıklama olaylarını ekler
+        document.getElementById('btn-filter-personel').addEventListener('click', loadPuantajDataForCurrentMonth);
+        document.getElementById('btn-clear-filter').addEventListener('click', () => {
+            document.getElementById('personel-filter-select').value = 'all';
+            loadPuantajDataForCurrentMonth();
+        });
             await loadPuantajDataForCurrentMonth();
         });
     } catch (error) {
@@ -3474,14 +3491,14 @@ let isPuantajLocked = false;
 let currentPuantajDocRef = null;
 // =================== 1. ADIM: EKSİK FONKSİYONLARI BURAYA EKLEYİN ===================
 
-// BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
+// MEVCUT HATALI FONKSİYONU SİLİP, YERİNE BU DOĞRU VERSİYONU YAPIŞTIRIN
+
 async function loadPuantajDataForCurrentMonth() {
     const year = document.getElementById('input-year').value;
     const month = document.getElementById('select-month').value;
     const docId = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}`;
     currentPuantajDocRef = doc(db, "kayitli_puantajlar", docId);
     try {
-        // GÜNCELLEME 2: Başlık metni bir değişkende oluşturuluyor.
         const ayAdi = document.getElementById('select-month').options[month].text;
         const baslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
 
@@ -3510,9 +3527,23 @@ async function loadPuantajDataForCurrentMonth() {
             return false;
         });
 
+        // =======================================================
+        // FİLTRELEME MANTIĞI BURADA UYGULANIYOR
+        // =======================================================
+        const selectedPersonelId = document.getElementById('personel-filter-select').value;
+        let displayList = aktifPersonelList; // Varsayılan olarak tüm aktif personel listesi atanıyor
+
+        if (selectedPersonelId && selectedPersonelId !== 'all') {
+            // Eğer belirli bir personel seçilmişse, 'displayList' filtrelenmiş sonuçla güncelleniyor
+            displayList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
+        }
+        // =======================================================
+
         const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
-        // GÜNCELLEME 3: Başlık metni, tablo çizim fonksiyonuna gönderiliyor.
-        renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni);
+        
+        // DEĞİŞİKLİK BURADA: Tablo, filtrelenmiş olan 'displayList' ile çiziliyor.
+        renderPuantajTable(nobetVerisi, displayList, baslikMetni);
+        
         renderGrandTotals(nobetVerisi);
         renderLegend();
         attachCellListeners();
@@ -3774,6 +3805,14 @@ async function generateInitialPuantaj() {
         const baslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
         
         const aktifPersonelList = puantajPersonelList.filter(personel => {
+// FİLTRELEME MANTIĞI BURAYA EKLENECEK
+const selectedPersonelId = document.getElementById('personel-filter-select').value;
+let displayList = aktifPersonelList; // Varsayılan olarak tüm aktif personel
+
+if (selectedPersonelId !== 'all') {
+    // Eğer belirli bir personel seçilmişse, listeyi filtrele
+    displayList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
+}
             const ayrilisStr = personel.isten_ayrilis;
             if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
             const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
@@ -4155,7 +4194,8 @@ async function saveModalChanges() {
     const nobetVerisi = await fetchAndCalculateNobetData(year, month);
     
     // DÜZELTME 2: Tablo çizim fonksiyonunu artık 3 parametre ile doğru şekilde çağırıyoruz.
-    renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni);
+    // YENİ HALİ:
+renderPuantajTable(nobetVerisi, displayList, baslikMetni);
     renderGrandTotals(nobetVerisi);
     attachCellListeners();
 
