@@ -392,14 +392,10 @@
     height: 32px;
 }
 
-/* YENİ EKLENEN KOD BAŞLANGICI */
-
-        /* Adım 1: 'N' kodlu hücrelerin arka planını şeffaf yapar */
-        .puantaj-table .status-N {
-            background-color: transparent;
-            color: #37474f; /* Yazı rengi okunaklı kalsın */
-        }
-
+.status-N {
+    background-color: #E8F5E9; /* Çok Açık Yeşil */
+    color: #1B5E20;      /* Koyu Yeşil Yazı Rengi */
+}
         
 
         /* YENİ EKLENEN KOD BİTİŞİ */
@@ -432,9 +428,12 @@
         .status-K { background-color: #D7F9E9; color: #1B5E20; } /* Yarım Gün (Tam zamanlı için) */
         .status-R { background-color: #FFEBEE; color: #B71C1C; } .status-UI { background-color: #E4E7EB; color: #37474f; }
         .status-S { background-color: #FFF9C4; color: #AF6000; } /* Yıllık İzin */
-        /* EKLENECEK YENİ CSS KODLARI */
-.status-Y { background-color: #D7F9E9; color: #1B5E20; } /* Yarım Gün (Eski K'nın yeni adı) */
-.status-E { background-color: #EEEEEE; color: #424242; font-weight: normal; } /* Eksik Gün */
+        .status-Y { background-color: #D7F9E9; color: #1B5E20; } /* Yarım Gün (Eski K'nın yeni adı) */
+        .status-E { background-color: #EEEEEE; color: #424242; font-weight: normal; } /* Eksik Gün */
+         .status-RT { 
+    background-color: #D1EAFE; /* Açık Mavi */
+    color: #0D47A1;      /* Koyu Mavi Yazı */
+}
         .status-RTÇ { background-color: #E1BEE7; color: #4A148C; } /* Resmi Tatil Çalışması */
         .status-HT { background-color: #FFEBCC; color: #B85B00; } /* Hafta Sonu */
         .puantaj-legend { margin-top: 25px; padding-top: 15px; border-top: 1px solid #dee2e6; display: flex; flex-wrap: wrap; gap: 15px 25px; justify-content: center; }
