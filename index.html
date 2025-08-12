@@ -405,6 +405,12 @@
 .puantaj-table .summary-green { background-color: #C8E6C9; font-weight: bold; }
 .puantaj-table .summary-nobet { background-color: #FFE0B2; font-weight: bold;}
 .puantaj-table .summary-rehberlik { background-color: #C5CAE9; font-weight: bold;}
+/* Fazla Mesai sütunu için yeni stil */
+
+.puantaj-table .summary-overtime { 
+    background-color: #FFCDD2; /* Açık Kırmızı */
+    font-weight: bold; 
+}
 
 .puantaj-table .col-summary-count,
 .puantaj-table .social-section,
@@ -481,12 +487,12 @@
         margin-left: 0 !important;
     }
 
-   /* Yazdırmada GİZLENECEK tüm elemanlar bu listede */
-            .sidebar, .panel-header, .controls.puantaj, .no-print,
-            .modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir,
-            #gorevlendirme .gorevlendirme-form-area {
-                display: none !important;
-            }
+  /* Üst barı gizlemek için .mobile-header eklendi */
+.sidebar, .mobile-header, .panel-header, .controls.puantaj, .no-print,
+.modal-overlay, #add-staff-modal, #logout-btn, #btn-nobet-yazdir,
+#gorevlendirme .gorevlendirme-form-area {
+    display: none !important;
+}
 
     /* ------------------------------------------------------------- */
     /* 2. PUANTAJ CETVELİ YAZDIRMA AYARLARI                          */
@@ -3358,19 +3364,27 @@ const personelFilterSelect = document.getElementById('personel-filter-select');
 }
 
 
-// --- 2. FONKSİYON: GÜN SAYIMI ---
-// Bu fonksiyon, tüm 'i' ve 'I' harflerini 'İ' olarak sayar.
+// MEVCUT FONKSİYONU SİLİP, YERİNE BU YENİ VERSİYONU YAPIŞTIRIN
 function calculateStatusCounts(personelId) {
     const personelData = puantajData[personelId];
     if (!personelData) return {};
 
-    // NİHAİ DÜZELTME: Toplamlar artık noktalı büyük 'İ' harfine göre başlatılıyor.
-    const counts = { N: 0, HT: 0, RT: 0, İ: 0, R: 0, UI: 0, S: 0, K: 0, RTÇ: 0 };
+    // DÜZELTME: Toplamlar artık 'Üİ' harflerine göre başlatılıyor.
+    const counts = { N: 0, HT: 0, RT: 0, İ: 0, R: 0, Üİ: 0, S: 0, K: 0, RTÇ: 0 };
     
     for (const date in personelData) {
         let dayCode = personelData[date].code;
 
-        // NİHAİ DÜZELTME: Hücredeki kod küçük 'i' veya standart büyük 'I' ise, sayım için onu noktalı 'İ' yap.
+        // Tutarlılık için eski 'UI' kodunu 'Üİ' olarak kabul et
+        if (dayCode === 'UI') {
+            dayCode = 'Üİ';
+        }
+        // Tutarlılık için küçük 'üi' kodunu da 'Üİ' olarak kabul et
+        if (dayCode === 'üi') {
+            dayCode = 'Üİ';
+        }
+
+        // Noktalı büyük 'İ' için tutarlılık kontrolü
         if (dayCode === 'i' || dayCode === 'I') {
             dayCode = 'İ';
         }
@@ -3383,8 +3397,8 @@ function calculateStatusCounts(personelId) {
 }
 
 
-// --- 3. FONKSİYON: TABLO ÇİZİMİ ---
-// Bu fonksiyon, tablonun başlığını ve toplamlar sütununu 'İ' harfine göre çizer.
+// MEVCUT HATALI renderPuantajTable FONKSİYONUNU SİLİP, YERİNE BU BLOĞU YAPIŞTIRIN
+
 function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
@@ -3416,7 +3430,8 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         const yeniGrupBasligi = `${ayAdi} ${year} Ayı Personel Puantaj Kayıtları ( ${grupAdi.toLocaleUpperCase('tr-TR')} )`;
         finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${yeniGrupBasligi}</h3>`;
         
-        let tableHTML = `<table class="puantaj-table"><thead><tr><th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2">İşe Giriş</th><th rowspan="2" class="vertical-divider">İşten Çıkış</th><th colspan="${daysInMonth}">Aylık Puantaj Durumu</th><th colspan="${(grupAdi === 'Belirsiz Süreli') ? 1 : 4}" class="vertical-divider">Aylık Saat Toplamları</th><th colspan="9" class="vertical-divider">Aylık Gün Toplamları</th><th rowspan="2" class="vertical-divider">Sgk Prim Günü</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th></tr><tr>`;
+        // Colspan başlık genişliği düzeltildi
+        let tableHTML = `<table class="puantaj-table"><thead><tr><th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2">İşe Giriş</th><th rowspan="2" class="vertical-divider">İşten Çıkış</th><th colspan="${daysInMonth}">Aylık Puantaj Durumu</th><th colspan="${(grupAdi === 'Belirsiz Süreli') ? 2 : 4}" class="vertical-divider">Aylık Saat Toplamları</th><th colspan="9" class="vertical-divider">Aylık Gün Toplamları</th><th rowspan="2" class="vertical-divider">Sgk Prim Günü</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th></tr><tr>`;
         
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
@@ -3425,8 +3440,8 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
             tableHTML += `<th class="col-day ${dividerClass}">${day}<br>${gunler[date.getDay()]}</th>`;
         }
         
-        // NİHAİ DÜZELTME: Başlık artık 'İ'.
-        tableHTML += `<th>Aylık Toplam</th>${!(grupAdi === 'Belirsiz Süreli') ? `<th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>` : ''}<th>N</th><th>HT</th><th>RT</th><th>İ</th><th>R</th><th>UI</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th><th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th></tr></thead><tbody>`;
+        // Fazla Mesai başlığı eklendi
+        tableHTML += `<th>Aylık Toplam</th>${(grupAdi === 'Belirsiz Süreli') ? '<th>Fazla Mesai</th>' : `<th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>`}<th>N</th><th>HT</th><th>RT</th><th>İ</th><th>R</th><th>Üİ</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th><th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th></tr></thead><tbody>`;
 
         personelGrubu.forEach(personel => {
             const personelPuantajData = puantajData[personel.id];
@@ -3446,10 +3461,10 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
             if (personel.sozlesme_turu === 'Kısmi Süreli') {
                 sgkPrimGunu = Math.round(monthlyHours.genelToplam / 7.5);
                 statusCounts.N = sgkPrimGunu;
-                statusCounts.Y = 0; statusCounts.E = 0; statusCounts.HT = 0; statusCounts.RT = 0;
             } else {
-                sgkPrimGunu = new Date(year, month + 1, 0).getDate() - ((statusCounts.R || 0) + (statusCounts.UI || 0));
+                sgkPrimGunu = new Date(year, month + 1, 0).getDate() - ((statusCounts.R || 0) + (statusCounts.Üİ || 0));
             }
+
             tableHTML += `<tr class="personel-row-status"><td class="col-personel" rowspan="2">${personel.ad}</td><td class="col-unvan" rowspan="2">${personel.unvan}</td><td class="col-date" rowspan="2">${formatDateDDMMYYYY(personel.ise_giris)}</td><td class="col-date vertical-divider" rowspan="2">${ayrilisTarihiGoster}</td>`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -3458,8 +3473,9 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
                 tableHTML += `<td class="status-cell status-${dayData.code} ${dividerClass}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || ''}</td>`;
             }
 
-            // NİHAİ DÜZELTME: Toplam verisi 'statusCounts.İ'den çekiliyor.
-            tableHTML += `<td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>${!(grupAdi === 'Belirsiz Süreli') ? `<td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td><td class="summary-nobet" rowspan="2">${nobetSaat}</td><td class="summary-rehberlik vertical-divider" rowspan="2">${rehberlikSaat}</td>` : ''}<td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.İ || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.UI || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td><td class="col-summary-count vertical-divider" rowspan="2">${statusCounts.RTÇ || 0}</td><td class="total-worked-day vertical-divider" rowspan="2">${sgkPrimGunu}</td><td class="social-section" rowspan="2">${personel.esDurumu === 'calismiyor' ? 'Çalışmıyor' : (personel.esDurumu === 'calisiyor' ? 'Çalışıyor' : 'Bekar')}</td><td class="social-section" rowspan="2">${personel.cocuk0_6 || ''}</td><td class="social-section" rowspan="2">${personel.cocuk6_18 || ''}</td><td class="col-imza" rowspan="2"></td></tr>`;
+            // Fazla Mesai verisi eklendi
+            const fazlaMesaiSaat = (grupAdi === 'Belirsiz Süreli') ? calculateFazlaMesai(personel.id) : 0;
+            tableHTML += `<td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>${(grupAdi === 'Belirsiz Süreli') ? `<td class="summary-overtime" rowspan="2">${fazlaMesaiSaat}</td>` : `<td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td><td class="summary-nobet" rowspan="2">${nobetSaat}</td><td class="summary-rehberlik vertical-divider" rowspan="2">${rehberlikSaat}</td>`}<td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.İ || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.Üİ || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td><td class="col-summary-count vertical-divider" rowspan="2">${statusCounts.RTÇ || 0}</td><td class="total-worked-day vertical-divider" rowspan="2">${sgkPrimGunu}</td><td class="social-section" rowspan="2">${personel.esDurumu === 'calismiyor' ? 'Çalışmıyor' : (personel.esDurumu === 'calisiyor' ? 'Çalışıyor' : 'Bekar')}</td><td class="social-section" rowspan="2">${personel.cocuk0_6 || ''}</td><td class="social-section" rowspan="2">${personel.cocuk6_18 || ''}</td><td class="col-imza" rowspan="2"></td></tr>`;
             
             tableHTML += `<tr class="personel-row-hours horizontal-divider">`;
             for (let day = 1; day <= daysInMonth; day++) {
@@ -3475,6 +3491,7 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         tableHTML += `</tbody></table>`;
         finalHTML += tableHTML;
     }
+    
     container.innerHTML = finalHTML;
     attachCellListeners();
 }
@@ -3949,8 +3966,44 @@ function calculateMonthlyHours(personelId) {
     return { genelToplam, ekDers: Math.round(ekDers) };
 }
 
+function calculateFazlaMesai(personelId) {
+    const personelData = puantajData[personelId];
+    if (!personelData) return 0;
 
+    const weeklyHours = {};
+    // Bir tarihin hangi haftaya ait olduğunu bulan yardımcı fonksiyon
+    const getWeekNumber = (d) => {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    };
 
+    // Her günün saatini ilgili haftanın toplamına ekle
+    for (const dateString in personelData) {
+        const dayData = personelData[dateString];
+        // Sadece çalışılan günlerin saatlerini hesaba kat
+        if (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') {
+            const date = new Date(dateString + 'T00:00:00');
+            const weekNumber = getWeekNumber(date);
+            
+            if (!weeklyHours[weekNumber]) {
+                weeklyHours[weekNumber] = 0;
+            }
+            weeklyHours[weekNumber] += (dayData.hours || 0);
+        }
+    }
+
+    let totalOvertime = 0;
+    // Her haftanın toplam saatini kontrol et ve 45'i aşan kısmı fazla mesaiye ekle
+    for (const week in weeklyHours) {
+        if (weeklyHours[week] > 45) {
+            totalOvertime += (weeklyHours[week] - 45);
+        }
+    }
+
+    return totalOvertime;
+}
 // YENİ EKLENECEK FONKSİYON
 function calculateEffectiveRehberlikHours(personelId, year, month, allPuantajData) {
     const personel = puantajPersonelList.find(p => p.id === personelId);
@@ -3988,7 +4041,7 @@ function renderLegend() {
     if(!legendContainer) return;
     legendContainer.innerHTML = '';
     
-     const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)', 'R': 'Raporlu', 'UI': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün' };
+     const statusCodes = { 'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)', 'R': 'Raporlu', 'Üİ': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma', 'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün' };
     for (const code in statusCodes) {
         const item = document.createElement('div'); item.className = 'legend-item';
         item.innerHTML = `<span class="legend-color-box status-${code}"></span><b>(${code})</b>: ${statusCodes[code]}`;
