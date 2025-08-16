@@ -412,6 +412,21 @@
     font-weight: bold; 
 }
 
+
+
+/* Fazla Mesai Nedeni sütunu için yeni stil */
+.puantaj-table .summary-reason {
+    background-color: #D2B4DE; /* Açık Leylak */
+    font-weight: bold;
+}
+
+/* Eksik Gün Kodu sütunu için yeni stil */
+.puantaj-table .summary-missing-day {
+    background-color: #AED6F1; /* Açık Gök Mavisi */
+    font-weight: bold;
+}
+
+
 .puantaj-table .col-summary-count,
 .puantaj-table .social-section,
 .puantaj-table .total-worked-day {
@@ -3582,10 +3597,10 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
                     // Listede hem kod hem de açıklama her zaman tam olarak oluşturulur
                     options += `<option value="${item.kod}" ${selected}>${item.kod} - ${item.aciklama}</option>`;
                 });
-                eksikGunKoduSelect = `<td rowspan="2"><select class="missing-day-code-select" data-personel-id="${personel.id}">${options}</select></td>`;
+                eksikGunKoduSelect = `<td rowspan="2" class="summary-missing-day"><select class="missing-day-code-select" data-personel-id="${personel.id}">${options}</select></td>`;
             }
             const fazlaMesaiSaat = (grupAdi === 'Belirsiz Süreli') ? calculateFazlaMesai(personel.id) : 0;
-            const mesaiNedeniInput = `<td rowspan="2"><input type="text" class="overtime-reason-input" data-personel-id="${personel.id}" value="${overtimeReasons[personel.id] || ''}"></td>`;
+            const mesaiNedeniInput = `<td rowspan="2" class="summary-reason"><input type="text" class="overtime-reason-input" data-personel-id="${personel.id}" value="${overtimeReasons[personel.id] || ''}"></td>`;
             
             tableHTML += `<td class="summary-yellow" rowspan="2">${monthlyHours.genelToplam}</td>${(grupAdi === 'Belirsiz Süreli') ? `<td class="summary-overtime" rowspan="2">${fazlaMesaiSaat}</td>${mesaiNedeniInput}${eksikGunKoduSelect}` : `<td class="summary-green" rowspan="2">${monthlyHours.ekDers}</td><td class="summary-nobet" rowspan="2">${nobetSaat}</td><td class="summary-rehberlik vertical-divider" rowspan="2">${rehberlikSaat}</td>`}<td class="col-summary-count" rowspan="2">${statusCounts.N || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.HT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.RT || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.İ || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.R || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.Üİ || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.S || 0}</td><td class="col-summary-count" rowspan="2">${statusCounts.K || 0}</td><td class="col-summary-count vertical-divider" rowspan="2">${statusCounts.RTÇ || 0}</td><td class="total-worked-day vertical-divider" rowspan="2">${sgkPrimGunu}</td><td class="social-section" rowspan="2">${personel.esDurumu === 'calismiyor' ? 'Çalışmıyor' : 'Bekar'}</td><td class="social-section" rowspan="2">${personel.cocuk0_6 || ''}</td><td class="social-section" rowspan="2">${personel.cocuk6_18 || ''}</td><td class="col-imza" rowspan="2"></td></tr>`;
             
@@ -4315,6 +4330,10 @@ async function downloadExcel() {
         'summary-yellow': 'background-color:#FFECB3; font-weight:bold;', 'summary-green': 'background-color:#C8E6C9; font-weight:bold;',
         'summary-nobet': 'background-color:#FFE0B2; font-weight:bold;', 'summary-rehberlik': 'background-color:#C5CAE9; font-weight:bold;',
         'summary-overtime': 'background-color:#FFCDD2; font-weight:bold;', 'summary-count': 'background-color:#E3F2FD; font-weight:bold; width:35px;',
+
+         'summary-reason': 'background-color:#D2B4DE; font-weight:bold;', // Mesai Nedeni için Leylak rengi
+         'summary-missing-day': 'background-color:#AED6F1; font-weight:bold;', // E.G. Kodu için Mavi renk
+
         'total-worked-day': 'background-color:#E3F2FD; font-weight:bold;', 'social-section': 'background-color:#E3F2FD;',
         'header': 'background-color:#343a40; color:white; font-weight:600; text-align:center; vertical-align:middle; border:0.5pt solid #888888; font-size:9pt; white-space:nowrap;',
         'group-header': 'background-color:#495057; color:white; font-weight:bold; text-align:left; padding-left:10px; font-size:13pt;',
