@@ -1235,7 +1235,11 @@ td[style*="background-color"] .input-wrapper {
     <button id="btn-generate" style="background-color: #ffc107; color: #000; padding: 10px 15px; font-size: 14px; font-weight: 500; border-radius: 6px; border: 1px solid transparent; cursor: pointer;">
         Yeni Puantaj Oluştur
     </button>
+<button id="btn-generate-individual" style="background-color: #17a2b8; color: white; padding: 10px 15px; font-size: 14px; font-weight: 500; border-radius: 6px; border: 1px solid transparent; cursor: pointer;">
+        Seçili Personel İçin Hesapla
+    </button>
 </div>
+
 <div class="personel-filter-container" style="display: flex; align-items: center; gap: 10px; border-left: 2px solid #ced4da; padding-left: 15px; margin-left: 5px; margin-top: 20px;">
     <select id="personel-filter-select" style="padding: 9px; border-radius: 6px; border: 1px solid #ced4da; min-width: 200px;"></select>
     <button id="btn-filter-personel" class="btn" style="background-color: #17a2b8;">Filtrele</button>
@@ -3794,6 +3798,8 @@ function initializePuantaj() {
 
             if(!puantajInitialized) {
                 showBtn.addEventListener('click', loadPuantajDataForCurrentMonth); generateBtn.addEventListener('click', generateInitialPuantaj);
+                document.getElementById('btn-generate-individual').addEventListener('click', generateIndividualPuantaj);
+                deleteBtn.addEventListener('click', deleteCurrentPuantaj);
                 deleteBtn.addEventListener('click', deleteCurrentPuantaj); savePuantajBtn.addEventListener('click', savePuantajData);
                 lockPuantajBtn.addEventListener('click', togglePuantajLock); document.getElementById('btn-bulk-update').addEventListener('click', applyBulkUpdate);
                 printBtn.addEventListener('click', printPuantaj); pdfBtn.addEventListener('click', downloadPdf); excelBtn.addEventListener('click', downloadExcel);
@@ -4488,7 +4494,112 @@ async function fetchAndProcessSchedules() {
         showToast('Puantaj oluşturulamadı.', 'error');
     }
 }
+// =================================================================
+// YENİ EKLENEN BİREYSEL PUANTAJ HAZIRLAMA FONKSİYONU
+// =================================================================
+async function generateIndividualPuantaj() {
+    const selectedPersonelId = document.getElementById('personel-filter-select').value;
 
+    // 1. Adım: Listeden bir personel seçilip seçilmediğini kontrol et
+    if (!selectedPersonelId || selectedPersonelId === 'all') {
+        showToast('Lütfen önce listeden bir personel seçin.', 'error');
+        return;
+    }
+
+    const personel = puantajPersonelList.find(p => p.id === selectedPersonelId);
+    if (!personel) {
+        showToast('Seçilen personel verisi bulunamadı.', 'error');
+        return;
+    }
+
+    if (!confirm(`'${personel.ad}' için puantaj yeniden hazırlanacak. Bu personelin mevcut puantaj verileri sıfırlanacaktır. Devam etmek istiyor musunuz?`)) {
+        return;
+    }
+
+    try {
+        const year = parseInt(document.getElementById('input-year').value);
+        const month = parseInt(document.getElementById('select-month').value);
+        showToast(`'${personel.ad}' için puantaj hazırlanıyor...`);
+
+        // 2. Adım: Puantajı oluşturmak için gerekli verileri (izinler, ders programı vb.) çek
+        const [scheduleData, izinVerisi] = await Promise.all([
+            fetchAndProcessSchedules(),
+            fetchIzinDataForPuantaj(year, month)
+        ]);
+        const gunlerTR = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+        
+        const individualPuantajData = {}; // Sadece bu personel için geçici veri nesnesi
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // 3. Adım: Seçili personel için ayın her gününü gezerek puantaj verisi oluştur
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateUTC = new Date(Date.UTC(year, month, day));
+            const dateString = dateUTC.toISOString().split('T')[0];
+            let code = '', hours = 0;
+
+            // Personel işten ayrıldıysa, ayrılış tarihinden sonraki günleri boş bırak
+            if (personel.isten_ayrilis && personel.isten_ayrilis !== '---') {
+                const ayrilisTarihiUTC = new Date(personel.isten_ayrilis + 'T00:00:00Z');
+                if (dateUTC > ayrilisTarihiUTC) {
+                    individualPuantajData[dateString] = { code: '', hours: 0, notes: '' };
+                    continue;
+                }
+            }
+
+            // Standart puantaj oluşturma mantığını uygula (izin, tatil, normal gün vb.)
+            const leaveCodeForDay = izinVerisi[personel.id]?.[dateString];
+            const dayOfWeek = dateUTC.getDay();
+            const dayOfWeekTR = gunlerTR[dayOfWeek];
+
+            if (leaveCodeForDay && (leaveCodeForDay === 'R' || leaveCodeForDay === 'Üİ')) {
+                code = leaveCodeForDay;
+            }
+
+            if (code === '') {
+                if (personel.sozlesme_turu === 'Kısmi Süreli') {
+                    if (isResmiTatil(dateUTC)) { code = 'E'; } 
+                    else {
+                        const scheduledHours = parseInt(personel.kismi_zamanli_calisma?.[dayOfWeekTR] || scheduleData[personel.id]?.[dayOfWeekTR] || 0);
+                        code = (scheduledHours > 0) ? 'Y' : 'E';
+                        hours = scheduledHours;
+                    }
+                } else { // Belirli ve Belirsiz Süreli
+                    if (isResmiTatil(dateUTC)) { code = 'RT'; } 
+                    else {
+                        let isWeekend = (personel.sozlesme_turu === 'Belirli Süreli') ? (dayOfWeek === 6 || dayOfWeek === 0) : (dayOfWeek === 0);
+                        if (isWeekend) { code = 'HT'; } 
+                        else {
+                            code = 'N';
+                            if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
+                                hours = 4;
+                            } else {
+                                hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : (scheduleData[personel.id]?.[dayOfWeekTR] || 0);
+                            }
+                        }
+                    }
+                }
+
+                if (leaveCodeForDay && (code === 'N' || code === 'Y')) {
+                     code = leaveCodeForDay;
+                     hours = 0;
+                }
+            }
+            individualPuantajData[dateString] = { code, hours, notes: '' };
+        }
+
+        // 4. Adım: En Önemli Kısım -> Diğerlerini silmeden SADECE bu personelin verisini güncelle
+        puantajData[selectedPersonelId] = individualPuantajData;
+
+        // 5. Adım: Değişikliği kalıcı hale getir ve ekranı yenile
+        showToast('Bireysel puantaj hazırlandı. Veritabanına kaydediliyor...', 'info');
+        await savePuantajData();
+        await loadPuantajDataForCurrentMonth(); // Ekranı en güncel haliyle yeniden yükle
+
+    } catch (error) {
+        console.error("Bireysel puantaj oluşturulurken hata:", error);
+        showToast('Bireysel puantaj oluşturulamadı.', 'error');
+    }
+}
 function calculateMonthlyHours(personelId) {
     const personel = puantajPersonelList.find(p => p.id == personelId);
     const personelData = puantajData[personelId];
