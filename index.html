@@ -4096,6 +4096,17 @@ async function savePuantajData() {
         return;
     }
 
+    // YENİ EKLENEN KONTROL BLOĞU BAŞLANGICI
+    // Eğer döküman referansı henüz oluşturulmadıysa (örneğin yeni puantaj sonrası),
+    // o anki ay ve yıla göre referansı burada oluştur.
+    if (!currentPuantajDocRef) {
+        const year = document.getElementById('input-year').value;
+        const month = document.getElementById('select-month').value;
+        const docId = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}`;
+        currentPuantajDocRef = doc(db, "kayitli_puantajlar", docId);
+    }
+    // YENİ EKLENEN KONTROL BLOĞU BİTİŞİ
+
     // Mesai nedenlerini topla
     const newOvertimeReasons = {};
     document.querySelectorAll('.overtime-reason-input').forEach(input => {
@@ -4105,7 +4116,7 @@ async function savePuantajData() {
     });
     overtimeReasons = newOvertimeReasons;
 
-    // YENİ EKLENEN KOD: Eksik gün kodlarını topla
+    // Eksik gün kodlarını topla
     const newMissingDayCodes = {};
     document.querySelectorAll('.missing-day-code-select').forEach(select => {
         if (select.value) {
@@ -4113,14 +4124,14 @@ async function savePuantajData() {
         }
     });
     missingDayCodes = newMissingDayCodes;
-    // BİTİŞ
 
     try {
+        // Artık currentPuantajDocRef'in null olmama garantisi var.
         await setDoc(currentPuantajDocRef, {
             puantajData: puantajData,
             isLocked: isPuantajLocked,
             overtimeReasons: overtimeReasons,
-            missingDayCodes: missingDayCodes // Eksik gün kodlarını kaydet
+            missingDayCodes: missingDayCodes
         }, { merge: true });
         showToast('Puantaj başarıyla kaydedildi!', 'success');
     } catch (error) {
