@@ -1356,6 +1356,13 @@ td[style*="background-color"] .input-wrapper {
             </div>
         </div>
         <div class="form-group">
+            <label>Cinsiyet:</label>
+            <div class="radio-group">
+                <div><input type="radio" id="cinsiyet_kadin" name="cinsiyet" value="kadin" checked><label for="cinsiyet_kadin">Kadın</label></div>
+                <div><input type="radio" id="cinsiyet_erkek" name="cinsiyet" value="erkek"><label for="cinsiyet_erkek">Erkek</label></div>
+            </div>
+        </div>
+        <div class="form-group">
             <label>Eş Durumu:</label>
             <div class="radio-group">
                 <div><input type="radio" id="es_calismiyor" name="es_durumu" value="calismiyor" checked><label for="es_calismiyor">Çalışmıyor</label></div>
@@ -1718,22 +1725,85 @@ async function loadZamanCizelgesiAyarlari() {
 
 
           
-        async function fetchStaff() {
-            const listContainer = document.querySelector('#staff-list .panel-body');
-            listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
-            try {
-                const [staffSnap, neviSnap, gorevSnap] = await Promise.all([ getDocs(collection(db, "personel")), getSettings('ayarlar_personel_nevileri'), getSettings('ayarlar_gorevler') ]);
-                const neviMap = Object.fromEntries(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
-                const gorevMap = Object.fromEntries(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
-                if (staffSnap.empty) { listContainer.innerHTML = '<p>Henüz kayıtlı personel bulunmamaktadır.</p>'; return; }
-                let tableHTML = `<table class="staff-table"><thead><tr><th>Adı Soyadı</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>`;
-                staffSnap.forEach(doc => { 
-                    const s = doc.data(); 
-                    tableHTML += `<tr><td>${s.ad_soyad || ''}</td><td>${neviMap[s.personel_nevisi] || 'Bilinmiyor'}</td><td>${gorevMap[s.gorevi_bransi] || 'Bilinmiyor'}</td><td>${formatDateDDMMYYYY(s.ise_giris)}</td><td>${formatDateDDMMYYYY(s.isten_ayrilis)}</td><td class="actions-cell"><button class="btn btn-edit" data-id="${doc.id}">Düzenle</button><button class="btn btn-delete" data-id="${doc.id}">Sil</button></td></tr>`; 
-                });
-                listContainer.innerHTML = tableHTML + `</tbody></table>`;
-            } catch (e) { listContainer.innerHTML = '<p style="color:red;">Personel listesi yüklenemedi.</p>'; console.error(e); }
+       // BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
+async function fetchStaff() {
+    const listContainer = document.querySelector('#staff-list .panel-body');
+    listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
+    try {
+        const personelSorgusu = query(collection(db, "personel"), orderBy("ad_soyad"));
+        const [staffSnap, neviSnap, gorevSnap] = await Promise.all([
+            getDocs(personelSorgusu),
+            getSettings('ayarlar_personel_nevileri'),
+            getSettings('ayarlar_gorevler')
+        ]);
+
+        const neviMap = Object.fromEntries(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
+        const gorevMap = Object.fromEntries(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
+
+        if (staffSnap.empty) {
+            listContainer.innerHTML = '<p>Henüz kayıtlı personel bulunmamaktadır.</p>';
+            return;
         }
+
+        const aktifPersonel = [];
+        const ayrilanPersonel = [];
+        const bugun = new Date();
+        const ayinIlkGunu = new Date(bugun.getFullYear(), bugun.getMonth(), 1);
+
+        staffSnap.forEach(doc => {
+            const personel = { id: doc.id, ...doc.data() };
+            const ayrilisTarihiStr = personel.isten_ayrilis;
+
+            if (ayrilisTarihiStr && ayrilisTarihiStr.trim() !== '') {
+                const ayrilisTarihi = new Date(ayrilisTarihiStr);
+                if (!isNaN(ayrilisTarihi.getTime()) && ayrilisTarihi < ayinIlkGunu) {
+                    ayrilanPersonel.push(personel);
+                } else {
+                    aktifPersonel.push(personel);
+                }
+            } else {
+                aktifPersonel.push(personel);
+            }
+        });
+
+        // Verilen listeye göre HTML tablosu oluşturan yardımcı fonksiyon GÜNCELLENDİ
+        const createTableHTML = (personelListesi) => {
+            if (personelListesi.length === 0) {
+                return '<p style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">Bu listede gösterilecek personel bulunmamaktadır.</p>';
+            }
+            // *** YENİ SÜTUN BAŞLIKLARI: S.N. ve Cinsiyet eklendi ***
+            let tableHTML = `<div class="table-container"><table class="staff-table"><thead><tr><th>S.N.</th><th>Adı Soyadı</th><th>Cinsiyet</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>`;
+            
+            // *** YENİ SATIR İÇERİĞİ: Sıra numarası ve cinsiyet bilgisi eklendi ***
+            personelListesi.forEach((s, index) => {
+                const cinsiyet = s.cinsiyet === 'kadin' ? 'Kadın' : (s.cinsiyet === 'erkek' ? 'Erkek' : '---');
+                tableHTML += `<tr>
+                                <td>${index + 1}</td>
+                                <td>${s.ad_soyad || ''}</td>
+                                <td>${cinsiyet}</td>
+                                <td>${neviMap[s.personel_nevisi] || 'Bilinmiyor'}</td>
+                                <td>${gorevMap[s.gorevi_bransi] || 'Bilinmiyor'}</td>
+                                <td>${formatDateDDMMYYYY(s.ise_giris)}</td>
+                                <td>${formatDateDDMMYYYY(s.isten_ayrilis)}</td>
+                                <td class="actions-cell"><button class="btn btn-edit" data-id="${s.id}">Düzenle</button><button class="btn btn-delete" data-id="${s.id}">Sil</button></td>
+                              </tr>`;
+            });
+            tableHTML += `</tbody></table></div>`;
+            return tableHTML;
+        };
+
+        let finalHTML = '<h3>Aktif Personel Listesi</h3>';
+        finalHTML += createTableHTML(aktifPersonel);
+        finalHTML += '<h3 style="margin-top: 40px; border-top: 2px solid #dee2e6; padding-top: 20px;">Ayrılan Personel Listesi</h3>';
+        finalHTML += createTableHTML(ayrilanPersonel);
+
+        listContainer.innerHTML = finalHTML;
+
+    } catch (e) {
+        listContainer.innerHTML = '<p style="color:red;">Personel listesi yüklenemedi.</p>';
+        console.error(e);
+    }
+}
   
         async function loadPersonelForm(staffId = null, staffData = null) {
     const template = document.getElementById('personel-form-template');
@@ -1813,6 +1883,10 @@ async function loadZamanCizelgesiAyarlari() {
 
         sozlesmeTuruSelect.value = staffData.sozlesme_turu || 'Belirsiz Süreli';
         
+        // YAPIŞTIRILACAK YENİ KOD BLOĞU
+        if (staffData.cinsiyet) {
+            document.querySelector(`input[name="cinsiyet"][value="${staffData.cinsiyet}"]`).checked = true;
+        }
         if (staffData.es_durumu) {
             document.querySelector(`input[name="es_durumu"][value="${staffData.es_durumu}"]`).checked = true;
         }
@@ -3381,7 +3455,10 @@ function initializePuantaj() {
                 };
             });
 
-            const selectMonth = document.getElementById('select-month'),
+
+
+                puantajPersonelList.sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
+                const selectMonth = document.getElementById('select-month'),
                 inputYear = document.getElementById('input-year'),
                 showBtn = document.getElementById('btn-show-puantaj'),
                 generateBtn = document.getElementById('btn-generate'),
@@ -3609,7 +3686,8 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
                 const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = personelPuantajData[dateString] || { code: '', hours: 0 };
                 const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
-                const hourContent = (dayData?.code === 'N' || dayData?.code === 'RTÇ') && dayData?.hours > 0 ? dayData.hours : '';
+                // EKLENECEK YENİ SATIR
+                const hourContent = (dayData?.code === 'N' || dayData?.code === 'RTÇ' || dayData?.code === 'Y' || dayData?.code === 'K') && dayData?.hours > 0 ? dayData.hours : '';
                 tableHTML += `<td class="hour-cell ${dividerClass}">${hourContent}</td>`;
             }
             tableHTML += `</tr>`;
@@ -3954,8 +4032,7 @@ async function fetchAndProcessSchedules() {
         return {};
     }
 }
-     // BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
-async function generateInitialPuantaj() {
+    async function generateInitialPuantaj() {
     if (isPuantajLocked) {
         showToast('Puantaj kilitli...', 'error');
         return;
@@ -3968,11 +4045,9 @@ async function generateInitialPuantaj() {
         const month = parseInt(document.getElementById('select-month').value);
         showToast('Puantaj oluşturuluyor...');
 
-        // GÜNCELLEME 2: Başlık metni bir değişkende oluşturuluyor.
         const ayAdi = document.getElementById('select-month').options[month].text;
         const baslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
         
-      // 1. Adım: Önce o ay için puantajda olması gereken TÜM aktif personeli bul.
         let aktifPersonelList = puantajPersonelList.filter(personel => {
             const ayrilisStr = personel.isten_ayrilis;
             if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
@@ -3985,7 +4060,6 @@ async function generateInitialPuantaj() {
             return false;
         });
 
-        // 2. Adım: Filtre seçimine göre, oluşturulmuş olan bu listeyi gerekirse daralt.
         const selectedPersonelId = document.getElementById('personel-filter-select').value;
         if (selectedPersonelId !== 'all') {
             aktifPersonelList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
@@ -4034,7 +4108,12 @@ async function generateInitialPuantaj() {
                             if (isWeekend) { code = 'HT'; } 
                             else {
                                 code = 'N';
-                                hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : (scheduleData[personel.id]?.[dayOfWeekTR] || 0);
+                                // *** YENİ KONTROL: "Rehberlik" kelimesi de eklendi ***
+                                if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
+                                    hours = 4;
+                                } else {
+                                    hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : (scheduleData[personel.id]?.[dayOfWeekTR] || 0);
+                                }
                             }
                         }
                     }
@@ -4047,7 +4126,6 @@ async function generateInitialPuantaj() {
             }
         });
 
-        // GÜNCELLEME 3: Başlık metni, tablo çizim fonksiyonuna gönderiliyor.
         renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni);
         renderGrandTotals(nobetVerisi);
         renderLegend();
@@ -4068,23 +4146,58 @@ function calculateMonthlyHours(personelId) {
     let ekDers = 0;
     const unvan = personel.unvan || '';
 
-    // KURAL 1 ve 2: Yönetici ek dersleri (Değişiklik yok)
-    if (unvan.includes('Okul Müdürü') || unvan.includes('Müdür Yardımcısı')) {
-        // ... (Bu kısımlar olduğu gibi kalıyor, özet için daraltıldı)
-        if (unvan.includes('Okul Müdürü')) { Object.keys(personelData).forEach(dateString => { const dayData = personelData[dateString]; if (dayData.code === 'N' || dayData.code === 'RTÇ') { ekDers += 4; } }); genelToplam = ekDers; return { genelToplam, ekDers }; }
-        if (unvan.includes('Müdür Yardımcısı')) { const yardimciSchedule = [0, 4, 4, 4, 3, 3, 0]; Object.keys(personelData).forEach(dateString => { const dayData = personelData[dateString]; if (dayData.code === 'N' || dayData.code === 'RTÇ') { const date = new Date(dateString + 'T00:00:00'); const dayOfWeek = date.getDay(); ekDers += yardimciSchedule[dayOfWeek]; } }); genelToplam = ekDers; return { genelToplam, ekDers }; }
+    // Yönetici personel ve Rehber Öğretmen için özel durumlar
+    // *** YENİ KONTROL: "Rehberlik" kelimesi de eklendi ***
+    if (unvan.includes('Okul Müdürü') || unvan.includes('Rehber Öğretmen') || unvan.includes('Rehberlik')) {
+        // Adım 1: Gerçek çalıştığı saatleri toplayarak 'genelToplam'ı hesapla.
+        if (personel.sozlesme_turu === 'Belirsiz Süreli') {
+            Object.values(personelData).forEach(dayData => {
+                if (dayData.code === 'N') {
+                    genelToplam += (dayData.hours || 0);
+                }
+            });
+        } else { // Diğer sözleşme türleri için
+            Object.values(personelData).forEach(dayData => {
+                if (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') {
+                    genelToplam += (dayData.hours || 0);
+                }
+            });
+        }
+
+        // Adım 2: Özel ek ders kuralını uygula (günde 4 saat).
+        Object.keys(personelData).forEach(dateString => {
+            const dayData = personelData[dateString];
+            if (dayData.code === 'N' || dayData.code === 'RTÇ') {
+                ekDers += 4;
+            }
+        });
+        
+        // Adım 3: Doğru hesaplanmış değerleri döndür.
+        return { genelToplam, ekDers };
     }
 
-    // KURAL 3: Personelin sözleşme türüne göre saat toplamı
+    if (unvan.includes('Müdür Yardımcısı')) { 
+        const yardimciSchedule = [0, 4, 4, 4, 3, 3, 0]; 
+        Object.keys(personelData).forEach(dateString => { 
+            const dayData = personelData[dateString]; 
+            if (dayData.code === 'N' || dayData.code === 'RTÇ') { 
+                const date = new Date(dateString + 'T00:00:00'); 
+                const dayOfWeek = date.getDay(); 
+                ekDers += yardimciSchedule[dayOfWeek]; 
+            } 
+        }); 
+        genelToplam = ekDers; 
+        return { genelToplam, ekDers }; 
+    }
+
+    // Diğer tüm personeller için 'genelToplam' hesaplaması
     if (personel.sozlesme_turu === 'Belirsiz Süreli') {
-        // Belirsiz süreli personel için SADECE 'N' (Normal Çalışma) günlerinin saatleri toplanır.
         Object.values(personelData).forEach(dayData => {
             if (dayData.code === 'N') {
                 genelToplam += (dayData.hours || 0);
             }
         });
     } else {
-        // Diğer sözleşme türleri (Belirli, Kısmi) için çalışılan tüm günler (N, RTÇ, Y, K) toplanır.
         Object.values(personelData).forEach(dayData => {
             if (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') {
                 genelToplam += (dayData.hours || 0);
@@ -4092,37 +4205,33 @@ function calculateMonthlyHours(personelId) {
         });
     }
 
-    // --- EK DERS HESAPLAMA MANTIĞI ---
+    // Diğer tüm personeller için 'ekDers' hesaplaması
     if (personel.sozlesme_turu === 'Kısmi Süreli') {
         ekDers = 0;
-    } 
+    }
     else if (!personel.neviAdi.includes('Eğitim Personeli')) {
         ekDers = genelToplam;
-    } 
+    }
     else {
         const maasKarsiligiHaftalik = parseInt(personel.maasKarsiligi) || 0;
         if (maasKarsiligiHaftalik === 0) {
-             ekDers = genelToplam;
+            ekDers = genelToplam;
         } else {
             const workWeeks = new Set();
-            const getWeek = (d) => { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d - yearStart) / 86400000) + 1)/7); };
-            
+            const getWeek = (d) => { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); };
+
             Object.keys(personelData).forEach(dateString => {
-                // ===================================================================
-                // !!! DEĞİŞİKLİK BURADA: 'K' kodu da ek ders hesabına dahil ediliyor !!!
-                 if(personelData[dateString].code === 'N' || personelData[dateString].code === 'RTÇ' || personelData[dateString].code === 'Y' || personelData[dateString].code === 'K'){
-                // ===================================================================
-                     workWeeks.add(getWeek(new Date(dateString + 'T00:00:00')));
-                 }
+                if (personelData[dateString].code === 'N' || personelData[dateString].code === 'RTÇ' || personelData[dateString].code === 'Y' || personelData[dateString].code === 'K') {
+                    workWeeks.add(getWeek(new Date(dateString + 'T00:00:00')));
+                }
             });
             const toplamMaasKarsiligi = workWeeks.size * maasKarsiligiHaftalik;
             ekDers = Math.max(0, genelToplam - toplamMaasKarsiligi);
         }
     }
-    
+
     return { genelToplam, ekDers: Math.round(ekDers) };
 }
-
 function calculateFazlaMesai(personelId) {
     const personelData = puantajData[personelId];
     if (!personelData) return 0;
