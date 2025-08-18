@@ -4048,16 +4048,21 @@ async function loadPuantajDataForCurrentMonth() {
         }
         updateLockStatusUI();
 
+        const ayinIlkGunu = new Date(Date.UTC(year, month, 1));
         const aktifPersonelList = puantajPersonelList.filter(personel => {
             const ayrilisStr = personel.isten_ayrilis;
-            if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
+            // İşten ayrılış tarihi yoksa veya geçersizse personeli listede tut.
+            if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') {
+                return true;
+            }
             const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
-            if (isNaN(ayrilisDate.getTime())) return true;
-            const ayrilisYear = ayrilisDate.getUTCFullYear();
-            const ayrilisMonth = ayrilisDate.getUTCMonth();
-            if (ayrilisYear > year) return true;
-            if (ayrilisYear === year && ayrilisMonth >= month) return true;
-            return false;
+            if (isNaN(ayrilisDate.getTime())) {
+                return true;
+            }
+            // Eğer personelin ayrılış tarihi, baktığımız ayın ilk gününden ÖNCE ise,
+            // bu personel o ay hiç çalışmamıştır, bu yüzden listeye ekleme (false dön).
+            // Diğer tüm durumlarda (o ay veya sonrasında ayrıldıysa) listede tut (true dön).
+            return ayrilisDate >= ayinIlkGunu;
         });
 
         // =======================================================
