@@ -4890,7 +4890,6 @@ async function downloadExcel() {
 }
 
 
-// BU YENİ VE GÜNCELLENMİŞ FONKSİYONU EKLEYİN
 async function saveModalChanges() {
     const modalSaveBtn = document.getElementById('modal-save');
     const personelId = modalSaveBtn.dataset.personelId;
@@ -4914,35 +4913,21 @@ async function saveModalChanges() {
     }
 
     document.getElementById('edit-modal-overlay').style.display = 'none';
+    
+    // Değişiklikleri veritabanına kalıcı olarak kaydetmek için ana kaydetme fonksiyonunu çağırıyoruz.
+    await savePuantajData(); // <-- YENİ EKLENEN SATIR
 
+    // Tabloyu ve toplamları yeniden çizmek için ilgili fonksiyonları tekrar çağır.
+    // Not: savePuantajData zaten başarılı bir toast mesajı gösterdiği için aşağıdaki satırı kaldırabilir veya değiştirebilirsiniz.
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
-
-    // DÜZELTME 1: Tabloyu yeniden çizmeden önce aktif personel listesini ve başlığı hazırlıyoruz.
-    const ayAdi = document.getElementById('select-month').options[month].text;
-    const baslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
-
-    const aktifPersonelList = puantajPersonelList.filter(personel => {
-        const ayrilisStr = personel.isten_ayrilis;
-        if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
-        const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
-        if (isNaN(ayrilisDate.getTime())) return true;
-        const ayrilisYear = ayrilisDate.getUTCFullYear();
-        const ayrilisMonth = ayrilisDate.getUTCMonth();
-        if (ayrilisYear > year) return true;
-        if (ayrilisYear === year && ayrilisMonth >= month) return true;
-        return false;
-    });
-
     const nobetVerisi = await fetchAndCalculateNobetData(year, month);
     
-    // DÜZELTME 2: Tablo çizim fonksiyonunu artık 3 parametre ile doğru şekilde çağırıyoruz.
-    // YENİ HALİ:
-renderPuantajTable(nobetVerisi, displayList, baslikMetni);
-    renderGrandTotals(nobetVerisi);
-    attachCellListeners();
-
-    showToast('Değişiklikler kaydedildi. Kalıcı olması için "Kaydet" butonuna tıklamayı unutmayın.', 'success');
+    // Bu kısım aslında savePuantajData'dan sonra tekrar tabloyu en güncel haliyle çizmek için
+    // loadPuantajDataForCurrentMonth fonksiyonunu çağırmak daha doğru olabilir ama mevcut yapı da iş görür.
+    await loadPuantajDataForCurrentMonth(); // Tabloyu veritabanından gelen son haliyle yeniden yüklemesi daha garanti.
+    
+    // showToast('Güncelleme başarıyla veritabanına kaydedildi.', 'success'); // İsteğe bağlı olarak bu mesajı kullanabilirsiniz.
 }
 // =================== 3. ADIM BİTİŞİ ===================
 function printPuantaj() {
