@@ -4101,7 +4101,7 @@ async function loadPuantajDataForCurrentMonth() {
         // DEĞİŞİKLİK BURADA: Tablo, filtrelenmiş olan 'displayList' ile çiziliyor.
         renderPuantajTable(nobetVerisi, displayList, baslikMetni);
         
-        renderGrandTotals(nobetVerisi);
+        renderGrandTotals(nobetVerisi, displayList);
         renderLegend();
         attachCellListeners();
     } catch (error) {
@@ -4212,7 +4212,7 @@ async function deleteCurrentPuantaj() {
 
         updateLockStatusUI();
         renderPuantajTable({}); // Tabloyu boşaltarak "veri yok" mesajını göster
-        renderGrandTotals({}); // Genel toplamları sıfırla
+        renderGrandTotals({}, []); // Genel toplamları sıfırla
 
         showToast('Puantaj başarıyla silindi.', 'success');
 
@@ -4779,20 +4779,20 @@ function renderLegend() {
 }
 
 
-function renderGrandTotals(nobetVerisi = {}) {
+// ======================= YERİNE BU YENİ FONKSİYONU EKLEYİN =======================
+function renderGrandTotals(nobetVerisi = {}, personelListesi) {
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
 
     let totalEkders = 0, totalNobet = 0, totalRehberlik = 0;
 
-    puantajPersonelList.forEach(personel => {
-        // !!! DEĞİŞİKLİK BURADA BAŞLIYOR !!!
-        // Sadece Eğitim Personeli (Belirli Süreli) veya Yönetici ise ek dersini toplama dahil et.
-        // Destek personeli gibi diğer personellerin saatleri genel ek ders toplamına eklenmeyecek.
+    // DEĞİŞİKLİK: Artık tüm listeyi değil, fonksiyona gönderilen
+    // filtrelenmiş listeyi (personelListesi) kullanıyoruz.
+    personelListesi.forEach(personel => {
         if (personel.neviAdi.includes('Eğitim Personeli') || personel.unvan.includes('Müdür')) {
             totalEkders += calculateMonthlyHours(personel.id).ekDers;
         }
-        
+
         totalNobet += nobetVerisi[personel.id] || 0;
         totalRehberlik += calculateEffectiveRehberlikHours(personel.id, year, month, puantajData);
     });
@@ -4801,6 +4801,7 @@ function renderGrandTotals(nobetVerisi = {}) {
     document.getElementById('total-nobet').textContent = totalNobet + " Saat";
     document.getElementById('total-rehberlik').textContent = totalRehberlik + " Saat";
 }
+// ==============================================================================
     
         
 
