@@ -695,7 +695,11 @@
 
 
 /* === GÜNCELLENMİŞ MOBİL GÖRÜNÜM KURALLARI === */
+
 @media (max-width: 768px) {
+.sidebar-header {
+    display: none;
+}
     /* Kaydırma sorununu çözen kural */
     html, body {
         height: auto; 
@@ -804,6 +808,97 @@ td[style*="background-color"] .input-wrapper {
     border-radius: 5px;
 }
 
+/* ======================= BUNU <style> İÇİNE EKLEYİN ======================= */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+.card-icon {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+.card-content {
+    flex-grow: 1;
+}
+.card-title {
+    font-size: 1em;
+    font-weight: 600;
+    color: #555;
+    margin: 0 0 5px 0;
+}
+.card-value {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: var(--theme-primary);
+    line-height: 1;
+}
+.card-description {
+    font-size: 0.85em;
+    color: #777;
+}
+/* =================== YERİNE BUNLARI EKLEYİN ================== */
+.dashboard-card {
+    background-color: var(--white-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    gap: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 125px; /* Tüm kartların minimum yüksekliğini eşitler */
+}
+.card-list {
+    font-size: 0.9em;
+    color: #333;
+    max-height: 60px; /* Kart yüksekliğine uygun max-height */
+    overflow-y: auto; /* Taşma durumunda dikey scrollbar ekler */
+    width: 100%;
+    padding-right: 5px; /* Kaydırma çubuğu için boşluk */
+}
+/* ============================================================= */
+.card-list span {
+    display: block;
+    padding: 2px 0;
+}
+.card-list .no-data {
+    color: #888;
+    font-style: italic;
+}
+.quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.quick-action-btn {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--dark-text-color);
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.quick-action-btn:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+    color: var(--theme-primary);
+}
+/* ========================================================================= */
 </style>
 </head>
 <body>
@@ -862,7 +957,89 @@ td[style*="background-color"] .input-wrapper {
                     
 
         <main class="main-content">
-            <div id="dashboard" class="module active"><div class="panel"><div class="panel-body"><h3>Hoş Geldiniz!</h3><p>Veri tanımlamaları için "Ayarlar" menüsünü kullanarak başlayabilirsiniz.</p></div></div></div>
+            <div id="dashboard" class="module active">
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div class="card-icon" style="background-color: #e6f7ff; color: #0056b3;">👥</div>
+            <div class="card-content">
+                <div class="card-title">Aktif Personel</div>
+                <div class="card-value" id="db-aktif-personel">Yükleniyor...</div>
+                <div class="card-description">Sistemde kayıtlı toplam personel</div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon" style="background-color: #fffbe6; color: #f39c12;">🛡️</div>
+            <div class="card-content">
+                <div class="card-title">Bugün Nöbetçi Olanlar</div>
+                <div class="card-list" id="db-gunun-nobetcileri-list">Yükleniyor...</div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon" style="background-color: #e6f7e9; color: #28a745;">✈️</div>
+            <div class="card-content">
+                <div class="card-title">Bugün İzinli Olanlar</div>
+                <div class="card-list" id="db-bugun-izinliler-list">Yükleniyor...</div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon" style="background-color: #feefe8; color: #dc3545;">📝</div>
+            <div class="card-content">
+                <div class="card-title">Bugünkü Görevlendirmeler</div>
+                <div class="card-list" id="db-bugun-gorevli-list">Yükleniyor...</div>
+            </div>
+        </div>
+    </div>
+<h3 style="margin-top: 35px; color: var(--dark-text-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">Aylık Özet</h3>
+<div class="dashboard-grid" style="margin-top: 20px;">
+
+    <div class="dashboard-card">
+        <div class="card-icon" style="background-color: #eefbec; color: #34a853;">➕</div>
+        <div class="card-content">
+            <div class="card-title">Bu Ayki Toplam Ek Ders</div>
+            <div class="card-value" id="db-aylik-ekders">...</div>
+            <div class="card-description">Tüm personel için</div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="card-icon" style="background-color: #e9f2ff; color: #4285f4;">🛡️</div>
+        <div class="card-content">
+            <div class="card-title">Bu Ayki Toplam Nöbet</div>
+            <div class="card-value" id="db-aylik-nobet">...</div>
+            <div class="card-description">Ek ders karşılığı</div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="card-icon" style="background-color: #fdf3e7; color: #fbbc05;">🧭</div>
+        <div class="card-content">
+            <div class="card-title">Bu Ayki Toplam Rehberlik</div>
+            <div class="card-value" id="db-aylik-rehberlik">...</div>
+            <div class="card-description">Ek ders karşılığı</div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="card-icon" style="background-color: #feebee; color: #ea4335;">🩺</div>
+        <div class="card-content">
+            <div class="card-title">Bu Ay Raporlu Olanlar</div>
+            <div class="card-list" id="db-aylik-raporlular-list">Yükleniyor...</div>
+        </div>
+    </div>
+</div>
+    <div class="panel" style="margin-top: 25px;">
+        <div class="panel-header"><h3>Hızlı İşlemler</h3></div>
+        <div class="panel-body quick-actions">
+            <a class="quick-action-btn nav-link" data-target="staff-list">👥 Personel Listesi</a>
+            <a class="quick-action-btn nav-link" data-target="gorevlendirme">📝 Yeni Görevlendirme</a>
+            <a class="quick-action-btn nav-link" data-target="izin-takip">✈️ Yeni İzin Girişi</a>
+            <a class="quick-action-btn nav-link" data-target="puantaj">📊 Puantaj Cetveli</a>
+        </div>
+    </div>
+</div>
             <div id="staff-list" class="module"><div class="panel"><div class="panel-header"><h3>Personel Listesi</h3><button id="add-staff-from-list-btn" class="btn-header-add">Yeni Personel Ekle</button></div><div class="panel-body"><p>Personel listesi yükleniyor...</p></div></div></div>
             <div id="ders-programi" class="module"><div class="panel"><div class="panel-header"><h3>Sınıf Bazlı Ders Programı</h3></div><div class="panel-body"><div id="tab-container"></div><div class="form-container"><div class="form-group"><label>Saat</label><select id="saat"></select></div><div class="form-group"><label>Gün</label><select id="gun">
     <option value="Pazartesi">Pazartesi</option>
@@ -1523,6 +1700,134 @@ function isResmiTatil(date) {
             container.appendChild(toast);
             setTimeout(() => { toast.style.animation = 'slideOut 0.3s forwards'; toast.addEventListener('animationend', () => toast.remove()); }, 3000);
         }
+
+/* ======================= ESKİ renderDashboardData FONKSİYONUNU SİLİP BUNU EKLEYİN ======================= */
+async function renderDashboardData() {
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-11
+
+    // Gerekli DOM elemanlarını seç
+    const personelValueEl = document.getElementById('db-aktif-personel');
+    const nobetListEl = document.getElementById('db-gunun-nobetcileri-list');
+    const izinListEl = document.getElementById('db-bugun-izinliler-list');
+    const gorevListEl = document.getElementById('db-bugun-gorevli-list');
+    // Yeni kartların elemanları
+    const aylikEkdersEl = document.getElementById('db-aylik-ekders');
+    const aylikNobetEl = document.getElementById('db-aylik-nobet');
+    const aylikRehberlikEl = document.getElementById('db-aylik-rehberlik');
+    const aylikRaporluListEl = document.getElementById('db-aylik-raporlular-list');
+
+    // Yükleniyor... durumunu ayarla
+    [personelValueEl, aylikEkdersEl, aylikNobetEl, aylikRehberlikEl].forEach(el => el.textContent = '...');
+    [nobetListEl, izinListEl, gorevListEl, aylikRaporluListEl].forEach(el => el.innerHTML = 'Yükleniyor...');
+
+    try {
+        // Aylık puantaj döküman ID'sini oluştur
+        const puantajDocId = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+
+        // Tüm veritabanı sorgularını aynı anda başlat
+        const [
+            personelSnap, nobetSnap, izinSnap, gorevSnap, nobetYeriSnap,
+            izinTipiSnap, puantajDocSnap
+        ] = await Promise.all([
+            getDocs(query(collection(db, "personel"))),
+            getDocs(query(collection(db, "nobetler"), where("tarih", "==", todayString))),
+            getDocs(query(collection(db, "izinler"), where("baslangicTarihi", "<=", todayString))),
+            getDocs(query(collection(db, "ders_gorevlendirmeleri"), where("tarih", "==", todayString))),
+            getSettings('ayarlar_nobet_yerleri'),
+            getSettings('ayarlar_izin_tipleri'),
+            getDoc(doc(db, "kayitli_puantajlar", puantajDocId))
+        ]);
+
+        const personelMap = new Map(personelSnap.docs.map(doc => [doc.id, doc.data().ad_soyad]));
+        const nobetYeriMap = new Map(nobetYeriSnap.docs.map(doc => [doc.id, doc.data().name]));
+        const tumPersonelListesi = personelSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // --- GÜNLÜK KARTLARIN DOLDURULMASI (MEVCUT KOD) ---
+        personelValueEl.textContent = personelSnap.size;
+        if (nobetSnap.empty) { nobetListEl.innerHTML = '<span class="no-data">Bugün nöbetçi yok.</span>'; } 
+        else { nobetListEl.innerHTML = nobetSnap.docs.map(doc => `<span><strong>${personelMap.get(doc.data().personelId) || '?'}</strong> - ${nobetYeriMap.get(doc.data().nobetYeriId) || ''}</span>`).join(''); }
+
+        const bugunIzinliler = [];
+        izinSnap.forEach(doc => {
+            const izin = doc.data();
+            if (new Date(izin.bitisTarihi + 'T23:59:59') >= today) {
+                bugunIzinliler.push(personelMap.get(izin.personelId) || '?');
+            }
+        });
+        if (bugunIzinliler.length === 0) { izinListEl.innerHTML = '<span class="no-data">Bugün izinli personel yok.</span>'; }
+        else { izinListEl.innerHTML = bugunIzinliler.map(ad => `<span>${ad}</span>`).join(''); }
+
+        if (gorevSnap.empty) { gorevListEl.innerHTML = '<span class="no-data">Bugün görevlendirme yok.</span>'; }
+        else { gorevListEl.innerHTML = gorevSnap.docs.map(d => `<span><strong>${personelMap.get(d.data().gorevliId) || '?'}</strong> (Yerine: ${personelMap.get(d.data().asilId) || '?'})</span>`).join(''); }
+
+        // --- YENİ EKLENEN AYLIK ÖZET KARTLARININ DOLDURULMASI ---
+        let totalEkders = 0, totalNobet = 0, totalRehberlik = 0;
+        const aylikPuantajVerisi = puantajDocSnap.exists() ? puantajDocSnap.data().puantajData : null;
+
+        if (aylikPuantajVerisi) {
+            const nobetVerisi = await fetchAndCalculateNobetData(currentYear, currentMonth);
+
+            tumPersonelListesi.forEach(personel => {
+                // Puantaj verisi olan personeller için hesaplama yap
+                if (aylikPuantajVerisi[personel.id]) {
+                    // Global puantajData değişkenini geçici olarak bu ayın verisiyle doldur
+                    window.puantajData = aylikPuantajVerisi; 
+
+                    if (personel.neviAdi?.includes('Eğitim Personeli') || personel.unvan?.includes('Müdür')) {
+                       totalEkders += calculateMonthlyHours(personel.id).ekDers;
+                    }
+                    totalNobet += nobetVerisi[personel.id] || 0;
+                    totalRehberlik += calculateEffectiveRehberlikHours(personel.id, currentYear, currentMonth, aylikPuantajVerisi);
+                }
+            });
+        }
+
+        aylikEkdersEl.textContent = totalEkders;
+        aylikNobetEl.textContent = totalNobet;
+        aylikRehberlikEl.textContent = totalRehberlik;
+
+        // Bu ay raporlu olanları bulma
+        const raporluIzinTipi = izinTipiSnap.docs.find(doc => doc.data().kod === 'R');
+        if (raporluIzinTipi) {
+            const ayinIlkGunu = new Date(currentYear, currentMonth, 1);
+            const ayinSonGunu = new Date(currentYear, currentMonth + 1, 0);
+            const raporluPersonelListesi = new Set();
+
+            const raporSorgusu = query(collection(db, "izinler"), where("izinTipiId", "==", raporluIzinTipi.id));
+            const raporluIzinlerSnap = await getDocs(raporSorgusu);
+
+            raporluIzinlerSnap.forEach(doc => {
+                const izin = doc.data();
+                const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
+                const bitis = new Date(izin.bitisTarihi + 'T23:59:59');
+                // İzin aralığı bu ay ile kesişiyor mu kontrolü
+                if (baslangic <= ayinSonGunu && bitis >= ayinIlkGunu) {
+                    const personelAdi = personelMap.get(izin.personelId);
+                    if (personelAdi) raporluPersonelListesi.add(personelAdi);
+                }
+            });
+
+            if (raporluPersonelListesi.size === 0) {
+                aylikRaporluListEl.innerHTML = '<span class="no-data">Bu ay raporlu personel yok.</span>';
+            } else {
+                aylikRaporluListEl.innerHTML = Array.from(raporluPersonelListesi).map(ad => `<span>${ad}</span>`).join('');
+            }
+        } else {
+             aylikRaporluListEl.innerHTML = '<span class="no-data">Rapor tanımı bulunamadı.</span>';
+        }
+
+    } catch (error) {
+        console.error("Dashboard verisi çekilirken hata:", error);
+        personelValueEl.textContent = 'Hata!';
+        [nobetListEl, izinListEl, gorevListEl, aylikRaporluListEl].forEach(el => el.innerHTML = '<span class="no-data" style="color:red;">Veri yüklenemedi.</span>');
+        [aylikEkdersEl, aylikNobetEl, aylikRehberlikEl].forEach(el => el.textContent = 'X');
+    }
+}
+/* ======================================================================================================== */
+
 
         // --- AYARLAR VERİTABANI İŞLEMLERİ ---
         const getSettings = async (collectionName) => getDocs(query(collection(db, collectionName), orderBy("name")));
@@ -4741,6 +5046,10 @@ function attachCellListeners() {
             loginPanel.style.display = 'none';
             appContainer.style.display = 'flex';
 
+renderDashboardData(); // <--- YENİ EKLENEN SATIR BU
+
+            
+
             // --- UYGULAMA BAŞLATMA KODLARI (SADECE GİRİŞ YAPILDIĞINDA ÇALIŞIR) ---
             const modal = document.getElementById('add-staff-modal');
             const personelForm = document.getElementById('personelForm');
@@ -4752,24 +5061,43 @@ function attachCellListeners() {
             modal.querySelector('.close-modal').addEventListener('click', closeModal);
             modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-            document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
-                if(link.id === 'open-add-staff-modal') return; // Bu zaten yukarıda tanımlı
-                link.addEventListener('click', function(e) {
-                    if (this.dataset.target) e.preventDefault();
-                    const targetId = this.dataset.target; if(!targetId) return;
-                    document.querySelectorAll('.nav-link, .accordion-trigger, .module').forEach(el => el.classList.remove('active'));
-                    this.classList.add('active');
-                    if (this.closest('.menu-item-group')) { this.closest('.menu-item-group').querySelector('a').classList.add('active'); }
-                    document.getElementById(targetId).classList.add('active');
-                    if (targetId === 'staff-list') fetchStaff();
-                    if (targetId === 'settings') initializeSettings();
-                    if (targetId === 'gorevlendirme') initializeGorevlendirme(); 
-                    if (targetId === 'nobet-takip') initializeNobetTakip();
-                    if (targetId === 'puantaj') initializePuantaj();
-                    if (targetId === 'izin-takip') initializeIzinTakip();
-                    if (targetId === 'ders-programi') initializeSchedule();
-                });
-            });
+
+            // ======================= YERİNE BU DOĞRU KOD BLOĞUNU EKLEYİN =======================
+document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
+    // Menüdeki "Yeni Personel Ekle" butonu ayrı yönetildiği için onu hariç tutuyoruz
+    if (link.id === 'open-add-staff-modal') return;
+
+    link.addEventListener('click', function(e) {
+        // Eğer linkin bir hedefi varsa, varsayılan tıklama eylemini engelle
+        if (this.dataset.target) e.preventDefault();
+        
+        const targetId = this.dataset.target;
+        if (!targetId) return; // Eğer linkin bir hedefi yoksa fonksiyondan çık
+
+        // Tüm menü linklerinden ve içerik modüllerinden 'active' sınıfını kaldır
+        document.querySelectorAll('.nav-link, .accordion-trigger, .module').forEach(el => el.classList.remove('active'));
+        
+        // Tıklanan linke ve eğer varsa ana menü grubuna 'active' sınıfını ekle
+        this.classList.add('active');
+        if (this.closest('.menu-item-group')) {
+            this.closest('.menu-item-group').querySelector('a').classList.add('active');
+        }
+        
+        // Hedef içerik modülünü görünür yap
+        document.getElementById(targetId).classList.add('active');
+
+        // Hangi modülün aktif olduğuna bağlı olarak ilgili fonksiyonu çağır
+        if (targetId === 'dashboard') renderDashboardData(); // Dashboard yenileme eklendi
+        if (targetId === 'staff-list') fetchStaff();
+        if (targetId === 'settings') initializeSettings();
+        if (targetId === 'gorevlendirme') initializeGorevlendirme(); 
+        if (targetId === 'nobet-takip') initializeNobetTakip();
+        if (targetId === 'puantaj') initializePuantaj();
+        if (targetId === 'izin-takip') initializeIzinTakip();
+        if (targetId === 'ders-programi') initializeSchedule();
+    });
+});
+// ==============================================================================
 
             document.querySelectorAll('.accordion-trigger').forEach(acc => acc.addEventListener('click', e => { e.preventDefault(); acc.parentElement.classList.toggle('open'); }));
 
