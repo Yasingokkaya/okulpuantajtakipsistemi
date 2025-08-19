@@ -5146,8 +5146,7 @@ async function applyBulkUpdate() {
 
     // DÜZELTME 2: Tabloyu çizen fonksiyona artık aktif personel listesini de gönderiyoruz.
     renderPuantajTable(nobetVerisi, aktifPersonelList);
-    renderGrandTotals(nobetVerisi);
-    attachCellListeners();
+    renderGrandTotals(nobetVerisi, aktifPersonelList);    attachCellListeners();
 
     showToast('Toplu güncelleme başarıyla uygulandı!', 'success');
 }
