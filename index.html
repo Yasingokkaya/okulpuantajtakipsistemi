@@ -4485,7 +4485,7 @@ async function fetchAndProcessSchedules() {
         });
 
         renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni);
-        renderGrandTotals(nobetVerisi);
+        renderGrandTotals(nobetVerisi, aktifPersonelList); // <-- DEĞİŞİKLİK BU SATIRDA YAPILDI
         renderLegend();
         attachCellListeners();
         showToast('Puantaj başarıyla oluşturuldu!', 'success');
@@ -5146,7 +5146,8 @@ async function applyBulkUpdate() {
 
     // DÜZELTME 2: Tabloyu çizen fonksiyona artık aktif personel listesini de gönderiyoruz.
     renderPuantajTable(nobetVerisi, aktifPersonelList);
-    renderGrandTotals(nobetVerisi, aktifPersonelList);    attachCellListeners();
+    renderGrandTotals(nobetVerisi);
+    attachCellListeners();
 
     showToast('Toplu güncelleme başarıyla uygulandı!', 'success');
 }
