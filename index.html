@@ -2034,7 +2034,6 @@ async function loadZamanCizelgesiAyarlari() {
 
 
           
-// BU KOD BLOGUNU MEVCUT fetchStaff FONKSIYONUNUZ İLE KIYASLAYIN
 async function fetchStaff() {
     const listContainer = document.querySelector('#staff-list .panel-body');
     listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
@@ -2130,7 +2129,6 @@ async function fetchStaff() {
     }
 }
   
-// BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
 async function generateIseGirisBildirgesi(personelId) {
     if (!personelId) {
         showToast('Personel seçimi geçersiz.', 'error');
@@ -2212,7 +2210,6 @@ async function generateIseGirisBildirgesi(personelId) {
         if (newWindow) {
             newWindow.document.write(bildirgeHTML);
             newWindow.document.close();
-            // Sayfanın yüklenmesini bekle ve yazdır
             newWindow.onload = () => {
                 newWindow.print();
             };
@@ -2237,7 +2234,6 @@ async function fetchAndConvertImageToBase64(url) {
         reader.readAsDataURL(blob);
     });
 }
-// YENİ EKLENECEK FONKSİYON
 async function generateIstenAyrilisBildirgesi(personelId) {
     if (!personelId) {
         showToast('Personel seçimi geçersiz.', 'error');
