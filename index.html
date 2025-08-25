@@ -2147,15 +2147,12 @@ async function generateIseGirisBildirgesi(personelId) {
         const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
         const gorevAdi = gorevMap.get(personel.gorevi_bransi) || 'Bilinmiyor';
 
-        const iseGirisTarihi = formatDateDDMMYYYY(personel.ise_giris);
-        const iseGirisYil = new Date(personel.ise_giris).getFullYear();
-        const medeniHali = personel.es_durumu === 'bekar' ? 'Bekar' : 'Evli';
-        const cinsiyet = personel.cinsiyet === 'kadin' ? 'Kadın' : 'Erkek';
-        
-        const iseGirisTarihDizi = personel.ise_giris.split('-');
-        const iseGirisGun = iseGirisTarihDizi[2];
-        const iseGirisAy = iseGirisTarihDizi[1];
-        const iseGirisYilSonIki = iseGirisTarihDizi[0].slice(-2);
+        const adSoyadParts = (personel.ad_soyad || '').split(' ');
+        const adi = adSoyadParts.slice(0, -1).join(' ');
+        const soyadi = adSoyadParts.slice(-1).join(' ');
+
+        const bugun = new Date();
+        const bugunTarihi = bugun.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
         const bildirgeHTML = `
             <!DOCTYPE html>
@@ -2164,54 +2161,64 @@ async function generateIseGirisBildirgesi(personelId) {
                 <meta charset="UTF-8">
                 <title>İşe Giriş Bildirgesi - ${personel.ad_soyad}</title>
                 <style>
-                    body { font-family: 'Times New Roman', serif; font-size: 10pt; margin: 0; }
-                    .form-container { width: 100%; height: 100%; background-image: url('data:image/png;base64,${await fetchAndConvertImageToBase64('EK-4.png')}'); background-size: contain; background-repeat: no-repeat; position: relative; }
-                    .field { position: absolute; font-size: 10pt; white-space: nowrap; overflow: hidden; }
-                    .checkbox-field { position: absolute; width: 10px; height: 10px; }
+                    body { font-family: Arial, sans-serif; font-size: 11pt; margin: 0; }
+                    .form-container { 
+                        width: 210mm; 
+                        height: 297mm; 
+                        background-image: url('data:image/png;base64,${await fetchAndConvertImageToBase64('EK-4-yeni.png')}'); 
+                        background-size: 100% 100%; 
+                        background-repeat: no-repeat; 
+                        position: relative; 
+                    }
+                    .field { position: absolute; font-weight: bold; white-space: nowrap; }
+                    .checkbox-field { position: absolute; font-weight: bold; font-size: 14pt; }
                     @media print {
-                        @page { size: A4; margin: 0; }
+                        @page { size: A4 portrait; margin: 0; }
                         body { margin: 0; }
-                        .no-print { display: none !important; }
                     }
                 </style>
             </head>
             <body>
                 <div class="form-container">
-                    <div class="field" style="top: 271px; left: 147px;">${personel.tc_kimlik_no || ''}</div>
-                    <div class="field" style="top: 310px; left: 147px;">${personel.ad_soyad.split(' ')[0] || ''}</div>
-                    <div class="field" style="top: 326px; left: 147px;">${personel.ad_soyad.split(' ')[1] || ''}</div>
-                    <div class="field" style="top: 343px; left: 147px;">${personel.baba_adi || ''}</div>
-                    <div class="field" style="top: 359px; left: 147px;">${personel.anne_adi || ''}</div>
-                    <div class="field" style="top: 375px; left: 147px;">${personel.dogum_yeri || ''}</div>
-                    <div class="field" style="top: 391px; left: 147px;">${formatDateDDMMYYYY(personel.dogum_tarihi) || ''}</div>
-                    <div class="checkbox-field" style="top: 408px; left: ${personel.cinsiyet === 'erkek' ? '148px' : '182px'};">X</div>
-                    <div class="checkbox-field" style="top: 424px; left: ${personel.es_durumu === 'evli' ? '148px' : '182px'};">X</div>
-                    <div class="field" style="top: 440px; left: 147px;">${personel.medeni_hali || ''}</div>
-                    <div class="field" style="top: 456px; left: 147px;">${personel.il || ''}</div>
-                    <div class="field" style="top: 472px; left: 147px;">${personel.ilce || ''}</div>
+                    <div class="field" style="top: 145px; left: 215px;">${personel.tc_kimlik_no || ''}</div>
                     
-                    <div class="field" style="top: 521px; left: 147px;">${personel.ise_giris || ''}</div>
-                    <div class="field" style="top: 537px; left: 147px;">${personel.sozlesme_turu || ''}</div>
+                    <div class="field" style="top: 247px; left: 170px;">${adi}</div>
+                    <div class="field" style="top: 268px; left: 170px;">${soyadi}</div>
+                    <div class="field" style="top: 288px; left: 170px;">${personel.baba_adi || ''}</div>
+                    <div class="field" style="top: 309px; left: 170px;">${personel.anne_adi || ''}</div>
+                    <div class="field" style="top: 330px; left: 170px;">${personel.dogum_yeri || ''}</div>
+                    <div class="field" style="top: 351px; left: 170px;">${formatDateDDMMYYYY(personel.dogum_tarihi) || ''}</div>
+                    <div class="checkbox-field" style="top: 372px; left: ${personel.cinsiyet === 'erkek' ? '271px' : '322px'};">X</div>
+                    <div class="checkbox-field" style="top: 393px; left: ${personel.es_durumu !== 'bekar' ? '271px' : '322px'};">X</div>
+                    <div class="field" style="top: 419px; left: 170px;">${personel.il || ''}</div>
+                    <div class="field" style="top: 440px; left: 170px;">${personel.ilce || ''}</div>
                     
-                    <div class="field" style="top: 553px; left: 147px;">${gorevAdi}</div>
-                    <div class="field" style="top: 588px; left: 147px;">ÖZEL İSABET ORTAOKULU</div>
-                    <div class="field" style="top: 604px; left: 147px;">${personel.sgk_no || ''}</div>
-                    <div class="field" style="top: 620px; left: 147px;">Hanımçeşme Mah. Gündüz Sokak No:13 TAVŞANLI/KÜTAHYA</div>
+                    <div class="field" style="top: 486px; left: 350px;">${formatDateDDMMYYYY(personel.ise_giris) || ''}</div>
                     
-                    <div class="field" style="top: 722px; left: 520px;">${iseGirisGun} / ${iseGirisAy} / ${iseGirisYilSonIki}</div>
+                    ${personel.sozlesme_turu === 'Belirli Süreli' ? '<div class="checkbox-field" style="top: 520px; left: 343px;">X</div>' : ''}
+                    ${personel.sozlesme_turu === 'Kısmi Süreli' ? '<div class="checkbox-field" style="top: 520px; left: 512px;">X</div>' : ''}
 
-                    <div class="field" style="top: 736px; left: 247px;">${personel.ad_soyad || ''}</div>
+                    <div class="field" style="top: 592px; left: 210px;">${gorevAdi}</div>
+                    
+                    <div class="field" style="top: 735px; left: 155px;">${personel.ad_soyad || ''}</div>
+
+                    <div class="field" style="top: 792px; left: 215px;">ÖZEL İSABET ORTAOKULU</div>
+                    <div class="field" style="top: 812px; left: 215px;">ÖZEL İSABET ORTAOKULU</div>
+                    <div class="field" style="top: 852px; left: 215px; white-space: normal; width: 400px;">Hanımçeşme Mah. Gündüz Sokak No:13 TAVŞANLI/KÜTAHYA</div>
+
+                    <div class="field" style="top: 902px; left: 270px;">${bugunTarihi}</div>
+                    <div class="field" style="top: 935px; left: 220px;">Okul Müdürü</div>
                 </div>
             </body>
             </html>
         `;
 
-        const newWindow = window.open('', '_blank', 'width=800,height=600');
+        const newWindow = window.open('', '_blank');
         if (newWindow) {
             newWindow.document.write(bildirgeHTML);
             newWindow.document.close();
             newWindow.onload = () => {
-                newWindow.print();
+                setTimeout(() => newWindow.print(), 500);
             };
         } else {
             showToast('Tarayıcı penceresi engellendi. Lütfen pop-up\'lara izin verin.', 'error');
