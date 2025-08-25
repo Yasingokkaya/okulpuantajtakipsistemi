@@ -2034,7 +2034,7 @@ async function loadZamanCizelgesiAyarlari() {
 
 
           
-       // BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
+  // BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
 async function fetchStaff() {
     const listContainer = document.querySelector('#staff-list .panel-body');
     listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
@@ -2075,15 +2075,12 @@ async function fetchStaff() {
             }
         });
 
-        // Verilen listeye göre HTML tablosu oluşturan yardımcı fonksiyon GÜNCELLENDİ
-        const createTableHTML = (personelListesi) => {
+        const createTableHTML = (personelListesi, tableType) => {
             if (personelListesi.length === 0) {
                 return '<p style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">Bu listede gösterilecek personel bulunmamaktadır.</p>';
             }
-            // *** YENİ SÜTUN BAŞLIKLARI: S.N. ve Cinsiyet eklendi ***
             let tableHTML = `<div class="table-container"><table class="staff-table"><thead><tr><th>S.N.</th><th>Adı Soyadı</th><th>Cinsiyet</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>`;
-            
-            // *** YENİ SATIR İÇERİĞİ: Sıra numarası ve cinsiyet bilgisi eklendi ***
+
             personelListesi.forEach((s, index) => {
                 const cinsiyet = s.cinsiyet === 'kadin' ? 'Kadın' : (s.cinsiyet === 'erkek' ? 'Erkek' : '---');
                 tableHTML += `<tr>
@@ -2094,7 +2091,12 @@ async function fetchStaff() {
                                 <td>${gorevMap[s.gorevi_bransi] || 'Bilinmiyor'}</td>
                                 <td>${formatDateDDMMYYYY(s.ise_giris)}</td>
                                 <td>${formatDateDDMMYYYY(s.isten_ayrilis)}</td>
-                                <td class="actions-cell"><button class="btn btn-edit" data-id="${s.id}">Düzenle</button><button class="btn btn-delete" data-id="${s.id}">Sil</button></td>
+                                <td class="actions-cell">
+                                    <button class="btn btn-edit" data-id="${s.id}">Düzenle</button>
+                                    <button class="btn btn-delete" data-id="${s.id}">Sil</button>
+                                    <button class="btn" style="background-color: #0dcaf0;" data-id="${s.id}" data-action="create-bildirge">Giriş Bildirgesi</button>
+                                    ${tableType === 'ayrilan' ? `<button class="btn" style="background-color: #dc3545;" data-id="${s.id}" data-action="create-ayrilis-bildirge">Ayrılış Bildirgesi</button>` : ''}
+                                </td>
                               </tr>`;
             });
             tableHTML += `</tbody></table></div>`;
@@ -2102,11 +2104,26 @@ async function fetchStaff() {
         };
 
         let finalHTML = '<h3>Aktif Personel Listesi</h3>';
-        finalHTML += createTableHTML(aktifPersonel);
+        finalHTML += createTableHTML(aktifPersonel, 'aktif');
         finalHTML += '<h3 style="margin-top: 40px; border-top: 2px solid #dee2e6; padding-top: 20px;">Ayrılan Personel Listesi</h3>';
-        finalHTML += createTableHTML(ayrilanPersonel);
+        finalHTML += createTableHTML(ayrilanPersonel, 'ayrilan');
 
         listContainer.innerHTML = finalHTML;
+
+        listContainer.querySelectorAll('[data-action="create-bildirge"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const personelId = e.target.dataset.id;
+                generateIseGirisBildirgesi(personelId);
+            });
+        });
+        
+        // YENİ EKLENEN KOD: Ayrılış bildirgesi butonu için olay dinleyicisi
+        listContainer.querySelectorAll('[data-action="create-ayrilis-bildirge"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const personelId = e.target.dataset.id;
+                generateIstenAyrilisBildirgesi(personelId);
+            });
+        });
 
     } catch (e) {
         listContainer.innerHTML = '<p style="color:red;">Personel listesi yüklenemedi.</p>';
@@ -2114,6 +2131,208 @@ async function fetchStaff() {
     }
 }
   
+// YENİ EKLENECEK FONKSİYON
+async function generateIseGirisBildirgesi(personelId) {
+    if (!personelId) {
+        showToast('Personel seçimi geçersiz.', 'error');
+        return;
+    }
+
+    try {
+        const docSnap = await getDoc(doc(db, 'personel', personelId));
+        if (!docSnap.exists()) {
+            showToast('Personel verisi bulunamadı.', 'error');
+            return;
+        }
+
+        const personel = docSnap.data();
+        const gorevSnap = await getSettings('ayarlar_gorevler');
+        const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
+        const gorevAdi = gorevMap.get(personel.gorevi_bransi) || 'Bilinmiyor';
+        
+        const iseGirisTarihi = formatDateDDMMYYYY(personel.ise_giris);
+        const iseGirisYil = new Date(personel.ise_giris).getFullYear();
+        const medeniHali = personel.es_durumu === 'bekar' ? 'Bekar' : 'Evli';
+        const cinsiyet = personel.cinsiyet === 'kadin' ? 'Kadın' : 'Erkek';
+        
+        // YIL BİLGİSİNİ DOĞRU ŞEKİLDE AYIR
+        const iseGirisTarihDizi = personel.ise_giris.split('-');
+        const iseGirisGun = iseGirisTarihDizi[2];
+        const iseGirisAy = iseGirisTarihDizi[1];
+        const iseGirisYilSonIki = iseGirisTarihDizi[0].slice(-2);
+
+        const bildirgeHTML = `
+            <!DOCTYPE html>
+            <html lang="tr">
+            <head>
+                <meta charset="UTF-8">
+                <title>İşe Giriş Bildirgesi - ${personel.ad_soyad}</title>
+                <style>
+                    body { font-family: 'Times New Roman', serif; font-size: 10pt; margin: 0; }
+                    .form-container { width: 100%; height: 100%; background-image: url('data:image/png;base64,${await fetchAndConvertImageToBase64('EK-4.png')}'); background-size: contain; background-repeat: no-repeat; position: relative; }
+                    .field { position: absolute; font-size: 10pt; white-space: nowrap; overflow: hidden; }
+                    .checkbox-field { position: absolute; width: 10px; height: 10px; }
+                    @media print {
+                        @page { size: A4; margin: 0; }
+                        body { margin: 0; }
+                        .no-print { display: none !important; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="form-container">
+                    <div class="field" style="top: 271px; left: 147px;">${personel.tc_kimlik_no || ''}</div>
+                    <div class="field" style="top: 310px; left: 147px;">${personel.ad_soyad.split(' ')[0] || ''}</div>
+                    <div class="field" style="top: 326px; left: 147px;">${personel.ad_soyad.split(' ')[1] || ''}</div>
+                    <div class="field" style="top: 343px; left: 147px;">${personel.baba_adi || ''}</div>
+                    <div class="field" style="top: 359px; left: 147px;">${personel.anne_adi || ''}</div>
+                    <div class="field" style="top: 375px; left: 147px;">${personel.dogum_yeri || ''}</div>
+                    <div class="field" style="top: 391px; left: 147px;">${formatDateDDMMYYYY(personel.dogum_tarihi) || ''}</div>
+                    <div class="checkbox-field" style="top: 408px; left: ${personel.cinsiyet === 'erkek' ? '148px' : '182px'};">X</div>
+                    <div class="checkbox-field" style="top: 424px; left: ${personel.es_durumu === 'evli' ? '148px' : '182px'};">X</div>
+                    <div class="field" style="top: 440px; left: 147px;">${personel.medeni_hali || ''}</div>
+                    <div class="field" style="top: 456px; left: 147px;">${personel.il || ''}</div>
+                    <div class="field" style="top: 472px; left: 147px;">${personel.ilce || ''}</div>
+                    
+                    <div class="field" style="top: 521px; left: 147px;">${personel.ise_giris || ''}</div>
+                    <div class="field" style="top: 537px; left: 147px;">${personel.sozlesme_turu || ''}</div>
+                    
+                    <div class="field" style="top: 553px; left: 147px;">${gorevAdi}</div>
+                    <div class="field" style="top: 588px; left: 147px;">ÖZEL İSABET ORTAOKULU</div>
+                    <div class="field" style="top: 604px; left: 147px;">${personel.sgk_no || ''}</div>
+                    <div class="field" style="top: 620px; left: 147px;">Hanımçeşme Mah. Gündüz Sokak No:13 TAVŞANLI/KÜTAHYA</div>
+                    
+                    <div class="field" style="top: 722px; left: 520px;">${iseGirisGun} / ${iseGirisAy} / ${iseGirisYilSonIki}</div>
+
+                    <div class="field" style="top: 736px; left: 247px;">${personel.ad_soyad || ''}</div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const newWindow = window.open('', '_blank', 'width=800,height=600');
+        if (newWindow) {
+            newWindow.document.write(bildirgeHTML);
+            newWindow.document.close();
+            // Sayfanın yüklenmesini bekle ve yazdır
+            newWindow.onload = () => {
+                newWindow.print();
+            };
+        } else {
+            showToast('Tarayıcı penceresi engellendi. Lütfen pop-up\'lara izin verin.', 'error');
+        }
+
+    } catch (error) {
+        console.error("Bildirge oluşturulurken hata:", error);
+        showToast('Bildirge oluşturulurken bir hata oluştu.', 'error');
+    }
+}
+
+// YENİ YARDIMCI FONKSİYON: Dışarıdan resim yüklemek için
+async function fetchAndConvertImageToBase64(url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+// YENİ EKLENECEK FONKSİYON
+async function generateIstenAyrilisBildirgesi(personelId) {
+    if (!personelId) {
+        showToast('Personel seçimi geçersiz.', 'error');
+        return;
+    }
+
+    try {
+        const docSnap = await getDoc(doc(db, 'personel', personelId));
+        if (!docSnap.exists()) {
+            showToast('Personel verisi bulunamadı.', 'error');
+            return;
+        }
+
+        const personel = docSnap.data();
+        const gorevSnap = await getSettings('ayarlar_gorevler');
+        const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
+        const gorevAdi = gorevMap.get(personel.gorevi_bransi) || 'Bilinmiyor';
+
+        const ayrilisTarihi = formatDateDDMMYYYY(personel.isten_ayrilis);
+        const ayrilisYil = new Date(personel.isten_ayrilis).getFullYear();
+        
+        const ayrilisTarihDizi = personel.isten_ayrilis.split('-');
+        const ayrilisGun = ayrilisTarihDizi[2];
+        const ayrilisAy = ayrilisTarihDizi[1];
+        const ayrilisYilSonIki = ayrilisTarihDizi[0].slice(-2);
+
+        const bildirgeHTML = `
+            <!DOCTYPE html>
+            <html lang="tr">
+            <head>
+                <meta charset="UTF-8">
+                <title>İşten Ayrılış Bildirgesi - ${personel.ad_soyad}</title>
+                <style>
+                    body { font-family: 'Times New Roman', serif; font-size: 10pt; margin: 0; }
+                    .form-container { width: 100%; height: 100%; background-image: url('data:image/png;base64,${await fetchAndConvertImageToBase64('EK-4-ayrilis.png')}'); background-size: contain; background-repeat: no-repeat; position: relative; }
+                    .field { position: absolute; font-size: 10pt; white-space: nowrap; overflow: hidden; }
+                    .checkbox-field { position: absolute; width: 10px; height: 10px; }
+                    @media print {
+                        @page { size: A4; margin: 0; }
+                        body { margin: 0; }
+                        .no-print { display: none !important; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="form-container">
+                    <div class="field" style="top: 271px; left: 147px;">${personel.tc_kimlik_no || ''}</div>
+                    <div class="field" style="top: 310px; left: 147px;">${personel.ad_soyad.split(' ')[0] || ''}</div>
+                    <div class="field" style="top: 326px; left: 147px;">${personel.ad_soyad.split(' ')[1] || ''}</div>
+                    <div class="field" style="top: 343px; left: 147px;">${personel.baba_adi || ''}</div>
+                    <div class="field" style="top: 359px; left: 147px;">${personel.anne_adi || ''}</div>
+                    <div class="field" style="top: 375px; left: 147px;">${personel.dogum_yeri || ''}</div>
+                    <div class="field" style="top: 391px; left: 147px;">${formatDateDDMMYYYY(personel.dogum_tarihi) || ''}</div>
+                    <div class="checkbox-field" style="top: 408px; left: ${personel.cinsiyet === 'erkek' ? '148px' : '182px'};">X</div>
+                    <div class="checkbox-field" style="top: 424px; left: ${personel.es_durumu === 'evli' ? '148px' : '182px'};">X</div>
+                    <div class="field" style="top: 440px; left: 147px;">${personel.medeni_hali || ''}</div>
+                    <div class="field" style="top: 456px; left: 147px;">${personel.il || ''}</div>
+                    <div class="field" style="top: 472px; left: 147px;">${personel.ilce || ''}</div>
+
+                    <div class="field" style="top: 556px; left: 476px;">${ayrilisYil}</div>
+                    <div class="field" style="top: 605px; left: 456px;">${gorevAdi}</div>
+                    
+                    <div class="field" style="top: 673px; left: 411px;">${personel.ad_soyad || ''}</div>
+                    <div class="field" style="top: 689px; left: 708px;">${ayrilisGun} / ${ayrilisAy} / ${ayrilisYilSonIki}</div>
+
+                    <div class="field" style="top: 792px; left: 135px;">ÖZEL İSABET ORTAOKULU</div>
+                    <div class="field" style="top: 808px; left: 135px;">${personel.sgk_no || ''}</div>
+                    <div class="field" style="top: 824px; left: 135px;">Hanımçeşme Mah. Gündüz Sokak No:13 TAVŞANLI/KÜTAHYA</div>
+                    
+                    <div class="field" style="top: 887px; left: 600px;">${ayrilisGun} / ${ayrilisAy} / ${ayrilisYilSonIki}</div>
+                    <div class="field" style="top: 900px; left: 590px;">${personel.ad_soyad || ''}</div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const newWindow = window.open('', '_blank', 'width=800,height=600');
+        if (newWindow) {
+            newWindow.document.write(bildirgeHTML);
+            newWindow.document.close();
+            newWindow.onload = () => {
+                newWindow.print();
+            };
+        } else {
+            showToast('Tarayıcı penceresi engellendi. Lütfen pop-up\'lara izin verin.', 'error');
+        }
+
+    } catch (error) {
+        console.error("Ayrılış bildirgesi oluşturulurken hata:", error);
+        showToast('Ayrılış bildirgesi oluşturulurken bir hata oluştu.', 'error');
+    }
+}
         async function loadPersonelForm(staffId = null, staffData = null) {
     const template = document.getElementById('personel-form-template');
     const formContainer = document.getElementById('personelForm');
