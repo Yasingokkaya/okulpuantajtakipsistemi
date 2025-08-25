@@ -2062,14 +2062,22 @@ async function fetchStaff() {
             const personel = { id: doc.id, ...doc.data() };
             const ayrilisTarihiStr = personel.isten_ayrilis;
 
+            // Eğer bir ayrılış tarihi girilmişse
             if (ayrilisTarihiStr && ayrilisTarihiStr.trim() !== '') {
                 const ayrilisTarihi = new Date(ayrilisTarihiStr);
-                if (!isNaN(ayrilisTarihi.getTime()) && ayrilisTarihi < ayinIlkGunu) {
+                // Zamanı sıfırlanmış bugünün tarihini al
+                const bugun = new Date();
+                bugun.setHours(0, 0, 0, 0);
+
+                // Eğer ayrılış tarihi bugünden eskiyse, personeli "ayrılanlar" listesine ekle
+                if (!isNaN(ayrilisTarihi.getTime()) && ayrilisTarihi < bugun) {
                     ayrilanPersonel.push(personel);
                 } else {
+                    // Ayrılış tarihi bugün veya ilerideyse, "aktif" listesine ekle
                     aktifPersonel.push(personel);
                 }
             } else {
+                // Hiç ayrılış tarihi yoksa, "aktif" listesine ekle
                 aktifPersonel.push(personel);
             }
         });
@@ -2136,7 +2144,7 @@ async function fetchStaff() {
 // TIRNAK İŞARETLERİNİN ('') İÇİNE DİKKATLİCE YAPIŞTIRIN.
 // ÖNEMLİ: Baştaki "data:image/png;base64," kısmı metne dahilse SİLMEDEN yapıştırın.
 // ====================================================================================
-const iseGirisBildirgesiBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA... (burada yüzlerce satır daha kod olacak) ...Jggg==';
+const iseGirisBildirgesiBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/epv2AAAAABJRU5ErkJggg==';
 
 
 async function generateIseGirisBildirgesi(personelId) {
