@@ -2034,7 +2034,7 @@ async function loadZamanCizelgesiAyarlari() {
 
 
           
-  // BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
+ // BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
 async function fetchStaff() {
     const listContainer = document.querySelector('#staff-list .panel-body');
     listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
@@ -2095,7 +2095,7 @@ async function fetchStaff() {
                                     <button class="btn btn-edit" data-id="${s.id}">Düzenle</button>
                                     <button class="btn btn-delete" data-id="${s.id}">Sil</button>
                                     <button class="btn" style="background-color: #0dcaf0;" data-id="${s.id}" data-action="create-bildirge">Giriş Bildirgesi</button>
-                                    ${tableType === 'ayrilan' ? `<button class="btn" style="background-color: #dc3545;" data-id="${s.id}" data-action="create-ayrilis-bildirge">Ayrılış Bildirgesi</button>` : ''}
+                                    ${s.isten_ayrilis && s.isten_ayrilis.trim() !== '' && s.isten_ayrilis.trim() !== '---' ? `<button class="btn" style="background-color: #dc3545;" data-id="${s.id}" data-action="create-ayrilis-bildirge">Ayrılış Bildirgesi</button>` : ''}
                                 </td>
                               </tr>`;
             });
@@ -2116,8 +2116,7 @@ async function fetchStaff() {
                 generateIseGirisBildirgesi(personelId);
             });
         });
-        
-        // YENİ EKLENEN KOD: Ayrılış bildirgesi butonu için olay dinleyicisi
+
         listContainer.querySelectorAll('[data-action="create-ayrilis-bildirge"]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const personelId = e.target.dataset.id;
@@ -2131,7 +2130,7 @@ async function fetchStaff() {
     }
 }
   
-// YENİ EKLENECEK FONKSİYON
+// BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
 async function generateIseGirisBildirgesi(personelId) {
     if (!personelId) {
         showToast('Personel seçimi geçersiz.', 'error');
@@ -2149,13 +2148,12 @@ async function generateIseGirisBildirgesi(personelId) {
         const gorevSnap = await getSettings('ayarlar_gorevler');
         const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
         const gorevAdi = gorevMap.get(personel.gorevi_bransi) || 'Bilinmiyor';
-        
+
         const iseGirisTarihi = formatDateDDMMYYYY(personel.ise_giris);
         const iseGirisYil = new Date(personel.ise_giris).getFullYear();
         const medeniHali = personel.es_durumu === 'bekar' ? 'Bekar' : 'Evli';
         const cinsiyet = personel.cinsiyet === 'kadin' ? 'Kadın' : 'Erkek';
         
-        // YIL BİLGİSİNİ DOĞRU ŞEKİLDE AYIR
         const iseGirisTarihDizi = personel.ise_giris.split('-');
         const iseGirisGun = iseGirisTarihDizi[2];
         const iseGirisAy = iseGirisTarihDizi[1];
@@ -2239,7 +2237,6 @@ async function fetchAndConvertImageToBase64(url) {
         reader.readAsDataURL(blob);
     });
 }
-
 // YENİ EKLENECEK FONKSİYON
 async function generateIstenAyrilisBildirgesi(personelId) {
     if (!personelId) {
