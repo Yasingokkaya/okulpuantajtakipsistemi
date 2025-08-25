@@ -2129,9 +2129,17 @@ async function fetchStaff() {
     }
 }
   
+
+
 async function generateIseGirisBildirgesi(personelId) {
     if (!personelId) {
         showToast('Personel seçimi geçersiz.', 'error');
+        return;
+    }
+    // Eğer yukarıdaki alana Base64 kodu yapıştırılmadıysa, kullanıcıyı uyar.
+    if (iseGirisBildirgesiBase64.includes('BURAYA_YAPIŞTIRIN')) {
+        showToast('Lütfen koddaki Base64 alanını güncelleyin.', 'error');
+        alert('İşe giriş bildirgesi arka plan resmi koda eklenmemiş. Lütfen talimatları takip ederek index.html dosyasını güncelleyin.');
         return;
     }
 
@@ -2165,7 +2173,8 @@ async function generateIseGirisBildirgesi(personelId) {
                     .form-container { 
                         width: 210mm; 
                         height: 297mm; 
-                        background-image: url('data:image/png;base64,${await fetchAndConvertImageToBase64('EK-4-yeni.png')}'); 
+                        /* Arka plan resmi artık doğrudan koddaki değişkenden alınıyor */
+                        background-image: url('${iseGirisBildirgesiBase64}'); 
                         background-size: 100% 100%; 
                         background-repeat: no-repeat; 
                         position: relative; 
@@ -2174,7 +2183,7 @@ async function generateIseGirisBildirgesi(personelId) {
                     .checkbox-field { position: absolute; font-weight: bold; font-size: 14pt; }
                     @media print {
                         @page { size: A4 portrait; margin: 0; }
-                        body { margin: 0; }
+                        body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
                 </style>
             </head>
@@ -2229,7 +2238,6 @@ async function generateIseGirisBildirgesi(personelId) {
         showToast('Bildirge oluşturulurken bir hata oluştu.', 'error');
     }
 }
-
 // YENİ YARDIMCI FONKSİYON: Dışarıdan resim yüklemek için
 async function fetchAndConvertImageToBase64(url) {
     const response = await fetch(url);
