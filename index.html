@@ -2131,6 +2131,14 @@ async function fetchStaff() {
   
 
 
+// ====================================================================================
+// 1. ADIM: BİR ÖNCEKİ ADIMDA KOPYALADIĞINIZ UZUN BASE64 METNİNİ AŞAĞIDAKİ
+// TIRNAK İŞARETLERİNİN ('') İÇİNE DİKKATLİCE YAPIŞTIRIN.
+// ÖNEMLİ: Baştaki "data:image/png;base64," kısmı metne dahilse SİLMEDEN yapıştırın.
+// ====================================================================================
+const iseGirisBildirgesiBase64 = 'data:image/png;base64,BURAYA_YAPIŞTIRIN';
+
+
 async function generateIseGirisBildirgesi(personelId) {
     if (!personelId) {
         showToast('Personel seçimi geçersiz.', 'error');
