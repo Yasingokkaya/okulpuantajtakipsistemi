@@ -3915,6 +3915,8 @@ function initializeCustomSelects() {
         select.addEventListener('blur', () => handleCustomSelectDisplay(select));
     });
 }
+
+// LÜTFEN MEVCUT ÜÇ FONKSİYONU SİLİP, YERİNE BU BLOĞUN TAMAMINI YAPIŞTIRIN
 function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
@@ -3926,13 +3928,27 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4 style="color: var(--theme-primary);">Bu ay için görüntülenecek puantaj verisi veya aktif personel bulunmuyor.</h4></div>`;
         return;
     }
+    
+    // YENİ DÜZENLEME: Puantaj verisi, personel verisinden ayrıldı.
+    const personelPuantajData = Object.keys(puantajData).reduce((acc, personelId) => {
+        const personelInfo = aktifPersonelListesi.find(p => p.id === personelId);
+        if (personelInfo) {
+            acc[personelId] = {
+                ...personelInfo, // O anki personel bilgilerini ekliyoruz.
+                ...puantajData[personelId] // Puantaj verilerini de üstüne yazıyoruz.
+            };
+        }
+        return acc;
+    }, {});
+
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+    
     const grupluPersonel = {
-        'Belirsiz Süreli': aktifPersonelListesi.filter(p => p.sozlesme_turu === 'Belirsiz Süreli'),
-        'Belirli Süreli': aktifPersonelListesi.filter(p => p.sozlesme_turu === 'Belirli Süreli'),
-        'Kısmi Süreli': aktifPersonelListesi.filter(p => p.sozlesme_turu === 'Kısmi Süreli')
+        'Belirsiz Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Belirsiz Süreli'),
+        'Belirli Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Belirli Süreli'),
+        'Kısmi Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Kısmi Süreli')
     };
     
     for (const grupAdi in grupluPersonel) {
@@ -3954,8 +3970,7 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         tableHTML += `<th>Aylık Toplam</th>${(grupAdi === 'Belirsiz Süreli') ? '<th>Fazla Mesai</th><th>Mesai Nedeni</th><th>E. G.<br>Kodu</th>' : `<th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>`}<th>N</th><th>HT</th><th>RT</th><th>İ</th><th>R</th><th>Üİ</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th><th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th></tr></thead><tbody>`;
 
         personelGrubu.forEach(personel => {
-            const personelPuantajData = puantajData[personel.id];
-            if (!personelPuantajData) { return; }
+            if (!personel.dailyData) { return; }
             let ayrilisTarihiGoster = '---';
             if (personel.isten_ayrilis) {
                 const ayrilisDate = new Date(personel.isten_ayrilis + 'T00:00:00Z');
@@ -3965,14 +3980,14 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
             }
             const monthlyHours = calculateMonthlyHours(personel.id);
             const nobetSaat = nobetVerisi[personel.id] || 0;
-            const rehberlikSaat = calculateEffectiveRehberlikHours(personel.id, year, month, puantajData);
+            const rehberlikSaat = calculateEffectiveRehberlikHours(personel.id, year, month, personelPuantajData);
             const statusCounts = calculateStatusCounts(personel.id);
             let sgkPrimGunu = new Date(year, month + 1, 0).getDate() - ((statusCounts.R || 0) + (statusCounts.Üİ || 0));
 
             tableHTML += `<tr class="personel-row-status"><td class="col-personel" rowspan="2">${personel.ad}</td><td class="col-unvan" rowspan="2">${personel.unvan}</td><td class="col-date vertical-divider" rowspan="2">${formatDateDDMMYYYY(personel.ise_giris)}<br>${ayrilisTarihiGoster}</td>`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayData = personelPuantajData[dateString] || { code: '', hours: 0 };
+                const dayData = personel.dailyData[dateString] || { code: '', hours: 0 };
                 const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
                 tableHTML += `<td class="status-cell status-${dayData.code} ${dividerClass}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || ''}</td>`;
             }
@@ -3995,7 +4010,7 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
             tableHTML += `<tr class="personel-row-hours horizontal-divider">`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayData = personelPuantajData[dateString] || { code: '', hours: 0 };
+                const dayData = personel.dailyData[dateString] || { code: '', hours: 0 };
                 const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
                 // EKLENECEK YENİ SATIR
                 const hourContent = (dayData?.code === 'N' || dayData?.code === 'RTÇ' || dayData?.code === 'Y' || dayData?.code === 'K') && dayData?.hours > 0 ? dayData.hours : '';
@@ -4011,7 +4026,6 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     attachCellListeners();
     initializeCustomSelects();
 }
-
 // =================================================================
 // EKLEME İŞLEMİ BURADA BİTİYOR
 // =================================================================
@@ -4026,8 +4040,6 @@ let isPuantajLocked = false;
 let currentPuantajDocRef = null;
 // =================== 1. ADIM: EKSİK FONKSİYONLARI BURAYA EKLEYİN ===================
 
-// MEVCUT HATALI FONKSİYONU SİLİP, YERİNE BU DOĞRU VERSİYONU YAPIŞTIRIN
-
 async function loadPuantajDataForCurrentMonth() {
     const year = document.getElementById('input-year').value;
     const month = document.getElementById('select-month').value;
@@ -4041,13 +4053,13 @@ async function loadPuantajDataForCurrentMonth() {
        if (docSnap.exists()) {
             const data = docSnap.data();
             puantajData = data.puantajData || {};
-            overtimeReasons = data.overtimeReasons || {}; 
+            overtimeReasons = data.overtimeReasons || {};
             missingDayCodes = data.missingDayCodes || {}; // Eksik gün kodlarını yükle
             isPuantajLocked = data.isLocked || false;
             showToast('Kaydedilmiş puantaj verisi yüklendi.', 'success');
         } else {
             puantajData = {};
-            overtimeReasons = {}; 
+            overtimeReasons = {};
             missingDayCodes = {}; // Puantaj yoksa kodları da sıfırla
             isPuantajLocked = false;
             showToast('Bu ay için kaydedilmiş bir puantaj yok.', 'info');
@@ -4055,52 +4067,47 @@ async function loadPuantajDataForCurrentMonth() {
         updateLockStatusUI();
 
         // === BAŞLANGIÇ: DOĞRU FİLTRELEME MANTIĞI ===
-    const ayinIlkGunu = new Date(Date.UTC(year, month, 1));
-    const ayinSonGunu = new Date(Date.UTC(year, month + 1, 0));
+        const ayinIlkGunu = new Date(Date.UTC(year, month, 1));
+        const ayinSonGunu = new Date(Date.UTC(year, month + 1, 0));
 
         const aktifPersonelList = puantajPersonelList.filter(personel => {
-        const girisStr = personel.ise_giris;
-        const ayrilisStr = personel.isten_ayrilis;
+            const girisStr = personel.ise_giris;
+            const ayrilisStr = personel.isten_ayrilis;
 
-        // İşe giriş tarihi yoksa veya geçersizse personeli gösterme.
-        if (!girisStr) return false;
-        const girisDate = new Date(girisStr + 'T00:00:00Z');
-        if (isNaN(girisDate.getTime())) return false;
+            // İşe giriş tarihi yoksa veya geçersizse personeli gösterme.
+            if (!girisStr) return false;
+            const girisDate = new Date(girisStr + 'T00:00:00Z');
+            if (isNaN(girisDate.getTime())) return false;
 
-        // Kural 1: İşe giriş tarihi, baktığımız ayın son gününden sonra olamaz.
-        const iseBaslamisMi = girisDate <= ayinSonGunu;
+            // Kural 1: İşe giriş tarihi, baktığımız ayın son gününden sonra olamaz.
+            const iseBaslamisMi = girisDate <= ayinSonGunu;
 
-        // Kural 2: İşten ayrılış tarihi, baktığımız ayın ilk gününden önce olamaz.
-        let istenAyrilmamisMi = true; // Varsayılan olarak true
-        if (ayrilisStr && ayrilisStr.trim() !== '' && ayrilisStr.trim() !== '---') {
-            const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
-            if (!isNaN(ayrilisDate.getTime())) {
-                istenAyrilmamisMi = ayrilisDate >= ayinIlkGunu;
+            // Kural 2: İşten ayrılış tarihi, baktığımız ayın ilk gününden önce olamaz.
+            let istenAyrilmamisMi = true; // Varsayılan olarak true
+            if (ayrilisStr && ayrilisStr.trim() !== '' && ayrilisStr.trim() !== '---') {
+                const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
+                if (!isNaN(ayrilisDate.getTime())) {
+                    istenAyrilmamisMi = ayrilisDate >= ayinIlkGunu;
+                }
             }
-        }
 
-        // Personel, ancak her iki kuralı da sağlıyorsa o ayın listesinde yer alabilir.
-        return iseBaslamisMi && istenAyrilmamisMi;
-    });
-    // === BİTİŞ: DOĞRU FİLTRELEME MANTIĞI ===
+            // Personel, ancak her iki kuralı da sağlıyorsa o ayın listesinde yer alabilir.
+            return iseBaslamisMi && istenAyrilmamisMi;
+        });
+        // === BİTİŞ: DOĞRU FİLTRELEME MANTIĞI ===
 
-        // =======================================================
-        // FİLTRELEME MANTIĞI BURADA UYGULANIYOR
-        // =======================================================
         const selectedPersonelId = document.getElementById('personel-filter-select').value;
-        let displayList = aktifPersonelList; // Varsayılan olarak tüm aktif personel listesi atanıyor
+        let displayList = aktifPersonelList;
 
         if (selectedPersonelId && selectedPersonelId !== 'all') {
-            // Eğer belirli bir personel seçilmişse, 'displayList' filtrelenmiş sonuçla güncelleniyor
             displayList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
         }
-        // =======================================================
 
         const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
-        
-        // DEĞİŞİKLİK BURADA: Tablo, filtrelenmiş olan 'displayList' ile çiziliyor.
+
+        // Tabloyu filtrelenmiş 'displayList' ile çiz
         renderPuantajTable(nobetVerisi, displayList, baslikMetni);
-        
+
         renderGrandTotals(nobetVerisi, displayList);
         renderLegend();
         attachCellListeners();
@@ -4372,7 +4379,8 @@ async function fetchAndProcessSchedules() {
         return {};
     }
 }
-    async function generateInitialPuantaj() {
+    // BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
+async function generateInitialPuantaj() {
     if (isPuantajLocked) {
         showToast('Puantaj kilitli...', 'error');
         return;
@@ -4432,7 +4440,11 @@ async function fetchAndProcessSchedules() {
         puantajData = {};
 
         aktifPersonelList.forEach(personel => {
-            puantajData[personel.id] = {};
+            puantajData[personel.id] = {
+                // YENİ EKLEME: Personelin o anki sözleşme türünü puantaj verisine ekle
+                sozlesmeTuru: personel.sozlesme_turu,
+                dailyData: {}
+            };
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateUTC = new Date(Date.UTC(year, month, day));
@@ -4441,7 +4453,7 @@ async function fetchAndProcessSchedules() {
                 if (personel.isten_ayrilis) {
                     const ayrilisTarihiUTC = new Date(personel.isten_ayrilis + 'T00:00:00Z');
                     if (dateUTC > ayrilisTarihiUTC) {
-                        puantajData[personel.id][dateString] = { code: '', hours: 0, notes: '' };
+                        puantajData[personel.id]['dailyData'][dateString] = { code: '', hours: 0, notes: '' };
                         continue;
                     }
                 }
@@ -4452,6 +4464,8 @@ async function fetchAndProcessSchedules() {
                     code = leaveCodeForDay;
                 }
                 if (code === '') {
+                    // DEĞİŞİKLİK: Buradaki "personel.sozlesme_turu" kontrolü, artık personel objesi üzerinden yapılır
+                    // ve bu bilgi zaten puantajData'nın içine kaydedilmiştir.
                     if (personel.sozlesme_turu === 'Kısmi Süreli') {
                         if (isResmiTatil(dateUTC)) { code = 'E'; } 
                         else {
@@ -4480,7 +4494,7 @@ async function fetchAndProcessSchedules() {
                          hours = 0;
                     }
                 }
-                puantajData[personel.id][dateString] = { code, hours, notes: '' };
+                puantajData[personel.id]['dailyData'][dateString] = { code, hours, notes: '' };
             }
         });
 
@@ -4601,67 +4615,70 @@ async function generateIndividualPuantaj() {
     }
 }
 function calculateMonthlyHours(personelId) {
-    const personel = puantajPersonelList.find(p => p.id == personelId);
-    const personelData = puantajData[personelId];
-    if (!personel || !personelData) return { genelToplam: 0, ekDers: 0 };
+    // Puantaj verisinin içinde saklanan bilgiyi al
+    const personelPuantajVerisi = puantajData[personelId];
+    if (!personelPuantajVerisi || !personelPuantajVerisi.dailyData) {
+        return { genelToplam: 0, ekDers: 0 };
+    }
+
+    // Puantaj verisi içindeki sözleşme türü ve unvan bilgisini kullan
+    const sozlesmeTuru = personelPuantajVerisi.sozlesmeTuru || '';
+    const unvan = personelPuantajVerisi.unvan || '';
 
     let genelToplam = 0;
     let ekDers = 0;
-    const unvan = personel.unvan || '';
+
+    const dailyData = personelPuantajVerisi.dailyData;
 
     // Yönetici personel ve Rehber Öğretmen için özel durumlar
-    // *** YENİ KONTROL: "Rehberlik" kelimesi de eklendi ***
     if (unvan.includes('Okul Müdürü') || unvan.includes('Rehber Öğretmen') || unvan.includes('Rehberlik')) {
         // Adım 1: Gerçek çalıştığı saatleri toplayarak 'genelToplam'ı hesapla.
-        if (personel.sozlesme_turu === 'Belirsiz Süreli') {
-            Object.values(personelData).forEach(dayData => {
+        if (sozlesmeTuru === 'Belirsiz Süreli') {
+            Object.values(dailyData).forEach(dayData => {
                 if (dayData.code === 'N') {
                     genelToplam += (dayData.hours || 0);
                 }
             });
         } else { // Diğer sözleşme türleri için
-            Object.values(personelData).forEach(dayData => {
+            Object.values(dailyData).forEach(dayData => {
                 if (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') {
                     genelToplam += (dayData.hours || 0);
                 }
             });
         }
-
         // Adım 2: Özel ek ders kuralını uygula (günde 4 saat).
-        Object.keys(personelData).forEach(dateString => {
-            const dayData = personelData[dateString];
+        Object.keys(dailyData).forEach(dateString => {
+            const dayData = dailyData[dateString];
             if (dayData.code === 'N' || dayData.code === 'RTÇ') {
                 ekDers += 4;
             }
         });
-        
-        // Adım 3: Doğru hesaplanmış değerleri döndür.
         return { genelToplam, ekDers };
     }
 
-    if (unvan.includes('Müdür Yardımcısı')) { 
-        const yardimciSchedule = [0, 4, 4, 4, 3, 3, 0]; 
-        Object.keys(personelData).forEach(dateString => { 
-            const dayData = personelData[dateString]; 
-            if (dayData.code === 'N' || dayData.code === 'RTÇ') { 
-                const date = new Date(dateString + 'T00:00:00'); 
-                const dayOfWeek = date.getDay(); 
-                ekDers += yardimciSchedule[dayOfWeek]; 
-            } 
-        }); 
-        genelToplam = ekDers; 
-        return { genelToplam, ekDers }; 
+    if (unvan.includes('Müdür Yardımcısı')) {
+        const yardimciSchedule = [0, 4, 4, 4, 3, 3, 0];
+        Object.keys(dailyData).forEach(dateString => {
+            const dayData = dailyData[dateString];
+            if (dayData.code === 'N' || dayData.code === 'RTÇ') {
+                const date = new Date(dateString + 'T00:00:00');
+                const dayOfWeek = date.getDay();
+                ekDers += yardimciSchedule[dayOfWeek];
+            }
+        });
+        genelToplam = ekDers;
+        return { genelToplam, ekDers };
     }
 
     // Diğer tüm personeller için 'genelToplam' hesaplaması
-    if (personel.sozlesme_turu === 'Belirsiz Süreli') {
-        Object.values(personelData).forEach(dayData => {
+    if (sozlesmeTuru === 'Belirsiz Süreli') {
+        Object.values(dailyData).forEach(dayData => {
             if (dayData.code === 'N') {
                 genelToplam += (dayData.hours || 0);
             }
         });
     } else {
-        Object.values(personelData).forEach(dayData => {
+        Object.values(dailyData).forEach(dayData => {
             if (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') {
                 genelToplam += (dayData.hours || 0);
             }
@@ -4669,22 +4686,26 @@ function calculateMonthlyHours(personelId) {
     }
 
     // Diğer tüm personeller için 'ekDers' hesaplaması
-    if (personel.sozlesme_turu === 'Kısmi Süreli') {
+    const neviAdi = personelPuantajVerisi.neviAdi || '';
+    if (sozlesmeTuru === 'Kısmi Süreli') {
         ekDers = 0;
-    }
-    else if (!personel.neviAdi.includes('Eğitim Personeli')) {
+    } else if (!neviAdi.includes('Eğitim Personeli')) {
         ekDers = genelToplam;
-    }
-    else {
-        const maasKarsiligiHaftalik = parseInt(personel.maasKarsiligi) || 0;
+    } else {
+        const maasKarsiligiHaftalik = parseInt(personelPuantajVerisi.maasKarsiligi) || 0;
         if (maasKarsiligiHaftalik === 0) {
             ekDers = genelToplam;
         } else {
             const workWeeks = new Set();
-            const getWeek = (d) => { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); };
+            const getWeek = (d) => {
+                d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+                const yearStart = new Date(Date.UTC(d.getUTCFull-Year(), 0, 1));
+                return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            };
 
-            Object.keys(personelData).forEach(dateString => {
-                if (personelData[dateString].code === 'N' || personelData[dateString].code === 'RTÇ' || personelData[dateString].code === 'Y' || personelData[dateString].code === 'K') {
+            Object.keys(dailyData).forEach(dateString => {
+                if (dailyData[dateString].code === 'N' || dailyData[dateString].code === 'RTÇ' || dailyData[dateString].code === 'Y' || dailyData[dateString].code === 'K') {
                     workWeeks.add(getWeek(new Date(dateString + 'T00:00:00')));
                 }
             });
@@ -5088,8 +5109,19 @@ async function saveModalChanges() {
     const newHours = parseFloat(document.getElementById('modal-hours').value) || 0;
     const newNotes = document.getElementById('modal-notes').value;
 
-    if (puantajData[personelId] && puantajData[personelId][date]) {
-        puantajData[personelId][date] = {
+    // Puantaj verisi içindeki dailyData'yı güncelleyin
+    if (puantajData[personelId] && puantajData[personelId].dailyData && puantajData[personelId].dailyData[date]) {
+        puantajData[personelId].dailyData[date] = {
+            code: newCode,
+            hours: newHours,
+            notes: newNotes
+        };
+    } else {
+        // Eğer dailyData veya tarih yoksa oluşturun
+        if (!puantajData[personelId].dailyData) {
+            puantajData[personelId].dailyData = {};
+        }
+        puantajData[personelId].dailyData[date] = {
             code: newCode,
             hours: newHours,
             notes: newNotes
@@ -5100,18 +5132,13 @@ async function saveModalChanges() {
     
     // Değişiklikleri veritabanına kalıcı olarak kaydetmek için ana kaydetme fonksiyonunu çağırıyoruz.
     await savePuantajData(); // <-- YENİ EKLENEN SATIR
-
+    
     // Tabloyu ve toplamları yeniden çizmek için ilgili fonksiyonları tekrar çağır.
-    // Not: savePuantajData zaten başarılı bir toast mesajı gösterdiği için aşağıdaki satırı kaldırabilir veya değiştirebilirsiniz.
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
     const nobetVerisi = await fetchAndCalculateNobetData(year, month);
     
-    // Bu kısım aslında savePuantajData'dan sonra tekrar tabloyu en güncel haliyle çizmek için
-    // loadPuantajDataForCurrentMonth fonksiyonunu çağırmak daha doğru olabilir ama mevcut yapı da iş görür.
-    await loadPuantajDataForCurrentMonth(); // Tabloyu veritabanından gelen son haliyle yeniden yüklemesi daha garanti.
-    
-    // showToast('Güncelleme başarıyla veritabanına kaydedildi.', 'success'); // İsteğe bağlı olarak bu mesajı kullanabilirsiniz.
+    await loadPuantajDataForCurrentMonth();
 }
 // =================== 3. ADIM BİTİŞİ ===================
 function printPuantaj() {
