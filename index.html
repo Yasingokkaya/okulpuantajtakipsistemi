@@ -1589,6 +1589,50 @@ td[style*="background-color"] .input-wrapper {
 </template>
     
     <script type="module">
+const sgkAyrilisKodlari = [
+    { kod: "01", aciklama: "Deneme süreli iş sözleşmesinin işverence feshi" },
+    { kod: "02", aciklama: "Deneme süreli iş sözleşmesinin işçi tarafından feshi" },
+    { kod: "03", aciklama: "Belirsiz süreli iş sözleşmesinin işçi tarafından feshi (istifa)" },
+    { kod: "04", aciklama: "Belirsiz süreli iş sözleşmesinin işveren tarafından haklı sebep bildirilmeden feshi" },
+    { kod: "05", aciklama: "Belirli süreli iş sözleşmesinin sona ermesi" },
+    { kod: "08", aciklama: "Emeklilik (yaşlılık) veya toptan ödeme nedeniyle" },
+    { kod: "09", aciklama: "Malulen emeklilik nedeniyle" },
+    { kod: "10", aciklama: "Ölüm" },
+    { kod: "11", aciklama: "İş kazası sonucu ölüm" },
+    { kod: "12", aciklama: "Askerlik" },
+    { kod: "13", aciklama: "Kadın işçinin evlenmesi" },
+    { kod: "14", aciklama: "Emeklilik için yaş dışında diğer şartların tamamlanması" },
+    { kod: "15", aciklama: "Toplu işçi çıkarma" },
+    { kod: "16", aciklama: "Sözleşme sona ermeden sigortalının aynı işverene ait diğer işyerine nakli" },
+    { kod: "17", aciklama: "İşyerinin kapanması" },
+    { kod: "18", aciklama: "İşin sona ermesi" },
+    { kod: "19", aciklama: "Mevsim bitimi" },
+    { kod: "20", aciklama: "Kampanya bitimi" },
+    { kod: "21", aciklama: "Statü değişikliği" },
+    { kod: "22", aciklama: "Diğer nedenler" },
+    { kod: "23", aciklama: "İşçi tarafından zorunlu nedenle fesih" },
+    { kod: "24", aciklama: "İşçi tarafından sağlık nedeniyle fesih" },
+    { kod: "25", aciklama: "İşçi tarafından işverenin ahlak ve iyiniyet kurallarına aykırı davranışı nedeni ile fesih" },
+    { kod: "26", aciklama: "Disiplin kurulu kararı ile fesih" },
+    { kod: "27", aciklama: "İşveren tarafından zorunlu nedenlerle ve tutukluluk nedeniyle fesih" },
+    { kod: "28", aciklama: "İşveren tarafından sağlık nedeni ile fesih" },
+    { kod: "29", aciklama: "İşveren tarafından işçinin ahlak ve iyiniyet kurallarına aykırı davranışı nedeni ile fesih" },
+    { kod: "30", aciklama: "Vize süresinin bitimi" },
+    { kod: "31", aciklama: "Borçlar Kanunu, Sendikalar Kanunu, Grev ve Lokavt Kanunu kapsamında kendi istek ve kusuru dışında fesih" },
+    { kod: "32", aciklama: "4046 sayılı Kanunun 21. maddesine göre özelleştirme nedeniyle fesih" },
+    { kod: "33", aciklama: "Gazeteci tarafından sözleşmenin feshi" },
+    { kod: "34", aciklama: "İşyerinin devri, işin veya işyerinin niteliğinin değişmesi nedeniyle fesih" },
+    { kod: "36", aciklama: "OHAL/KHK" },
+    { kod: "42", aciklama: "İş sözleşmesi yapıldığı sırada bu sözleşmenin esaslı noktalarından biri için gerekli vasıflar veya şartlar kendisinde bulunmadığı halde bunların kendisinde bulunduğunu ileri sürerek, yahut gerçeğe uygun olmayan bilgiler veya sözler söyleyerek işçinin işvereni yanıltması (4857 sayılı Kanun Madde 25-II-a)" },
+    { kod: "43", aciklama: "İşçinin, işveren yahut bunların aile üyelerinden birinin şeref ve namusuna dokunacak sözler sarfetmesi veya davranışlarda bulunması, yahut işveren hakkında şeref ve haysiyet kırıcı asılsız ihbar ve isnadlarda bulunması (4857 sayılı Kanun Madde 25-II-b)" },
+    { kod: "44", aciklama: "İşçinin işverenin başka bir işçisine cinsel tacizde bulunması (4857 sayılı Kanun Madde 25-II-c)" },
+    { kod: "45", aciklama: "İşçinin işverene yahut onun ailesi üyelerinden birine yahut işverenin başka işçisine sataşması, işyerine sarhoş yahut uyuşturucu madde almış olarak gelmesi ya da işyerinde bu maddeleri kullanması (4857 sayılı Kanun Madde 25-II-d)" },
+    { kod: "46", aciklama: "İşçinin, işverenin güvenini kötüye kullanmak, hırsızlık yapmak, işverenin meslek sırlarını ortaya atmak gibi doğruluk ve bağlılığa uymayan davranışlarda bulunması (4857 sayılı Kanun Madde 25-II-e)" },
+    { kod: "47", aciklama: "İşçinin, işyerinde, yedi günden fazla hapisle cezalandırılan ve cezası ertelenmeyen bir suç işlemesi (4857 sayılı Kanun Madde 25-II-f)" },
+    { kod: "48", aciklama: "İşçinin işverenden izin almaksızın veya haklı bir sebebe dayanmaksızın ardı ardına iki işgünü veya bir ay içinde iki defa herhangi bir tatil gününden sonraki işgünü, yahut bir ayda üç işgünü işine devam etmemesi (4857 sayılı Kanun Madde 25-II-g)" },
+    { kod: "49", aciklama: "İşçinin yapmakla ödevli bulunduğu görevleri kendisine hatırlatıldığı halde yapmamakta ısrar etmesi (4857 sayılı Kanun Madde 25-II-h)" },
+    { kod: "50", aciklama: "İşçinin kendi isteği veya savsaması yüzünden işin güvenliğini tehlikeye düşürmesi, işyerinin malı olan veya malı olmayıp da eli altında bulunan makineleri, tesisatı veya başka eşya ve maddeleri otuz günlük ücretinin tutarıyla ödeyemeyecek derecede hasara ve kayba uğratması (4857 sayılı Kanun Madde 25-II-ı)" }
+];
  // =================================================================
 // 1. ADIM: BU KOD BLOĞUNU OLDUĞU GİBİ EKLEYİN
 // =================================================================
@@ -2127,7 +2171,7 @@ async function fetchStaff() {
         listContainer.querySelectorAll('[data-action="create-ayrilis-bildirge"]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const personelId = e.target.dataset.id;
-                generateIstenAyrilisBildirgesi(personelId);
+                generateModernIstenAyrilisBildirgesi(personelId);
             });
         });
 
@@ -2264,97 +2308,88 @@ async function fetchAndConvertImageToBase64(url) {
         reader.onerror = reject;
         reader.readAsDataURL(blob);
     });
-}
-async function generateIstenAyrilisBildirgesi(personelId) {
+} 
+async function generateModernIstenAyrilisBildirgesi(personelId) {
     if (!personelId) {
         showToast('Personel seçimi geçersiz.', 'error');
         return;
     }
 
     try {
-        const docSnap = await getDoc(doc(db, 'personel', personelId));
-        if (!docSnap.exists()) {
+        const [personelDoc, gorevSnap] = await Promise.all([
+            getDoc(doc(db, 'personel', personelId)),
+            getSettings('ayarlar_gorevler')
+        ]);
+
+        if (!personelDoc.exists()) {
             showToast('Personel verisi bulunamadı.', 'error');
             return;
         }
 
-        const personel = docSnap.data();
-        const gorevSnap = await getSettings('ayarlar_gorevler');
+        const personel = personelDoc.data();
         const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
-        const gorevAdi = gorevMap.get(personel.gorevi_bransi) || 'Bilinmiyor';
-
-        const ayrilisTarihi = formatDateDDMMYYYY(personel.isten_ayrilis);
-        const ayrilisYil = new Date(personel.isten_ayrilis).getFullYear();
+        const adSoyadParts = (personel.ad_soyad || '').split(' ');
+        const adi = adSoyadParts.slice(0, -1).join(' ');
+        const soyadi = adSoyadParts.slice(-1).join(' ');
         
-        const ayrilisTarihDizi = personel.isten_ayrilis.split('-');
-        const ayrilisGun = ayrilisTarihDizi[2];
-        const ayrilisAy = ayrilisTarihDizi[1];
-        const ayrilisYilSonIki = ayrilisTarihDizi[0].slice(-2);
+        const ayrilisTarihi = new Date(personel.isten_ayrilis + 'T00:00:00Z');
+        const year = ayrilisTarihi.getUTCFullYear();
+        const month = ayrilisTarihi.getUTCMonth();
+        const puantajDocId = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const puantajDocSnap = await getDoc(doc(db, "kayitli_puantajlar", puantajDocId));
+        const personelPuantaj = puantajDocSnap.exists() ? puantajDocSnap.data().puantajData[personelId] : null;
+
+        let calendarCells = '';
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let i = 1; i <= 31; i++) {
+            let content = '&nbsp;';
+            if (i <= daysInMonth) {
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                content = personelPuantaj?.dailyData?.[dateString]?.code || '';
+            }
+            calendarCells += `<td class="day-input">${content}</td>`;
+        }
+        
+        const ayrilisKodlariOptions = sgkAyrilisKodlari.map(k => `<option value="${k.kod}">${k.kod} - ${k.aciklama}</option>`).join('');
 
         const bildirgeHTML = `
-            <!DOCTYPE html>
-            <html lang="tr">
-            <head>
-                <meta charset="UTF-8">
-                <title>İşten Ayrılış Bildirgesi - ${personel.ad_soyad}</title>
-                <style>
-                    body { font-family: 'Times New Roman', serif; font-size: 10pt; margin: 0; }
-                    .form-container { width: 100%; height: 100%; background-image: url('data:image/png;base64,${await fetchAndConvertImageToBase64('EK-4-ayrilis.png')}'); background-size: contain; background-repeat: no-repeat; position: relative; }
-                    .field { position: absolute; font-size: 10pt; white-space: nowrap; overflow: hidden; }
-                    .checkbox-field { position: absolute; width: 10px; height: 10px; }
-                    @media print {
-                        @page { size: A4; margin: 0; }
-                        body { margin: 0; }
-                        .no-print { display: none !important; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="form-container">
-                    <div class="field" style="top: 271px; left: 147px;">${personel.tc_kimlik_no || ''}</div>
-                    <div class="field" style="top: 310px; left: 147px;">${personel.ad_soyad.split(' ')[0] || ''}</div>
-                    <div class="field" style="top: 326px; left: 147px;">${personel.ad_soyad.split(' ')[1] || ''}</div>
-                    <div class="field" style="top: 343px; left: 147px;">${personel.baba_adi || ''}</div>
-                    <div class="field" style="top: 359px; left: 147px;">${personel.anne_adi || ''}</div>
-                    <div class="field" style="top: 375px; left: 147px;">${personel.dogum_yeri || ''}</div>
-                    <div class="field" style="top: 391px; left: 147px;">${formatDateDDMMYYYY(personel.dogum_tarihi) || ''}</div>
-                    <div class="checkbox-field" style="top: 408px; left: ${personel.cinsiyet === 'erkek' ? '148px' : '182px'};">X</div>
-                    <div class="checkbox-field" style="top: 424px; left: ${personel.es_durumu === 'evli' ? '148px' : '182px'};">X</div>
-                    <div class="field" style="top: 440px; left: 147px;">${personel.medeni_hali || ''}</div>
-                    <div class="field" style="top: 456px; left: 147px;">${personel.il || ''}</div>
-                    <div class="field" style="top: 472px; left: 147px;">${personel.ilce || ''}</div>
-
-                    <div class="field" style="top: 556px; left: 476px;">${ayrilisYil}</div>
-                    <div class="field" style="top: 605px; left: 456px;">${gorevAdi}</div>
-                    
-                    <div class="field" style="top: 673px; left: 411px;">${personel.ad_soyad || ''}</div>
-                    <div class="field" style="top: 689px; left: 708px;">${ayrilisGun} / ${ayrilisAy} / ${ayrilisYilSonIki}</div>
-
-                    <div class="field" style="top: 792px; left: 135px;">ÖZEL İSABET ORTAOKULU</div>
-                    <div class="field" style="top: 808px; left: 135px;">${personel.sgk_no || ''}</div>
-                    <div class="field" style="top: 824px; left: 135px;">Hanımçeşme Mah. Gündüz Sokak No:13 TAVŞANLI/KÜTAHYA</div>
-                    
-                    <div class="field" style="top: 887px; left: 600px;">${ayrilisGun} / ${ayrilisAy} / ${ayrilisYilSonIki}</div>
-                    <div class="field" style="top: 900px; left: 590px;">${personel.ad_soyad || ''}</div>
-                </div>
-            </body>
-            </html>
+            <!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>İşten Ayrılış Bildirgesi - ${personel.ad_soyad}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+            <style>:root{--primary-color:#3a7bd5;--secondary-color:#333;--border-color:#dde6f1;--background-color:#f7f9fc;--form-background:#ffffff;--label-color:#555;--section-title-bg:#edf4fb;}body{font-family:'Lato',sans-serif;background-color:var(--background-color);color:var(--secondary-color);margin:0;padding:30px;font-size:14px;}@media print{@page{size:A4;margin:0;}body{padding:0;background-color:#fff;}.form-container{box-shadow:none;border:none;}}.form-container{max-width:950px;margin:0 auto;background-color:var(--form-background);border-radius:12px;box-shadow:0 6px 25px rgba(0,0,0,0.07);overflow:hidden;border:1px solid var(--border-color);}.form-header{background:linear-gradient(to right,#3a7bd5,#00d2ff);padding:25px;text-align:center;color:white;}.form-header h1{margin:0;font-size:26px;}.form-header p{margin:5px 0 0;opacity:0.9;}.form-body{padding:30px;}table{width:100%;border-collapse:collapse;margin-top:15px;}td,th{padding:10px 12px;border:1px solid var(--border-color);vertical-align:middle;}.section-title{background-color:var(--section-title-bg);color:var(--primary-color);font-size:16px;font-weight:700;text-align:center;}.label-text{font-weight:700;color:var(--label-color);display:inline-block;margin-bottom:5px;}input[type="text"],input[type="date"],select{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;transition:all 0.3s ease;font-family:'Lato',sans-serif;font-size:14px;}input[type="text"]:focus,input[type="date"]:focus,select:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 8px rgba(58,123,213,0.2);}.radio-group label,.checkbox-group label{font-weight:400;}.calendar-table{table-layout:fixed;}.calendar-table td{text-align:center;}.calendar-table .day-input{height:25px;border-bottom:1px solid var(--border-color);}.signature-area{text-align:center;padding:20px 10px 10px 10px;}.signature-box{border-top:1px solid var(--secondary-color);margin-top:50px;padding-top:8px;font-weight:700;font-size:13px;}.sub-table td{border:none;padding:5px;}</style></head>
+            <body><div class="form-container"><div class="form-header"><h1>SİGORTALI İŞTEN AYRILIŞ BİLDİRGESİ</h1><p>(4/1-a-b kapsamındaki sigortalılar için)</p></div><div class="form-body">
+            <table><tr><td colspan="2" class="section-title">A- SİGORTALININ KİMLİK BİLGİLERİ</td></tr><tr><td style="width:50%;vertical-align:top;"><table class="sub-table">
+            <tr><td><label>T.C. Kimlik Numarası</label><input type="text" value="${personel.tc_kimlik_no || ''}"></td></tr>
+            <tr><td><label>Adı</label><input type="text" value="${adi}"></td></tr>
+            <tr><td><label>Soyadı</label><input type="text" value="${soyadi}"></td></tr>
+            <tr><td><label>Doğum Tarihi</label><input type="text" value="${formatDateDDMMYYYY(personel.dogum_tarihi)}"></td></tr>
+            </table></td><td style="width:50%;vertical-align:top;"><table class="sub-table">
+            <tr><td><label>SGK Sicil Numarası</label><input type="text" value="${personel.sgk_no || ''}"></td></tr>
+            <tr><td><label>Nüfusa Kayıtlı Olduğu İl/İlçe</label><input type="text" value="${(personel.il || '') + ' / ' + (personel.ilce || '')}"></td></tr>
+            <tr><td><label>Adresi</label><input type="text" value="${personel.adres || ''}"></td></tr>
+            </table></td></tr></table>
+            <table><tr><td colspan="2" class="section-title">B- HİZMET BİLGİLERİ</td></tr>
+            <tr><td style="width:50%"><label>İşe Başlama Tarihi</label><input type="text" value="${formatDateDDMMYYYY(personel.ise_giris)}"></td><td style="width:50%"><label>İşten Ayrılış Tarihi</label><input type="text" value="${formatDateDDMMYYYY(personel.isten_ayrilis)}"></td></tr>
+            <tr><td><label>Görevi (Meslek Adı)</label><input type="text" value="${gorevMap.get(personel.gorevi_bransi) || ''}"></td><td><label>16- İşten Ayrılış Nedeni (SGK Kodu)</label><select>${ayrilisKodlariOptions}</select></td></tr>
+            </table>
+            <table><tr><td colspan="31" class="section-title">AYRILDIĞI AY İÇİNDEKİ PUANTAJ DURUMU (${month+1}. Ay / ${year})</td></tr><tr class="calendar-table"><script>for(let i=1;i<=31;i++){document.write('<td><b>'+i+'</b></td>');}</script></tr><tr class="calendar-table">${calendarCells}</tr></table>
+            <table><tr><td colspan="2" class="section-title">C- İŞYERİ BİLGİLERİ</td></tr>
+            <tr><td style="width:30%;"><label>İşyeri Ünvanı</label></td><td><input type="text" value="ÖZEL İSABET ORTAOKULU"></td></tr>
+            <tr><td><label>İşyeri SGK Sicil No</label></td><td><input type="text" value=""></td></tr>
+            <tr><td><label>İşyerinin Adresi</label></td><td><input type="text" value="Hanımçeşme Mah. Gündüz Sokak No:13 TAVŞANLI/KÜTAHYA"></td></tr></table>
+            <table><tr><td colspan="3" class="section-title">D- ONAY VE İMZALAR</td></tr><tr>
+            <td class="signature-area"><p style="font-size:13px;">Yukarıdaki bilgilerin doğruluğunu beyan ederim.</p><div class="signature-box">Personel Adı Soyadı<br>${personel.ad_soyad}</div></td>
+            <td class="signature-area"><p style="font-size:13px;">Onaylayan</p><div class="signature-box">Muhasebe Personeli<br>Adı, Soyadı ve İmzası</div></td>
+            <td class="signature-area"><p style="font-size:13px;">Onaylayan</p><div class="signature-box">Okul Müdürü / Yönetici<br>Adı, Soyadı ve İmzası</div></td>
+            </tr></table></div></div></body></html>
         `;
 
-        const newWindow = window.open('', '_blank', 'width=800,height=600');
-        if (newWindow) {
-            newWindow.document.write(bildirgeHTML);
-            newWindow.document.close();
-            newWindow.onload = () => {
-                newWindow.print();
-            };
-        } else {
-            showToast('Tarayıcı penceresi engellendi. Lütfen pop-up\'lara izin verin.', 'error');
-        }
+        const win = window.open('', '_blank');
+        win.document.write(bildirgeHTML);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
 
     } catch (error) {
-        console.error("Ayrılış bildirgesi oluşturulurken hata:", error);
-        showToast('Ayrılış bildirgesi oluşturulurken bir hata oluştu.', 'error');
+        console.error("Modern ayrılış bildirgesi oluşturulurken hata:", error);
+        showToast('Bildirge oluşturulurken bir hata oluştu.', 'error');
     }
 }
         async function loadPersonelForm(staffId = null, staffData = null) {
