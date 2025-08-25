@@ -2034,7 +2034,7 @@ async function loadZamanCizelgesiAyarlari() {
 
 
           
- // BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
+// BU KOD BLOGUNU MEVCUT fetchStaff FONKSIYONUNUZ İLE KIYASLAYIN
 async function fetchStaff() {
     const listContainer = document.querySelector('#staff-list .panel-body');
     listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
@@ -5540,38 +5540,29 @@ document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
 
             document.querySelectorAll('.accordion-trigger').forEach(acc => acc.addEventListener('click', e => { e.preventDefault(); acc.parentElement.classList.toggle('open'); }));
 
-            personelForm.addEventListener('submit', async function(e) {
+            // ======================= YENİ VE DÜZELTİLMİŞ KOD BLOĞU =======================
+personelForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     const editingId = e.target.dataset.editingId;
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
-    // Kısmi süreli çalışma verilerini güvenli bir şekilde işle
     if (data.sozlesme_turu === 'Kısmi Süreli') {
         data.kismi_zamanli_calisma = {};
-        const gunler = formData.getAll('kismi_gunler'); // Seçili tüm günler
+        const gunler = formData.getAll('kismi_gunler');
         const gunMap = {
-            'Pazartesi': 'pzts_saat',
-            'Salı': 'sali_saat',
-            'Çarşamba': 'crs_saat',
-            'Perşembe': 'prs_saat',
-            'Cuma': 'cuma_saat',
-            'Cumartesi': 'cmrts_saat',
-            'Pazar': 'pazar_saat'
+            'Pazartesi': 'pzts_saat', 'Salı': 'sali_saat', 'Çarşamba': 'crs_saat',
+            'Perşembe': 'prs_saat', 'Cuma': 'cuma_saat', 'Cumartesi': 'cmrts_saat', 'Pazar': 'pazar_saat'
         };
-
         gunler.forEach(gunAdi => {
             const saatInputAdi = gunMap[gunAdi];
-            // Eğer gün haritada varsa ve ilgili saat input'u doluysa veriyi işle
             if (saatInputAdi && data[saatInputAdi]) {
                 const saatDegeri = parseInt(data[saatInputAdi], 10);
-                if (!isNaN(saatDegeri)) { // Sayısal bir değer olduğundan emin ol
+                if (!isNaN(saatDegeri)) {
                     data.kismi_zamanli_calisma[gunAdi] = saatDegeri;
                 }
             }
         });
-
-        // Ana 'data' objesinden artık gereksiz olan geçici anahtarları temizle
         delete data.kismi_gunler;
         Object.values(gunMap).forEach(inputAdi => delete data[inputAdi]);
     }
@@ -5585,15 +5576,18 @@ document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
             showToast('Personel başarıyla eklendi.');
         }
         closeModal();
-        // Eğer personel listesi ekranı aktifse, listeyi yenile
+        
+        // ÖNEMLİ DEĞİŞİKLİK: Personel listesi modülü aktifse, listeyi yeniden çek
         if (document.getElementById('staff-list').classList.contains('active')) {
-            fetchStaff();
+            fetchStaff(); // <-- Bu satır, listenin güncellenmesini sağlar
         }
+        
     } catch (err) {
         showToast('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'error');
         console.error("Personel kaydetme/güncelleme hatası:", err);
     }
 });
+// ==============================================================================
             document.getElementById('staff-list').addEventListener('click', async (e) => {
                 if(e.target.classList.contains('btn-delete')) { if (confirm('Bu personeli silmek istediğinizden emin misiniz?')) { await deleteDoc(doc(db, 'personel', e.target.dataset.id)); showToast('Personel silindi.'); fetchStaff(); } }
                 if(e.target.classList.contains('btn-edit')) { const docSnap = await getDoc(doc(db, 'personel', e.target.dataset.id)); if(docSnap.exists()) openModal(docSnap.id, docSnap.data()); }
