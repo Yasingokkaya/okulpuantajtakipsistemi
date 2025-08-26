@@ -1041,13 +1041,41 @@ td[style*="background-color"] .input-wrapper {
     </div>
 </div>
             <div id="staff-list" class="module"><div class="panel"><div class="panel-header"><h3>Personel Listesi</h3><button id="add-staff-from-list-btn" class="btn-header-add">Yeni Personel Ekle</button></div><div class="panel-body"><p>Personel listesi yükleniyor...</p></div></div></div>
-            <div id="ders-programi" class="module"><div class="panel"><div class="panel-header"><h3>Sınıf Bazlı Ders Programı</h3></div><div class="panel-body"><div id="tab-container"></div><div class="form-container"><div class="form-group"><label>Saat</label><select id="saat"></select></div><div class="form-group"><label>Gün</label><select id="gun">
-    <option value="Pazartesi">Pazartesi</option>
-    <option value="Salı">Salı</option>
-    <option value="Çarşamba">Çarşamba</option>
-    <option value="Perşembe">Perşembe</option>
-    <option value="Cuma">Cuma</option>
-</select></div><div class="form-group"><label>Öğretmen</label><select id="ogretmen"><option value="">Öğretmen Seçin...</option></select></div><div class="form-group"><label>Ders (Branş)</label><select id="dersAdi"><option value="">Ders Seçin...</option></select></div><button id="ekleBtn" class="btn">Ders Ekle</button></div><div id="schedule-display-area"></div></div></div></div>
+            <div id="ders-programi" class="module">
+    <div class="panel">
+        <div class="panel-header"><h3>Sınıf Bazlı Ders Programı</h3></div>
+        <div class="panel-body">
+            
+            <div id="tab-container"></div>
+
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="etkinTarihInput" style="color: var(--theme-primary); font-weight: bold;">Programın Geçerlilik Başlangıç Tarihi</label>
+                    <input type="date" id="etkinTarihInput">
+                </div>
+                <div class="form-group"><label>Saat</label><select id="saat"></select></div>
+                <div class="form-group"><label>Gün</label><select id="gun">
+                    <option value="Pazartesi">Pazartesi</option>
+                    <option value="Salı">Salı</option>
+                    <option value="Çarşamba">Çarşamba</option>
+                    <option value="Perşembe">Perşembe</option>
+                    <option value="Cuma">Cuma</option>
+                </select></div>
+                <div class="form-group"><label>Öğretmen</label><select id="ogretmen"><option value="">Öğretmen Seçin...</option></select></div>
+                <div class="form-group"><label>Ders (Branş)</label><select id="dersAdi"><option value="">Ders Seçin...</option></select></div>
+                <button id="ekleBtn" class="btn">Ders Ekle</button>
+            </div>
+
+            <div id="versiyon-yonetim-alani" style="margin-top: 15px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                <h4 style="margin-top: 0;">Kaydedilmiş Program Versiyonları</h4>
+                <p id="aktif-versiyon-bilgisi" style="font-style: italic; color: #555;">Henüz bir versiyon seçilmedi.</p>
+                <ul id="versiyon-listesi" style="list-style: none; padding: 0; max-height: 150px; overflow-y: auto;">
+                </ul>
+            </div>
+
+            <div id="schedule-display-area"></div>
+
+        </div> </div> </div> 
             <div id="gorevlendirme" class="module">
     <div class="panel">
         <div class="panel-header">
@@ -2376,24 +2404,71 @@ async function initializeSchedule() {
                 });
             });
         }
-async function loadScheduleForClass(sinifAdi) {
-            try {
-                // Sınıf adındaki '/' karakterini '-' ile değiştiriyoruz.
-                const sanitizedSinifAdi = sinifAdi.replace(/\//g, '-');
-                const docRef = doc(db, "ders_programlari", sanitizedSinifAdi);
-                const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists()) {
-                    window.tumProgramlar[sinifAdi] = docSnap.data();
-                } else {
-                    window.tumProgramlar[sinifAdi] = {};
-                }
-            } catch (error) {
-                console.error("Ders programı yüklenirken hata:", error);
-                window.tumProgramlar[sinifAdi] = {}; 
+// ================= EKLENECEK YENİ YARDIMCI FONKSİYONLAR =================
+// Arayüzdeki versiyon listesini dolduran fonksiyon
+async function renderVersionList(sanitizedSinifAdi) {
+    const versiyonListesiUL = document.getElementById('versiyon-listesi');
+    versiyonListesiUL.innerHTML = '<li>Versiyonlar yükleniyor...</li>';
+
+    const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
+    const q = query(versionsRef, orderBy(documentId(), "desc"));
+    
+    const snapshot = await getDocs(q);
+    versiyonListesiUL.innerHTML = '';
+    if (snapshot.empty) {
+        versiyonListesiUL.innerHTML = '<li>Bu sınıf için kayıtlı program versiyonu yok.</li>';
+        return;
+    }
+
+    snapshot.forEach(doc => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="#" data-tarih="${doc.id}" style="text-decoration: none; color: #0056b3;">${formatDateDDMMYYYY(doc.id)} tarihli program</a>`;
+        li.querySelector('a').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const tarih = e.target.dataset.tarih;
+            const docSnap = await getDoc(doc.ref);
+            if (docSnap.exists()) {
+                window.tumProgramlar[window.aktifSinif] = docSnap.data();
+                renderSchedule();
+                document.getElementById('etkinTarihInput').value = tarih;
+                document.getElementById('aktif-versiyon-bilgisi').textContent = `Şu an ${formatDateDDMMYYYY(tarih)} tarihli versiyonu düzenliyorsunuz.`;
+                showToast(`${formatDateDDMMYYYY(tarih)} versiyonu yüklendi.`, 'info');
             }
-            renderSchedule();
+        });
+        versiyonListesiUL.appendChild(li);
+    });
+}
+
+// Belirli bir sınıfın programını yükleyen ana fonksiyon (GÜNCELLENDİ)
+async function loadScheduleForClass(sinifAdi) {
+    const sanitizedSinifAdi = sinifAdi.replace(/\//g, '-');
+    document.getElementById('aktif-versiyon-bilgisi').textContent = 'En güncel versiyon yükleniyor...';
+    document.getElementById('etkinTarihInput').value = '';
+
+    try {
+        // En güncel versiyonu (tarihi en son olanı) bulup yükle
+        const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
+        const q = query(versionsRef, orderBy(documentId(), "desc"), limit(1));
+        const snapshot = await getDocs(q);
+
+        if (!snapshot.empty) {
+            const latestDoc = snapshot.docs[0];
+            window.tumProgramlar[sinifAdi] = latestDoc.data();
+            document.getElementById('etkinTarihInput').value = latestDoc.id; // Tarih alanını doldur
+            document.getElementById('aktif-versiyon-bilgisi').textContent = `Şu an ${formatDateDDMMYYYY(latestDoc.id)} tarihli en güncel versiyonu düzenliyorsunuz.`;
+        } else {
+            window.tumProgramlar[sinifAdi] = {}; // Hiç versiyon yoksa boş program
+            document.getElementById('aktif-versiyon-bilgisi').textContent = 'Bu sınıf için kayıtlı program yok. Yeni oluşturabilirsiniz.';
         }
+    } catch (error) {
+        console.error("Ders programı versiyonu yüklenirken hata:", error);
+        window.tumProgramlar[sinifAdi] = {};
+    }
+    
+    renderSchedule(); // Tabloyu çiz
+    renderVersionList(sanitizedSinifAdi); // Versiyon listesini doldur
+}
        
 
         function deleteLesson(gun, saat) {
@@ -2427,20 +2502,27 @@ async function loadScheduleForClass(sinifAdi) {
             // 3. YENİ: Değişikliği veritabanına otomatik kaydet
             saveScheduleForClass(window.aktifSinif);
         }
+// ================= EKLENECEK YENİ saveScheduleForClass =================
 async function saveScheduleForClass(sinifAdi) {
-    // Firestore'da "9/A" gibi document ID'leri geçersizdir.
-    // Yükleme fonksiyonunda olduğu gibi '/' karakterini '-' ile değiştiriyoruz.
+    const etkinTarihInput = document.getElementById('etkinTarihInput');
+    const etkinTarih = etkinTarihInput.value;
+
+    if (!etkinTarih) {
+        showToast('Lütfen program için bir geçerlilik başlangıç tarihi seçin.', 'error');
+        return;
+    }
+
     const sanitizedSinifAdi = sinifAdi.replace(/\//g, '-');
-    const docRef = doc(db, "ders_programlari", sanitizedSinifAdi);
+    // YOL GÜNCELLENDİ: Artık versiyonlar alt koleksiyonuna, tarih ID'si ile kaydediyoruz.
+    const docRef = doc(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar", etkinTarih);
     const dataToSave = window.tumProgramlar[sinifAdi] || {};
 
     try {
-        // setDoc komutu ile ilgili sınıfın tüm programını tek seferde kaydediyoruz.
-        // Bu komut, döküman yoksa oluşturur, varsa üzerine yazar.
         await setDoc(docRef, dataToSave);
-        showToast(`${sinifAdi} için program başarıyla kaydedildi.`, 'success');
+        showToast(`${sinifAdi} için ${etkinTarih} tarihli program kaydedildi.`, 'success');
+        renderVersionList(sanitizedSinifAdi); // Kayıttan sonra versiyon listesini yenile
     } catch (error) {
-        console.error("Ders programı kaydedilirken hata oluştu:", error);
+        console.error("Ders programı versiyonu kaydedilirken hata:", error);
         showToast('Program kaydedilirken bir hata meydana geldi.', 'error');
     }
 }
@@ -3944,7 +4026,7 @@ function initializeCustomSelects() {
     });
 }
 
-// LÜTFEN MEVCUT ÜÇ FONKSİYONU SİLİP, YERİNE BU BLOĞUN TAMAMINI YAPIŞTIRIN
+// ================= BU FONKSİYONUN TAMAMINI EKLEYİN =================
 function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
@@ -3957,13 +4039,12 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         return;
     }
     
-    // YENİ DÜZENLEME: Puantaj verisi, personel verisinden ayrıldı.
     const personelPuantajData = Object.keys(puantajData).reduce((acc, personelId) => {
         const personelInfo = aktifPersonelListesi.find(p => p.id === personelId);
         if (personelInfo) {
             acc[personelId] = {
-                ...personelInfo, // O anki personel bilgilerini ekliyoruz.
-                ...puantajData[personelId] // Puantaj verilerini de üstüne yazıyoruz.
+                ...personelInfo,
+                ...puantajData[personelId]
             };
         }
         return acc;
@@ -3973,20 +4054,31 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
     
+    // 1. İstenen grup sıralamasını bir dizi (array) olarak tanımlıyoruz.
+    const grupSiralama = ['Belirli Süreli', 'Belirsiz Süreli', 'Kısmi Süreli'];
+
+    // 2. Personelleri gruplara ayırırken her grubu kendi içinde A'dan Z'ye sıralıyoruz.
     const grupluPersonel = {
-        'Belirsiz Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Belirsiz Süreli'),
-        'Belirli Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Belirli Süreli'),
-        'Kısmi Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Kısmi Süreli')
+        'Belirsiz Süreli': Object.values(personelPuantajData)
+            .filter(p => p.sozlesmeTuru === 'Belirsiz Süreli')
+            .sort((a, b) => a.ad.localeCompare(b.ad, 'tr')),
+        'Belirli Süreli': Object.values(personelPuantajData)
+            .filter(p => p.sozlesmeTuru === 'Belirli Süreli')
+            .sort((a, b) => a.ad.localeCompare(b.ad, 'tr')),
+        'Kısmi Süreli': Object.values(personelPuantajData)
+            .filter(p => p.sozlesmeTuru === 'Kısmi Süreli')
+            .sort((a, b) => a.ad.localeCompare(b.ad, 'tr'))
     };
-    
-    for (const grupAdi in grupluPersonel) {
+
+    // 3. Tanımladığımız sıralama dizisi üzerinden dönüyoruz.
+    grupSiralama.forEach(grupAdi => {
         const personelGrubu = grupluPersonel[grupAdi];
-        if (personelGrubu.length === 0) continue;
+        if (personelGrubu.length === 0) return;
+
         const ayAdi = document.getElementById('select-month').options[month].text;
         const yeniGrupBasligi = `${ayAdi} ${year} Ayı Personel Puantaj Kayıtları ( ${grupAdi.toLocaleUpperCase('tr-TR')} )`;
         finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${yeniGrupBasligi}</h3>`;
         
-        // DEĞİŞİKLİK: Belirsiz Süreli grup için colspan 4'e çıkarıldı.
         let tableHTML = `<table class="puantaj-table"><thead><tr><th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2" class="vertical-divider">İşe Giriş<br>İşten Çıkış</th><th colspan="${daysInMonth}">Aylık Puantaj Durumu</th><th colspan="${(grupAdi === 'Belirsiz Süreli') ? 4 : 4}" class="vertical-divider">Aylık Saat Toplamları</th><th colspan="9" class="vertical-divider">Aylık Gün Toplamları</th><th rowspan="2" class="vertical-divider">Sgk Prim Günü</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th></tr><tr>`;
         
         for (let day = 1; day <= daysInMonth; day++) {
@@ -4022,10 +4114,9 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
             
            let eksikGunKoduSelect = '';
             if (grupAdi === 'Belirsiz Süreli') {
-                let options = '<option value=""></option>'; // Varsayılan boş seçenek
+                let options = '<option value=""></option>';
                 eksikGunKodlari.forEach(item => {
                     const selected = (missingDayCodes[personel.id] === item.kod) ? 'selected' : '';
-                    // Listede hem kod hem de açıklama her zaman tam olarak oluşturulur
                     options += `<option value="${item.kod}" ${selected}>${item.kod} - ${item.aciklama}</option>`;
                 });
                 eksikGunKoduSelect = `<td rowspan="2" class="summary-missing-day"><select class="missing-day-code-select" data-personel-id="${personel.id}">${options}</select></td>`;
@@ -4040,7 +4131,6 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
                 const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = personel.dailyData[dateString] || { code: '', hours: 0 };
                 const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
-                // EKLENECEK YENİ SATIR
                 const hourContent = (dayData?.code === 'N' || dayData?.code === 'RTÇ' || dayData?.code === 'Y' || dayData?.code === 'K') && dayData?.hours > 0 ? dayData.hours : '';
                 tableHTML += `<td class="hour-cell ${dividerClass}">${hourContent}</td>`;
             }
@@ -4048,15 +4138,13 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         });
         tableHTML += `</tbody></table>`;
         finalHTML += tableHTML;
-    }
+    });
     
     container.innerHTML = finalHTML;
     attachCellListeners();
     initializeCustomSelects();
 }
-// =================================================================
-// EKLEME İŞLEMİ BURADA BİTİYOR
-// =================================================================
+// =======================================================================
 let puantajInitialized = false;
 let puantajPersonelList = [];
 let puantajData = {};
@@ -4347,65 +4435,68 @@ async function fetchAndCalculateNobetData(year, month) {
     for (const personelId in nobetHaftalari) { nobetEkDers[personelId] = nobetHaftalari[personelId].size * 3; }
     return nobetEkDers;
 }
+ // ================= EKLENECEK YENİ fetchAndProcessSchedules =================
+async function fetchAndProcessSchedules(year, month) {
+    const scheduleCache = {}; // Her gün DB'ye sormamak için cache
+    const personelScheduleData = {}; // Sonuç: { personelId: { '2025-09-15': {Pazartesi: 6}, '2025-09-16': {Salı: 5} } }
 
-async function fetchAndProcessSchedules() {
-    const scheduleData = {}; // Sonuç: { personelId: { 'Pazartesi': 5, 'Sali': 4 ... } }
+    const [sinifSnap, personelSnap] = await Promise.all([
+        getDocs(collection(db, "ders_programlari")),
+        getDocs(collection(db, "personel"))
+    ]);
 
-    try {
-        const [scheduleSnap, personelSnap] = await Promise.all([
-            getDocs(collection(db, "ders_programlari")),
-            getDocs(collection(db, "personel"))
-        ]);
+    const personelAdindanIdMap = new Map();
+    const personelSinifMap = new Map(); // Hangi personelin hangi sınıflara girdiğini bulmak için
+    personelSnap.forEach(doc => personelAdindanIdMap.set(doc.data().ad_soyad, doc.id));
+    
+    const sinifListesi = sinifSnap.docs.map(doc => doc.id);
 
-        // EĞER HİÇ DERS PROGRAMI YOKSA UYARI VER VE BOŞ DÖN
-        if (scheduleSnap.empty) {
-            console.warn("UYARI: Firestore 'ders_programlari' koleksiyonunda hiç veri bulunamadı. Saatler 0 olarak hesaplanacak.");
-            return {};
+    for (const sanitizedSinifAdi of sinifListesi) {
+        const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
+        const q = query(versionsRef, orderBy(documentId(), "desc"));
+        const versionSnapshot = await getDocs(q);
+        
+        const versions = versionSnapshot.docs.map(doc => ({
+            tarih: doc.id,
+            program: doc.data()
+        }));
+        
+        if (versions.length > 0) {
+            scheduleCache[sanitizedSinifAdi] = versions;
         }
-
-        // Personel adından ID'ye bir harita oluşturuyoruz.
-        const personelAdindanIdMap = new Map();
-        personelSnap.forEach(doc => {
-            personelAdindanIdMap.set(doc.data().ad_soyad, doc.id);
-        });
-
-        // Tüm ders programlarını gez
-        scheduleSnap.forEach(doc => {
-            const program = doc.data();
+    }
+    
+    // Cache'deki programları personellere göre yeniden yapılandır
+    for (const sinifAdi in scheduleCache) {
+        const versions = scheduleCache[sinifAdi];
+        versions.forEach(version => {
+            const program = version.program;
             for (const gun in program) {
-                const gununDersleri = program[gun];
-                for (const saat in gununDersleri) {
-                    const dersDetayi = gununDersleri[saat];
-                    if (!dersDetayi || !dersDetayi.ogretmen) continue; // Ders detayı veya öğretmen yoksa atla
-
-                    const personelAdi = dersDetayi.ogretmen;
-                    const personelId = personelAdindanIdMap.get(personelAdi);
-
-                    // --- EN ÖNEMLİ GÜNCELLEME BURADA ---
-                    // Eğer öğretmen adı personel listesinde bulunduysa işlem yap. Bulunmadıysa hata vermeden atla.
+                for (const saat in program[gun]) {
+                    const dersDetayi = program[gun][saat];
+                    const personelId = personelAdindanIdMap.get(dersDetayi.ogretmen);
                     if (personelId) {
-                        if (!scheduleData[personelId]) {
-                            scheduleData[personelId] = {};
+                        if (!personelScheduleData[personelId]) personelScheduleData[personelId] = [];
+                        // Her personelin girdiği dersleri, programın başlangıç tarihiyle birlikte sakla
+                        const existingEntry = personelScheduleData[personelId].find(e => e.tarih === version.tarih);
+                        if (!existingEntry) {
+                            personelScheduleData[personelId].push({ tarih: version.tarih, gunlukSaatler: {} });
                         }
-                        if (!scheduleData[personelId][gun]) {
-                            scheduleData[personelId][gun] = 0;
-                        }
-                        scheduleData[personelId][gun]++;
-                    } else {
-                        // Eşleşmeyen öğretmeni konsola yazdır, bu sayede hatayı kolayca bulabilirsiniz.
-                        console.warn(`DİKKAT: Ders programındaki "${personelAdi}" isimli öğretmen, personel listesinde bulunamadı. Bu ders saati puantaja eklenmeyecek.`);
+                        const entry = personelScheduleData[personelId].find(e => e.tarih === version.tarih);
+                        if (!entry.gunlukSaatler[gun]) entry.gunlukSaatler[gun] = 0;
+                        entry.gunlukSaatler[gun]++;
                     }
                 }
             }
         });
-        
-        return scheduleData;
-
-    } catch (error) {
-        console.error("Ders programları işlenirken kritik bir hata oluştu:", error);
-        showToast("Ders programı verisi okunamadı! Konsolu kontrol edin.", "error");
-        return {};
     }
+
+    // Her personel için versiyonları tarihe göre sırala (en yeniden en eskiye)
+    for (const personelId in personelScheduleData) {
+        personelScheduleData[personelId].sort((a, b) => b.tarih.localeCompare(a.tarih));
+    }
+    
+    return personelScheduleData;
 }
    // BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
 async function generateInitialPuantaj() {
@@ -4453,7 +4544,7 @@ async function generateInitialPuantaj() {
         }
 
         const [scheduleData, nobetVerisi, izinVerisi] = await Promise.all([
-            fetchAndProcessSchedules(),
+            fetchAndProcessSchedules(year, month),
             fetchAndCalculateNobetData(year, month),
             fetchIzinDataForPuantaj(year, month)
         ]);
@@ -4511,11 +4602,16 @@ async function generateInitialPuantaj() {
                             if (isWeekend) { code = 'HT'; }
                             else {
                                 code = 'N';
-                                if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
-                                    hours = 4;
-                                } else {
-                                    hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : (scheduleData[personel.id]?.[dayOfWeekTR] || 0);
-                                }
+                                // Bu yeni kodu ekleyin
+// O gün için geçerli olan doğru ders programını bul
+const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
+const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
+
+if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
+    hours = 4;
+} else {
+    hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : gununDersSaati;
+}
                             }
                         }
                     }
