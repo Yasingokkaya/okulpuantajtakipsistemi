@@ -702,10 +702,20 @@
 }
     /* Kaydırma sorununu çözen kural */
     html, body {
-        height: auto; 
-        overflow-x: hidden; 
+        height: auto;  
     }
-
+/* YENİ EKLENECEK KOD */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99; /* Kenar menüsünden daha düşük, ana içerikten daha yüksek */
+    display: none; /* Varsayılan olarak gizli */
+    transition: background-color 0.3s ease-in-out;
+}
     /* Hamburger menü için üst başlığı gösteren kural */
     .mobile-header {
         display: flex;
@@ -1003,6 +1013,8 @@ td[style*="background-color"] .input-wrapper {
         <img src="logo.png" alt="Okul Logosu" class="mobile-logo">
         <span class="mobile-title">Okul Puantaj Sistemi</span>
     </header>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
 <div id="login-panel" style="display: none; justify-content: center; align-items: center; height: 100vh; background-color: var(--light-gray-color);">
     <div style="width: 100%; max-width: 400px; padding: 40px; background: var(--white-color); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
         <h2 style="text-align: center; color: var(--theme-primary); margin-bottom: 30px;">Okul Puantaj Sistemi Giriş Paneli</h2>
@@ -5585,24 +5597,45 @@ function attachCellListeners() {
 
 
         document.addEventListener('DOMContentLoaded', () => {
-// === MOBİL HAMBURGER MENÜ MANTIĞI ===
-        const hamburgerBtn = document.getElementById('hamburger-btn');
-        const sidebar = document.querySelector('.sidebar');
-        
-        if (hamburgerBtn) {
-            hamburgerBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Diğer tıklama olaylarını engelle
-                sidebar.classList.toggle('open');
-            });
-        }
-        
-        // Menüdeki bir linke tıklandığında menünün otomatik kapanmasını sağla
-        sidebar.addEventListener('click', (e) => {
-            if (e.target.closest('a')) {
-                sidebar.classList.remove('open');
-            }
-        });
 
+
+// === GÜNCELLENMİŞ MOBİL HAMBURGER MENÜ MANTIĞI ===
+const hamburgerBtn = document.getElementById('hamburger-btn');
+const sidebar = document.querySelector('.sidebar');
+const overlay = document.getElementById('sidebar-overlay');
+
+function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.style.display = 'block';
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.style.display = 'none';
+}
+
+if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (sidebar.classList.contains('open')) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    });
+}
+
+// Menüdeki bir linke tıklandığında menüyü otomatik kapat
+sidebar.addEventListener('click', (e) => {
+    if (e.target.closest('a')) {
+        closeSidebar();
+    }
+});
+
+// Arka plan katmanına tıklandığında menüyü kapat
+if (overlay) {
+    overlay.addEventListener('click', closeSidebar);
+}
         // Menü dışına tıklandığında menüyü kapat
         document.body.addEventListener('click', (e) => {
             if (sidebar.classList.contains('open') && !sidebar.contains(e.target)) {
