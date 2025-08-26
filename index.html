@@ -807,8 +807,47 @@ td[style*="background-color"] .input-wrapper {
     background-color: rgba(255, 255, 255, 0.2); /* Rengi biraz açar */
     border-radius: 5px;
 }
+/* ========================================================================= */
+/* DERS PROGRAMI VERSİYON LİSTESİ İÇİN EKLENEN YENİ STİLLER                  */
+/* ========================================================================= */
 
-/* ======================= BUNU <style> İÇİNE EKLEYİN ======================= */
+#versiyon-listesi li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background-color: #fff;
+}
+
+.btn-delete-version {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0; /* Butonun küçülmesini engeller */
+}
+.btn-delete-version:hover {
+    opacity: 0.85;
+}
+
+
+.confirmation-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+.confirmation-buttons .btn {
+    padding: 10px 25px;
+    font-size: 16px;
+}
+
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -899,9 +938,66 @@ td[style*="background-color"] .input-wrapper {
     color: var(--theme-primary);
 }
 /* ========================================================================= */
+/* ADIM 1: YÜKLEME ANİMASYONLARI İÇİN BU CSS BLOKUNU EKLEYİN                */
+/* ========================================================================= */
+
+/* --- Genel Yükleme İkonu (Spinner) Stilleri --- */
+.spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    display: none; /* Varsayılan olarak gizli */
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 7px solid #f3f3f3;
+    border-top: 7px solid var(--theme-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- İskelet Ekran (Skeleton Screen) Stilleri --- */
+.skeleton {
+    animation: shimmer 1.5s infinite linear;
+    background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    color: transparent;
+    border-radius: 4px;
+}
+.skeleton-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.skeleton-cell {
+    height: 48px; /* Tablo satır yüksekliğine benzer */
+    background-color: #e0e0e0;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+
 </style>
 </head>
 <body>
+<div class="spinner-overlay" id="global-spinner"><div class="spinner"></div></div>
 <header class="mobile-header">
         <button id="hamburger-btn">☰</button>
         <img src="logo.png" alt="Okul Logosu" class="mobile-logo">
@@ -1617,6 +1713,48 @@ td[style*="background-color"] .input-wrapper {
 </template>
     
     <script type="module">
+// =========================================================================
+// ADIM 2B: SPINNER'I KONTROL ETMEK İÇİN BU FONKSİYONLARI EKLEYİN
+// =========================================================================
+function showSpinner() {
+    document.getElementById('global-spinner').style.display = 'flex';
+}
+// =========================================================================
+// ADIM 1C: YENİ ONAY PENCERESİ YÖNETİM FONKSİYONUNU EKLEYİN
+// =========================================================================
+function showConfirmationModal(message, onConfirm) {
+    const modal = document.getElementById('confirmation-modal');
+    const messageEl = document.getElementById('confirmation-modal-message');
+    const confirmBtn = document.getElementById('confirm-action-btn');
+    const cancelBtn = document.getElementById('confirm-cancel-btn');
+    const closeModalBtn = modal.querySelector('.close-modal');
+
+    messageEl.innerHTML = message; // innerHTML kullanarak metni kalın (strong) yapabilme özelliği
+
+    modal.classList.add('open');
+
+    const close = () => {
+        modal.classList.remove('open');
+        // Olay dinleyicilerini temizle ki bir sonraki seferde birikmesinler
+        confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+        cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+        closeModalBtn.replaceWith(closeModalBtn.cloneNode(true));
+    };
+    
+    confirmBtn.onclick = () => {
+        onConfirm(); // Onaylandığında çalışacak olan asıl işlemi çağır
+        close();
+    };
+
+    cancelBtn.onclick = close;
+    closeModalBtn.onclick = close;
+}
+// =========================================================================
+
+function hideSpinner() {
+    document.getElementById('global-spinner').style.display = 'none';
+}
+// =========================================================================
  // =================================================================
 // 1. ADIM: BU KOD BLOĞUNU OLDUĞU GİBİ EKLEYİN
 // =================================================================
@@ -1637,7 +1775,8 @@ const eksikGunKodlari = [
     { kod: "29", aciklama: "Pandemi Ücretsiz İzin ve diğer nedenler" }
 ];
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // YERİNE BU DOĞRU SATIRI EKLEYİN
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, query, where, orderBy, documentId } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         const firebaseConfig = {
@@ -1733,33 +1872,33 @@ function isResmiTatil(date) {
             setTimeout(() => { toast.style.animation = 'slideOut 0.3s forwards'; toast.addEventListener('animationend', () => toast.remove()); }, 3000);
         }
 
-/* ======================= ESKİ renderDashboardData FONKSİYONUNU SİLİP BUNU EKLEYİN ======================= */
+// =========================================================================
+// YENİ, TAM VE SPINNER ENTEGRE EDİLMİŞ renderDashboardData FONKSİYONU
+// =========================================================================
 async function renderDashboardData() {
+    showSpinner(); // <-- 1. ADIM: Fonksiyon çalışır çalışmaz yükleme ikonunu gösterir.
+
+    // Fonksiyonun geri kalanı aynı şekilde başlıyor...
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
     const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth(); // 0-11
+    const currentMonth = today.getMonth();
 
-    // Gerekli DOM elemanlarını seç
     const personelValueEl = document.getElementById('db-aktif-personel');
     const nobetListEl = document.getElementById('db-gunun-nobetcileri-list');
     const izinListEl = document.getElementById('db-bugun-izinliler-list');
     const gorevListEl = document.getElementById('db-bugun-gorevli-list');
-    // Yeni kartların elemanları
     const aylikEkdersEl = document.getElementById('db-aylik-ekders');
     const aylikNobetEl = document.getElementById('db-aylik-nobet');
     const aylikRehberlikEl = document.getElementById('db-aylik-rehberlik');
     const aylikRaporluListEl = document.getElementById('db-aylik-raporlular-list');
 
-    // Yükleniyor... durumunu ayarla
     [personelValueEl, aylikEkdersEl, aylikNobetEl, aylikRehberlikEl].forEach(el => el.textContent = '...');
     [nobetListEl, izinListEl, gorevListEl, aylikRaporluListEl].forEach(el => el.innerHTML = 'Yükleniyor...');
 
     try {
-        // Aylık puantaj döküman ID'sini oluştur
         const puantajDocId = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
 
-        // Tüm veritabanı sorgularını aynı anda başlat
         const [
             personelSnap, nobetSnap, izinSnap, gorevSnap, nobetYeriSnap,
             izinTipiSnap, puantajDocSnap
@@ -1777,22 +1916,19 @@ async function renderDashboardData() {
         const nobetYeriMap = new Map(nobetYeriSnap.docs.map(doc => [doc.id, doc.data().name]));
         const tumPersonelListesi = personelSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // --- DEĞİŞİKLİK BURADA: Sadece aktif personeli say ---
         const bugunTarihi = new Date();
-        bugunTarihi.setHours(0, 0, 0, 0); // Saat farklarından etkilenmemek için
+        bugunTarihi.setHours(0, 0, 0, 0);
 
         const aktifPersonelListesi = tumPersonelListesi.filter(p => {
             const ayrilisTarihiStr = p.isten_ayrilis;
             if (!ayrilisTarihiStr || ayrilisTarihiStr.trim() === '') {
-                return true; // Ayrılış tarihi yoksa aktiftir.
+                return true;
             }
             const ayrilisTarihi = new Date(ayrilisTarihiStr);
-            // Ayrılış tarihi bugünden sonraysa aktiftir.
             return ayrilisTarihi > bugunTarihi;
         });
 
-        personelValueEl.textContent = aktifPersonelListesi.length; // Artık toplam değil, aktif personel sayısını yazıyoruz.
-        // --- DEĞİŞİKLİK SONA ERDİ ---
+        personelValueEl.textContent = aktifPersonelListesi.length;
 
         if (nobetSnap.empty) { nobetListEl.innerHTML = '<span class="no-data">Bugün nöbetçi yok.</span>'; } 
         else { nobetListEl.innerHTML = nobetSnap.docs.map(doc => `<span><strong>${personelMap.get(doc.data().personelId) || '?'}</strong> - ${nobetYeriMap.get(doc.data().nobetYeriId) || ''}</span>`).join(''); }
@@ -1810,7 +1946,6 @@ async function renderDashboardData() {
         if (gorevSnap.empty) { gorevListEl.innerHTML = '<span class="no-data">Bugün görevlendirme yok.</span>'; }
         else { gorevListEl.innerHTML = gorevSnap.docs.map(d => `<span><strong>${personelMap.get(d.data().gorevliId) || '?'}</strong> (Yerine: ${personelMap.get(d.data().asilId) || '?'})</span>`).join(''); }
 
-        // --- Aylık Özet Kartlarının Doldurulması (Bu kısım aynı kalıyor) ---
         let totalEkders = 0, totalNobet = 0, totalRehberlik = 0;
         const aylikPuantajVerisi = puantajDocSnap.exists() ? puantajDocSnap.data().puantajData : null;
 
@@ -1863,6 +1998,8 @@ async function renderDashboardData() {
         personelValueEl.textContent = 'Hata!';
         [nobetListEl, izinListEl, gorevListEl, aylikRaporluListEl].forEach(el => el.innerHTML = '<span class="no-data" style="color:red;">Veri yüklenemedi.</span>');
         [aylikEkdersEl, aylikNobetEl, aylikRehberlikEl].forEach(el => el.textContent = 'X');
+    } finally {
+        hideSpinner(); // <-- 2. ADIM: İşlem bitince (hata olsa da olmasa da) ikonu gizler.
     }
 }
 
@@ -1871,37 +2008,37 @@ async function renderDashboardData() {
         const addSetting = (collectionName, data) => addDoc(collection(db, collectionName), data);
         const deleteSetting = (collectionName, id) => deleteDoc(doc(db, collectionName, id));
 
-        // --- AYARLAR MODÜLÜ YÖNETİMİ ---
-        async function renderSettingsList(collectionName, listElementId, relatedData) {
-            const listElement = document.getElementById(listElementId);
-            if (!listElement) return;
-            listElement.innerHTML = '<li>Yükleniyor...</li>';
-            try {
-                const snapshot = await getSettings(collectionName);
-                if (snapshot.empty) { listElement.innerHTML = '<li>Henüz veri eklenmemiş.</li>'; return; }
-                listElement.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const item = doc.data(); const li = document.createElement('li'); let displayText = item.name;
-                    if (collectionName === 'ayarlar_gorevler' && relatedData) {
-                        const nevi = relatedData.find(n => n.id === item.neviId);
-                        displayText = `${item.name} <small style="color: #555;">(${nevi ? nevi.name : 'Bilinmeyen'})</small>`;
-                    }
-                    if (collectionName === 'ayarlar_izin_tipleri') {
-                        displayText = `${item.name} <strong style="color: var(--theme-accent);"> (Kod: ${item.kod})</strong>`;
-                    }
-                    li.innerHTML = `
-    <span>${displayText}</span>
-    <div class="actions-cell" style="width: auto; min-width: 120px;">
-        <button class="btn btn-edit btn-edit-setting" data-id="${doc.id}" data-collection="${collectionName}" data-name="${item.name}">Düzenle</button>
-        <button class="btn btn-delete btn-delete-setting" data-id="${doc.id}" data-collection="${collectionName}">Sil</button>
-    </div>
-`;
-                    listElement.appendChild(li);
-                });
-            } catch (e) { listElement.innerHTML = '<li>Veri yüklenemedi.</li>'; console.error("Error rendering settings:", e); }
-        }
+        // YERİNE BU DOĞRU FONKSİYONU EKLEYİN
+async function renderSettingsList(collectionName, listElementId, relatedData) {
+    const listElement = document.getElementById(listElementId);
+    if (!listElement) return;
+    listElement.innerHTML = '<li>Yükleniyor...</li>';
+    try {
+        const snapshot = await getSettings(collectionName);
+        if (snapshot.empty) { listElement.innerHTML = '<li>Henüz veri eklenmemiş.</li>'; return; }
+        listElement.innerHTML = '';
+        snapshot.forEach(doc => {
+            const item = doc.data(); const li = document.createElement('li'); let displayText = item.name;
+            if (collectionName === 'ayarlar_gorevler' && relatedData) {
+                const nevi = relatedData.find(n => n.id === item.neviId);
+                displayText = `${item.name} <small style="color: #555;">(${nevi ? nevi.name : 'Bilinmeyen'})</small>`;
+            }
+            if (collectionName === 'ayarlar_izin_tipleri') {
+                displayText = `${item.name} <strong style="color: var(--theme-accent);"> (Kod: ${item.kod})</strong>`;
+            }
+            li.innerHTML = `
+                <span>${displayText}</span>
+                <div class="actions-cell" style="width: auto; min-width: 120px;">
+                    <button class="btn btn-edit btn-edit-setting" data-id="${doc.id}" data-collection="${collectionName}" data-name="${item.name}">Düzenle</button>
+                    <button class="btn btn-delete btn-delete-setting" data-id="${doc.id}" data-collection="${collectionName}" data-name="${item.name}">Sil</button>
+                </div>
+            `;
+            listElement.appendChild(li);
+        });
+    } catch (e) { listElement.innerHTML = '<li>Veri yüklenemedi.</li>'; console.error("Error rendering settings:", e); }
+}
         
-        async function initializeSettings() {
+        async function initializeSettings() { 
             const tabsContainer = document.querySelector('.settings-tabs');
             if (tabsContainer.dataset.initialized) return;
             tabsContainer.dataset.initialized = 'true';
@@ -1931,26 +2068,58 @@ async function renderDashboardData() {
                 if(ad && kod) { await addSetting('ayarlar_izin_tipleri', { name: ad, kod: kod }); adInput.value = ''; kodInput.value = ''; await renderSettingsList('ayarlar_izin_tipleri', 'izin-tipi-list'); } 
                 else { showToast('İzin Adı ve Puantaj Kodu alanları zorunludur.', 'error'); }
             });
-            document.querySelector('#settings .panel-body').addEventListener('click', async (e) => {
-    const target = e.target;
+            // YERİNE BU DOĞRU KOD BLOĞUNU EKLEYİN
+document.querySelector('#settings .panel-body').addEventListener('click', async (e) => {
+    const target = e.target.closest('button'); // Tıklamanın bir butondan geldiğinden emin olalım
+    if (!target) return;
 
-    // Silme İşlemi
+    // --- GÜVENLİ SİLME İŞLEMİ ---
     if (target.classList.contains('btn-delete-setting')) {
-        const { id, collection } = target.dataset;
-        if (confirm('Bu öğeyi silmek istediğinizden emin misiniz?')) {
-            await deleteSetting(collection, id);
-            showToast('Ayar başarıyla silindi.');
-            if (collection === 'ayarlar_personel_nevileri') {
-                location.reload();
-            } else {
-                await renderAll();
+        // 'collection' yerine 'collectionName' adını kullanıyoruz
+        const { id, collection: collectionName, name } = target.dataset; // <-- DEĞİŞİKLİK 1
+
+        // Veritabanı sorgusunda bir personelin bu ayara bağlı olup olmadığını kontrol etme
+        if (collectionName === 'ayarlar_personel_nevileri') { // <-- DEĞİŞİKLİK 2
+            // Firebase'in orijinal 'collection' fonksiyonu burada doğru çalışır
+            const q = query(collection(db, 'personel'), where('personel_nevisi', '==', id));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                showToast(`'${name}' nevisine kayıtlı personel bulunduğu için silinemez.`, 'error');
+                return;
             }
         }
+        if (collectionName === 'ayarlar_gorevler') { // <-- DEĞİŞİKLİK 3
+            const q = query(collection(db, 'personel'), where('gorevi_bransi', '==', id));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                showToast(`'${name}' görevine/branşına kayıtlı personel bulunduğu için silinemez.`, 'error');
+                return;
+            }
+        }
+        
+        // Onay penceresini göster
+        showConfirmationModal(
+            `<strong>'${name || 'Bu ayar'}'</strong> öğesini kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+            async () => {
+                await deleteSetting(collectionName, id); // <-- DEĞİŞİKLİK 4
+                showToast('Ayar başarıyla silindi.');
+                
+                // Eğer bir nevi silindiyse, görev listesi de etkileneceği için sayfayı yeniden yüklemek en güvenlisidir.
+                if (collectionName === 'ayarlar_personel_nevileri') { // <-- DEĞİŞİKLİK 5
+                    location.reload(); 
+                } else {
+                    // Diğer ayarlar için sadece listeleri yenilemek yeterli
+                    const neviSnapshot = await getSettings('ayarlar_personel_nevileri');
+                    const personelNevileri = neviSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+                    renderSettingsList(collectionName, document.getElementById(collectionName.replace('ayarlar_', '') + '-list').id, personelNevileri);
+                }
+            }
+        );
     }
 
-    // Düzenleme İşlemi
+    // --- DÜZENLEME İŞLEMİ ---
     if (target.classList.contains('btn-edit-setting')) {
-        const { id, collection, name } = target.dataset;
+        const { id, collection: collectionName, name } = target.dataset; // <-- DEĞİŞİKLİK 6
         const modal = document.getElementById('edit-setting-modal');
         const input = document.getElementById('edit-setting-input');
         const saveBtn = document.getElementById('edit-setting-save-btn');
@@ -1961,19 +2130,22 @@ async function renderDashboardData() {
         saveBtn.onclick = async () => {
             const newName = input.value.trim();
             if (newName && newName !== name) {
-                await setDoc(doc(db, collection, id), { name: newName }, { merge: true });
+                await setDoc(doc(db, collectionName, id), { name: newName }, { merge: true }); // <-- DEĞİŞİKLİK 7
                 showToast('Ayar başarıyla güncellendi.');
                 modal.style.display = 'none';
-                if (collection === 'ayarlar_personel_nevileri') {
+
+                // Nevi adı değiştiyse, görev listesindeki gösterimi de etkileyeceği için sayfayı yeniden yükle
+                if (collectionName === 'ayarlar_personel_nevileri') { // <-- DEĞİŞİKLİK 8
                     location.reload();
                 } else {
-                    await renderAll();
+                    const neviSnapshot = await getSettings('ayarlar_personel_nevileri');
+                    const personelNevileri = neviSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+                    renderSettingsList(collectionName, document.getElementById(collectionName.replace('ayarlar_', '') + '-list').id, personelNevileri);
                 }
             } else {
                 modal.style.display = 'none';
             }
         };
-
         modal.style.display = 'flex';
     }
 });
@@ -2064,13 +2236,36 @@ async function loadZamanCizelgesiAyarlari() {
     }
 }
       
-
+// =========================================================================
+// ADIM 3A: PERSONEL LİSTESİ İÇİN İSKELET EKRAN OLUŞTURAN FONKSİYON
+// =========================================================================
+function showStaffListSkeleton() {
+    const listContainer = document.querySelector('#staff-list .panel-body');
+    let skeletonHTML = '<div class="table-container"><table class="staff-table"><thead><tr><th>S.N.</th><th>Adı Soyadı</th><th>Cinsiyet</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>';
+    for (let i = 0; i < 5; i++) { // 5 satırlık bir iskelet oluşturalım
+        skeletonHTML += `
+            <tr>
+                <td><div class="skeleton skeleton-cell" style="width: 30px; height: 20px;"></div></td>
+                <td><div class="skeleton skeleton-cell" style="width: 150px; height: 20px;"></div></td>
+                <td><div class="skeleton skeleton-cell" style="width: 60px; height: 20px;"></div></td>
+                <td><div class="skeleton skeleton-cell" style="width: 120px; height: 20px;"></div></td>
+                <td><div class="skeleton skeleton-cell" style="width: 120px; height: 20px;"></div></td>
+                <td><div class="skeleton skeleton-cell" style="width: 80px; height: 20px;"></div></td>
+                <td><div class="skeleton skeleton-cell" style="width: 80px; height: 20px;"></div></td>
+                <td><div class="skeleton skeleton-cell" style="width: 140px; height: 35px;"></div></td>
+            </tr>
+        `;
+    }
+    skeletonHTML += '</tbody></table></div>';
+    listContainer.innerHTML = skeletonHTML;
+}
+// =========================================================================
 
           
        // BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
 async function fetchStaff() {
     const listContainer = document.querySelector('#staff-list .panel-body');
-    listContainer.innerHTML = '<p>Personel listesi yükleniyor...</p>';
+    showStaffListSkeleton();
     try {
         const personelSorgusu = query(collection(db, "personel"), orderBy("ad_soyad"));
         const [staffSnap, neviSnap, gorevSnap] = await Promise.all([
@@ -2326,7 +2521,19 @@ async function initializeSchedule() {
         
         await loadScheduleForClass(window.aktifSinif);
 
-        scheduleInitialized = true;
+        // YERİNE BU YENİ KOD BLOĞUNU EKLEYİN
+        // YENİ EKLENDİ: Versiyon listesindeki silme butonları için olay dinleyicisi
+        document.getElementById('versiyon-listesi').addEventListener('click', async (e) => {
+            if (e.target.classList.contains('btn-delete-version')) {
+                const tarih = e.target.dataset.tarih;
+                const sinif = e.target.dataset.sinif;
+                if (tarih && sinif) {
+                    await deleteScheduleVersion(sinif, tarih);
+                }
+            }
+        });
+
+        scheduleInitialized = true; // Bu satır en sonda kalacak
 
     } catch (error) {
         console.error("Ders programı başlatılırken hata:", error);
@@ -2405,8 +2612,9 @@ async function initializeSchedule() {
             });
         }
 
-// ================= EKLENECEK YENİ YARDIMCI FONKSİYONLAR =================
-// Arayüzdeki versiyon listesini dolduran fonksiyon
+// =========================================================================
+// SİLME BUTONUNU EKLEYEN GÜNCELLENMİŞ renderVersionList FONKSİYONU
+// =========================================================================
 async function renderVersionList(sanitizedSinifAdi) {
     const versiyonListesiUL = document.getElementById('versiyon-listesi');
     versiyonListesiUL.innerHTML = '<li>Versiyonlar yükleniyor...</li>';
@@ -2423,7 +2631,16 @@ async function renderVersionList(sanitizedSinifAdi) {
 
     snapshot.forEach(doc => {
         const li = document.createElement('li');
-        li.innerHTML = `<a href="#" data-tarih="${doc.id}" style="text-decoration: none; color: #0056b3;">${formatDateDDMMYYYY(doc.id)} tarihli program</a>`;
+        
+        // YENİ EKLENDİ: Buton ve linki içeren HTML yapısı
+        li.innerHTML = `
+            <a href="#" data-tarih="${doc.id}" style="text-decoration: none; color: #0056b3; font-weight: 500;">
+                ${formatDateDDMMYYYY(doc.id)} tarihli program
+            </a>
+            <button class="btn-delete-version" data-tarih="${doc.id}" data-sinif="${sanitizedSinifAdi}">Sil</button>
+        `;
+
+        // Linke tıklama olayı (bu kısım aynı kaldı)
         li.querySelector('a').addEventListener('click', async (e) => {
             e.preventDefault();
             const tarih = e.target.dataset.tarih;
@@ -2438,6 +2655,25 @@ async function renderVersionList(sanitizedSinifAdi) {
         });
         versiyonListesiUL.appendChild(li);
     });
+}
+
+
+// YERİNE BU YENİ FONKSİYONU EKLEYİN
+async function deleteScheduleVersion(sanitizedSinifAdi, tarih) {
+    showConfirmationModal(
+        `Bu sınıfa ait <strong>${formatDateDDMMYYYY(tarih)}</strong> tarihli ders programını kalıcı olarak silmek istediğinizden emin misiniz?`,
+        async () => { // Onaylandığında çalışacak fonksiyon
+            try {
+                const docRef = doc(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar", tarih);
+                await deleteDoc(docRef);
+                showToast('Ders programı versiyonu başarıyla silindi.', 'success');
+                await loadScheduleForClass(window.aktifSinif);
+            } catch (error) {
+                console.error("Program versiyonu silinirken hata:", error);
+                showToast('Silme işlemi sırasında bir hata oluştu.', 'error');
+            }
+        }
+    );
 }
 
 // Belirli bir sınıfın programını yükleyen ana fonksiyon (GÜNCELLENDİ)
@@ -4543,7 +4779,7 @@ async function generateInitialPuantaj() {
             aktifPersonelList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
         }
 
-        const [scheduleData, nobetVerisi, izinVerisi] = await Promise.all([
+        const [personelScheduleData, nobetVerisi, izinVerisi] = await Promise.all([
             fetchAndProcessSchedules(year, month),
             fetchAndCalculateNobetData(year, month),
             fetchIzinDataForPuantaj(year, month)
@@ -5494,7 +5730,21 @@ personelForm.addEventListener('submit', async function(e) {
     }
 });
             document.getElementById('staff-list').addEventListener('click', async (e) => {
-                if(e.target.classList.contains('btn-delete')) { if (confirm('Bu personeli silmek istediğinizden emin misiniz?')) { await deleteDoc(doc(db, 'personel', e.target.dataset.id)); showToast('Personel silindi.'); fetchStaff(); } }
+                // YERİNE BU YENİ if BLOĞUNU EKLEYİN
+if (e.target.classList.contains('btn-delete')) {
+    const personelId = e.target.dataset.id;
+    // Sil butonuna en yakın satırı (tr) bul ve içindeki 2. hücreden (td) personel adını al
+    const personelAdi = e.target.closest('tr').querySelector('td:nth-child(2)').textContent.trim();
+    
+    showConfirmationModal(
+        `<strong>${personelAdi}</strong> adlı personeli kalıcı olarak silmek istediğinizden emin misiniz?`,
+        async () => { // Onaylandığında çalışacak fonksiyon
+            await deleteDoc(doc(db, 'personel', personelId));
+            showToast('Personel silindi.');
+            fetchStaff(); // Listeyi yenile
+        }
+    );
+}
                 if(e.target.classList.contains('btn-edit')) { const docSnap = await getDoc(doc(db, 'personel', e.target.dataset.id)); if(docSnap.exists()) openModal(docSnap.id, docSnap.data()); }
             });
 
@@ -5616,6 +5866,21 @@ personelForm.addEventListener('submit', async function(e) {
             </div>
             <div class="button-group">
                 <button id="generate-dilekce-with-date-btn" class="btn btn-save">Dilekçeyi Oluştur</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="confirmation-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px; text-align: center;">
+        <div class="modal-header">
+            <h3 id="confirmation-modal-title">İşlemi Onayla</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirmation-modal-message" style="font-size: 1.1em; line-height: 1.5;"></p>
+            <div class="confirmation-buttons" style="margin-top: 25px;">
+                <button id="confirm-cancel-btn" class="btn" style="background-color: #6c757d;">İptal</button>
+                <button id="confirm-action-btn" class="btn btn-confirm" style="background-color: var(--danger-color);">Onayla ve Sil</button>
             </div>
         </div>
     </div>
