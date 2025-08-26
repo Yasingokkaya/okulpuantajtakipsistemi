@@ -1873,7 +1873,7 @@ async function renderDashboardData() {
             } catch (e) { listElement.innerHTML = '<li>Veri yüklenemedi.</li>'; console.error("Error rendering settings:", e); }
         }
         
-        async function initializeSettings() { sssssssssssssssssssssssssi
+        async function initializeSettings() {
             const tabsContainer = document.querySelector('.settings-tabs');
             if (tabsContainer.dataset.initialized) return;
             tabsContainer.dataset.initialized = 'true';
@@ -5333,11 +5333,10 @@ document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
         if (targetId === 'ders-programi') initializeSchedule();
     });
 });
-// ==============================================================================
 
-            document.querySelectorAll('.accordion-trigger').forEach(acc => acc.addEventListener('click', e => { e.preventDefault(); acc.parentElement.classList.toggle('open'); }));
 
-            personelForm.addEventListener('submit', async function(e) {
+// EKLENECEK GÜNCELLENMİŞ KOD BLOĞU
+personelForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     const editingId = e.target.dataset.editingId;
     const formData = new FormData(e.target);
@@ -5346,29 +5345,20 @@ document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
     // Kısmi süreli çalışma verilerini güvenli bir şekilde işle
     if (data.sozlesme_turu === 'Kısmi Süreli') {
         data.kismi_zamanli_calisma = {};
-        const gunler = formData.getAll('kismi_gunler'); // Seçili tüm günler
+        const gunler = formData.getAll('kismi_gunler');
         const gunMap = {
-            'Pazartesi': 'pzts_saat',
-            'Salı': 'sali_saat',
-            'Çarşamba': 'crs_saat',
-            'Perşembe': 'prs_saat',
-            'Cuma': 'cuma_saat',
-            'Cumartesi': 'cmrts_saat',
-            'Pazar': 'pazar_saat'
+            'Pazartesi': 'pzts_saat', 'Salı': 'sali_saat', 'Çarşamba': 'crs_saat',
+            'Perşembe': 'prs_saat', 'Cuma': 'cuma_saat', 'Cumartesi': 'cmrts_saat', 'Pazar': 'pazar_saat'
         };
-
         gunler.forEach(gunAdi => {
             const saatInputAdi = gunMap[gunAdi];
-            // Eğer gün haritada varsa ve ilgili saat input'u doluysa veriyi işle
             if (saatInputAdi && data[saatInputAdi]) {
                 const saatDegeri = parseInt(data[saatInputAdi], 10);
-                if (!isNaN(saatDegeri)) { // Sayısal bir değer olduğundan emin ol
+                if (!isNaN(saatDegeri)) {
                     data.kismi_zamanli_calisma[gunAdi] = saatDegeri;
                 }
             }
         });
-
-        // Ana 'data' objesinden artık gereksiz olan geçici anahtarları temizle
         delete data.kismi_gunler;
         Object.values(gunMap).forEach(inputAdi => delete data[inputAdi]);
     }
@@ -5382,10 +5372,17 @@ document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
             showToast('Personel başarıyla eklendi.');
         }
         closeModal();
+
         // Eğer personel listesi ekranı aktifse, listeyi yenile
         if (document.getElementById('staff-list').classList.contains('active')) {
             fetchStaff();
         }
+
+        // *** YENİ EKLENEN SATIR: PUANTAJ VERİSİNİ GÜNCELLE ***
+        // Bu satır, puantaj modülünün kullandığı personel listesini
+        // veritabanından tazeleyerek sorunu çözer.
+        await loadAndFilterPersonelList();
+        
     } catch (err) {
         showToast('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'error');
         console.error("Personel kaydetme/güncelleme hatası:", err);
