@@ -5298,39 +5298,48 @@ renderDashboardData(); // <--- YENİ EKLENEN SATIR BU
             modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
 
-            // ======================= YERİNE BU DOĞRU KOD BLOĞUNU EKLEYİN =======================
-document.querySelectorAll('.nav-link, .sub-menu a').forEach(link => {
-    // Menüdeki "Yeni Personel Ekle" butonu ayrı yönetildiği için onu hariç tutuyoruz
+           // EKLENECEK YENİ VE BİRLEŞTİRİLMİŞ KOD BLOĞU
+document.querySelectorAll('.sidebar-nav a').forEach(link => {
+    // "Yeni Personel Ekle" butonu sadece bir modal açtığı için bu genel mantığın dışında tutulur.
     if (link.id === 'open-add-staff-modal') return;
 
     link.addEventListener('click', function(e) {
-        // Eğer linkin bir hedefi varsa, varsayılan tıklama eylemini engelle
-        if (this.dataset.target) e.preventDefault();
-        
-        const targetId = this.dataset.target;
-        if (!targetId) return; // Eğer linkin bir hedefi yoksa fonksiyondan çık
-
-        // Tüm menü linklerinden ve içerik modüllerinden 'active' sınıfını kaldır
-        document.querySelectorAll('.nav-link, .accordion-trigger, .module').forEach(el => el.classList.remove('active'));
-        
-        // Tıklanan linke ve eğer varsa ana menü grubuna 'active' sınıfını ekle
-        this.classList.add('active');
-        if (this.closest('.menu-item-group')) {
-            this.closest('.menu-item-group').querySelector('a').classList.add('active');
+        // Tıklanan link bir akordiyon menü başlığı ise (Personel Yönetimi gibi)
+        if (this.classList.contains('accordion-trigger')) {
+            e.preventDefault(); // Linkin varsayılan davranışını engelle
+            this.parentElement.classList.toggle('open'); // Menüyü aç/kapat
         }
         
-        // Hedef içerik modülünü görünür yap
-        document.getElementById(targetId).classList.add('active');
+        // Tıklanan link bir içerik sayfası açıyorsa (Personel Listesi, Ana Sayfa gibi)
+        const targetId = this.dataset.target;
+        if (targetId) {
+            e.preventDefault(); // Linkin varsayılan davranışını engelle
+            
+            // Önceki aktif linkleri ve modülleri temizle
+            document.querySelectorAll('.nav-link, .accordion-trigger, .module').forEach(el => el.classList.remove('active'));
 
-        // Hangi modülün aktif olduğuna bağlı olarak ilgili fonksiyonu çağır
-        if (targetId === 'dashboard') renderDashboardData(); // Dashboard yenileme eklendi
-        if (targetId === 'staff-list') fetchStaff();
-        if (targetId === 'settings') initializeSettings();
-        if (targetId === 'gorevlendirme') initializeGorevlendirme(); 
-        if (targetId === 'nobet-takip') initializeNobetTakip();
-        if (targetId === 'puantaj') initializePuantaj();
-        if (targetId === 'izin-takip') initializeIzinTakip();
-        if (targetId === 'ders-programi') initializeSchedule();
+            // Tıklanan linki aktif yap
+            this.classList.add('active');
+            
+            // Eğer bu link bir alt menüdeyse, ana başlığını da aktif yap
+            const parentGroup = this.closest('.menu-item-group');
+            if (parentGroup) {
+                parentGroup.querySelector('.accordion-trigger').classList.add('active');
+            }
+
+            // İlgili modülü göster
+            document.getElementById(targetId).classList.add('active');
+            
+            // Gerekli fonksiyonu çalıştır
+            if (targetId === 'dashboard') renderDashboardData();
+            if (targetId === 'staff-list') fetchStaff();
+            if (targetId === 'settings') initializeSettings();
+            if (targetId === 'gorevlendirme') initializeGorevlendirme();
+            if (targetId === 'nobet-takip') initializeNobetTakip();
+            if (targetId === 'puantaj') initializePuantaj();
+            if (targetId === 'izin-takip') initializeIzinTakip();
+            if (targetId === 'ders-programi') initializeSchedule();
+        }
     });
 });
 
