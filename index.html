@@ -4734,7 +4734,9 @@ async function fetchAndProcessSchedules(year, month) {
     
     return personelScheduleData;
 }
-   // BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
+
+
+// MEVCUT generateInitialPuantaj FONKSİYONUNU SİLİP, BU NİHAİ VERSİYONU YAPIŞTIRIN
 async function generateInitialPuantaj() {
     if (isPuantajLocked) {
         showToast('Puantaj kilitli...', 'error');
@@ -4790,7 +4792,6 @@ async function generateInitialPuantaj() {
 
         aktifPersonelList.forEach(personel => {
             puantajData[personel.id] = {
-                // YENİ EKLEME: Personelin o anki tüm bilgilerini puantaj verisine göm
                 ad: personel.ad,
                 unvan: personel.unvan,
                 neviAdi: personel.neviAdi,
@@ -4803,14 +4804,14 @@ async function generateInitialPuantaj() {
                 ise_giris: personel.ise_giris,
                 isten_ayrilis: personel.isten_ayrilis,
                 kismi_zamanli_calisma: personel.kismi_zamanli_calisma,
-                dailyData: {} // Günlük veriler için boş bir obje
+                dailyData: {}
             };
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateUTC = new Date(Date.UTC(year, month, day));
                 const dateString = dateUTC.toISOString().split('T')[0];
                 let code = '', hours = 0;
-                if (personel.isten_ayrilis) {
+                if (personel.isten_ayrilis && personel.isten_ayrilis !== '---') {
                     const ayrilisTarihiUTC = new Date(personel.isten_ayrilis + 'T00:00:00Z');
                     if (dateUTC > ayrilisTarihiUTC) {
                         puantajData[personel.id]['dailyData'][dateString] = { code: '', hours: 0, notes: '' };
@@ -4827,7 +4828,10 @@ async function generateInitialPuantaj() {
                     if (personel.sozlesme_turu === 'Kısmi Süreli') {
                         if (isResmiTatil(dateUTC)) { code = 'E'; }
                         else {
-                            const scheduledHours = parseInt(personel.kismi_zamanli_calisma?.[dayOfWeekTR] || scheduleData[personel.id]?.[dayOfWeekTR] || 0);
+                            // HATA BURADAYDI: scheduleData -> personelScheduleData olarak düzeltildi.
+                            const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
+                            const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
+                            const scheduledHours = parseInt(personel.kismi_zamanli_calisma?.[dayOfWeekTR] || gununDersSaati || 0);
                             code = (scheduledHours > 0) ? 'Y' : 'E';
                             hours = scheduledHours;
                         }
@@ -4838,16 +4842,13 @@ async function generateInitialPuantaj() {
                             if (isWeekend) { code = 'HT'; }
                             else {
                                 code = 'N';
-                                // Bu yeni kodu ekleyin
-// O gün için geçerli olan doğru ders programını bul
-const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
-const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
-
-if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
-    hours = 4;
-} else {
-    hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : gununDersSaati;
-}
+                                const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
+                                const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
+                                if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
+                                    hours = 4;
+                                } else {
+                                    hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : gununDersSaati;
+                                }
                             }
                         }
                     }
@@ -4870,6 +4871,7 @@ if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unv
         showToast('Puantaj oluşturulamadı.', 'error');
     }
 }
+
 // BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
 async function generateIndividualPuantaj() {
     const selectedPersonelId = document.getElementById('personel-filter-select').value;
