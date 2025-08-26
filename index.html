@@ -1749,8 +1749,23 @@ async function renderDashboardData() {
         const nobetYeriMap = new Map(nobetYeriSnap.docs.map(doc => [doc.id, doc.data().name]));
         const tumPersonelListesi = personelSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // --- GÜNLÜK KARTLARIN DOLDURULMASI (MEVCUT KOD) ---
-        personelValueEl.textContent = personelSnap.size;
+        // --- DEĞİŞİKLİK BURADA: Sadece aktif personeli say ---
+        const bugunTarihi = new Date();
+        bugunTarihi.setHours(0, 0, 0, 0); // Saat farklarından etkilenmemek için
+
+        const aktifPersonelListesi = tumPersonelListesi.filter(p => {
+            const ayrilisTarihiStr = p.isten_ayrilis;
+            if (!ayrilisTarihiStr || ayrilisTarihiStr.trim() === '') {
+                return true; // Ayrılış tarihi yoksa aktiftir.
+            }
+            const ayrilisTarihi = new Date(ayrilisTarihiStr);
+            // Ayrılış tarihi bugünden sonraysa aktiftir.
+            return ayrilisTarihi > bugunTarihi;
+        });
+
+        personelValueEl.textContent = aktifPersonelListesi.length; // Artık toplam değil, aktif personel sayısını yazıyoruz.
+        // --- DEĞİŞİKLİK SONA ERDİ ---
+
         if (nobetSnap.empty) { nobetListEl.innerHTML = '<span class="no-data">Bugün nöbetçi yok.</span>'; } 
         else { nobetListEl.innerHTML = nobetSnap.docs.map(doc => `<span><strong>${personelMap.get(doc.data().personelId) || '?'}</strong> - ${nobetYeriMap.get(doc.data().nobetYeriId) || ''}</span>`).join(''); }
 
@@ -1767,7 +1782,7 @@ async function renderDashboardData() {
         if (gorevSnap.empty) { gorevListEl.innerHTML = '<span class="no-data">Bugün görevlendirme yok.</span>'; }
         else { gorevListEl.innerHTML = gorevSnap.docs.map(d => `<span><strong>${personelMap.get(d.data().gorevliId) || '?'}</strong> (Yerine: ${personelMap.get(d.data().asilId) || '?'})</span>`).join(''); }
 
-        // --- YENİ EKLENEN AYLIK ÖZET KARTLARININ DOLDURULMASI ---
+        // --- Aylık Özet Kartlarının Doldurulması (Bu kısım aynı kalıyor) ---
         let totalEkders = 0, totalNobet = 0, totalRehberlik = 0;
         const aylikPuantajVerisi = puantajDocSnap.exists() ? puantajDocSnap.data().puantajData : null;
 
@@ -1775,11 +1790,8 @@ async function renderDashboardData() {
             const nobetVerisi = await fetchAndCalculateNobetData(currentYear, currentMonth);
 
             tumPersonelListesi.forEach(personel => {
-                // Puantaj verisi olan personeller için hesaplama yap
                 if (aylikPuantajVerisi[personel.id]) {
-                    // Global puantajData değişkenini geçici olarak bu ayın verisiyle doldur
                     window.puantajData = aylikPuantajVerisi; 
-
                     if (personel.neviAdi?.includes('Eğitim Personeli') || personel.unvan?.includes('Müdür')) {
                        totalEkders += calculateMonthlyHours(personel.id).ekDers;
                     }
@@ -1793,27 +1805,22 @@ async function renderDashboardData() {
         aylikNobetEl.textContent = totalNobet;
         aylikRehberlikEl.textContent = totalRehberlik;
 
-        // Bu ay raporlu olanları bulma
         const raporluIzinTipi = izinTipiSnap.docs.find(doc => doc.data().kod === 'R');
         if (raporluIzinTipi) {
             const ayinIlkGunu = new Date(currentYear, currentMonth, 1);
             const ayinSonGunu = new Date(currentYear, currentMonth + 1, 0);
             const raporluPersonelListesi = new Set();
-
             const raporSorgusu = query(collection(db, "izinler"), where("izinTipiId", "==", raporluIzinTipi.id));
             const raporluIzinlerSnap = await getDocs(raporSorgusu);
-
             raporluIzinlerSnap.forEach(doc => {
                 const izin = doc.data();
                 const baslangic = new Date(izin.baslangicTarihi + 'T00:00:00');
                 const bitis = new Date(izin.bitisTarihi + 'T23:59:59');
-                // İzin aralığı bu ay ile kesişiyor mu kontrolü
                 if (baslangic <= ayinSonGunu && bitis >= ayinIlkGunu) {
                     const personelAdi = personelMap.get(izin.personelId);
                     if (personelAdi) raporluPersonelListesi.add(personelAdi);
                 }
             });
-
             if (raporluPersonelListesi.size === 0) {
                 aylikRaporluListEl.innerHTML = '<span class="no-data">Bu ay raporlu personel yok.</span>';
             } else {
@@ -1830,8 +1837,6 @@ async function renderDashboardData() {
         [aylikEkdersEl, aylikNobetEl, aylikRehberlikEl].forEach(el => el.textContent = 'X');
     }
 }
-/* ======================================================================================================== */
-
 
         // --- AYARLAR VERİTABANI İŞLEMLERİ ---
         const getSettings = async (collectionName) => getDocs(query(collection(db, collectionName), orderBy("name")));
@@ -2056,8 +2061,13 @@ async function fetchStaff() {
 
         const aktifPersonel = [];
         const ayrilanPersonel = [];
+        
+        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+        // Artık ayın ilk gününü değil, bugünün tarihini baz alıyoruz.
+        // Saat, dakika ve saniye bilgilerini sıfırlayarak sadece gün karşılaştırması yapılmasını sağlıyoruz.
         const bugun = new Date();
-        const ayinIlkGunu = new Date(bugun.getFullYear(), bugun.getMonth(), 1);
+        bugun.setHours(0, 0, 0, 0); 
+        // --- DEĞİŞİKLİK BURADA BİTİYOR ---
 
         staffSnap.forEach(doc => {
             const personel = { id: doc.id, ...doc.data() };
@@ -2065,25 +2075,28 @@ async function fetchStaff() {
 
             if (ayrilisTarihiStr && ayrilisTarihiStr.trim() !== '') {
                 const ayrilisTarihi = new Date(ayrilisTarihiStr);
-                if (!isNaN(ayrilisTarihi.getTime()) && ayrilisTarihi < ayinIlkGunu) {
+                
+                // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+                // Karşılaştırma artık `bugun` değişkeni ile yapılıyor.
+                // Eğer ayrılış tarihi bugünden önceyse veya tam olarak bugünse, personel "ayrılanlar" listesine eklenir.
+                if (!isNaN(ayrilisTarihi.getTime()) && ayrilisTarihi <= bugun) {
                     ayrilanPersonel.push(personel);
                 } else {
                     aktifPersonel.push(personel);
                 }
+                // --- DEĞİŞİKLİK BURADA BİTİYOR ---
             } else {
                 aktifPersonel.push(personel);
             }
         });
 
-        // Verilen listeye göre HTML tablosu oluşturan yardımcı fonksiyon GÜNCELLENDİ
+        // Verilen listeye göre HTML tablosu oluşturan yardımcı fonksiyon (Bu kısım aynı kalıyor)
         const createTableHTML = (personelListesi) => {
             if (personelListesi.length === 0) {
                 return '<p style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">Bu listede gösterilecek personel bulunmamaktadır.</p>';
             }
-            // *** YENİ SÜTUN BAŞLIKLARI: S.N. ve Cinsiyet eklendi ***
             let tableHTML = `<div class="table-container"><table class="staff-table"><thead><tr><th>S.N.</th><th>Adı Soyadı</th><th>Cinsiyet</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>`;
             
-            // *** YENİ SATIR İÇERİĞİ: Sıra numarası ve cinsiyet bilgisi eklendi ***
             personelListesi.forEach((s, index) => {
                 const cinsiyet = s.cinsiyet === 'kadin' ? 'Kadın' : (s.cinsiyet === 'erkek' ? 'Erkek' : '---');
                 tableHTML += `<tr>
