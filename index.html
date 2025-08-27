@@ -35,6 +35,38 @@
     z-index: 100; /* Diğer elemanların üzerinde kalmasını sağlar */
     /* EKLENEN YENİ KODLAR BİTİŞİ */
 }
+/* ========================================================================= */
+/* PERSONEL DETAY MODALI İÇİN EKLENEN STİLLER                                */
+/* ========================================================================= */
+.btn-details {
+    background-color: var(--info-color); /* Mavi renk */
+}
+
+#personel-bilgileri-container .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px 25px;
+}
+
+#personel-bilgileri-container .info-item {
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+#personel-bilgileri-container .info-item label {
+    font-size: 0.9em;
+    color: #555;
+    display: block;
+    margin-bottom: 4px;
+}
+
+#personel-bilgileri-container .info-item span {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--dark-text-color);
+}
 .sidebar nav {
         flex-grow: 1;
         overflow-y: auto;
@@ -213,7 +245,23 @@
         .toast { padding: 15px 20px; color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateX(100%); animation: slideIn 0.3s forwards; }
         .toast.success { background-color: var(--success-color); }
 .toast.error { background-color: var(--danger-color); }
-
+/* ========================================================================= */
+/* PERSONEL LİSTESİ FİLTRELEME ALANI İÇİN YENİ STİLLER                      */
+/* ========================================================================= */
+.filter-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+.filter-container .form-group {
+    margin-bottom: 0;
+}
+/* ========================================================================= */
 /* YENİ EKLENEN BİLGİ UYARISI STİLİ */
 .toast.info { background-color: var(--info-color); }
         @keyframes slideIn { to { opacity: 1; transform: translateX(0); } } @keyframes slideOut { to { opacity: 0; transform: translateX(100%); } }
@@ -1043,7 +1091,7 @@ td[style*="background-color"] .input-wrapper {
         <ul class="sidebar-nav">
             <li><a class="nav-link active" data-target="dashboard">🏠 <span>Ana Sayfa</span></a></li>
             <li class="menu-item-group">
-                <a class="accordion-trigger">👥 <span>Personel Yönetimi</span></a>
+                <a class="accordion-trigger nav-link">👥 <span>Personel Yönetimi</span></a>
                 <ul class="sub-menu">
                     <li><a id="open-add-staff-modal"><span>Yeni Personel Ekle</span></a></li>
                     <li><a class="nav-link" data-target="staff-list"><span>Personel Listesi</span></a></li>
@@ -1138,7 +1186,7 @@ td[style*="background-color"] .input-wrapper {
         </div>
     </div>
 </div>
-    <div class="panel" style="margin-top: 25px;">
+    <div class="panel" style="margin-top: 25px;"> 
         <div class="panel-header"><h3>Hızlı İşlemler</h3></div>
         <div class="panel-body quick-actions">
             <a class="quick-action-btn nav-link" data-target="staff-list">👥 Personel Listesi</a>
@@ -1148,7 +1196,40 @@ td[style*="background-color"] .input-wrapper {
         </div>
     </div>
 </div>
-            <div id="staff-list" class="module"><div class="panel"><div class="panel-header"><h3>Personel Listesi</h3><button id="add-staff-from-list-btn" class="btn-header-add">Yeni Personel Ekle</button></div><div class="panel-body"><p>Personel listesi yükleniyor...</p></div></div></div>
+
+<div id="staff-list" class="module">
+    <div class="panel">
+        <div class="panel-header">
+            <h3>Personel Listesi</h3>
+            <button id="add-staff-from-list-btn" class="btn-header-add">Yeni Personel Ekle</button>
+        </div>
+        <div class="panel-body"> 
+
+            <div class="filter-container">
+                <div class="form-group">
+                    <label for="search-personel-input">Personel Adına Göre Ara</label>
+                    <input type="text" id="search-personel-input" placeholder="İsim yazarak arayın...">
+                </div>
+                <div class="form-group">
+                    <label for="filter-nevi-select">Personel Nevine Göre Filtrele</label>
+                    <select id="filter-nevi-select">
+                        <option value="">Tüm Neviler</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filter-gorev-select">Göreve Göre Filtrele</label>
+                    <select id="filter-gorev-select">
+                        <option value="">Tüm Görevler</option>
+                    </select>
+                </div>
+                <div class="form-group" style="align-self: flex-end;">
+                    <button id="clear-personel-filters-btn" class="btn" style="width:100%; background-color:#6c757d;">Filtreleri Temizle</button>
+                </div>
+            </div> <div id="personel-table-area">
+                </div>
+
+        </div> </div> </div> 
+
             <div id="ders-programi" class="module">
     <div class="panel">
         <div class="panel-header"><h3>Sınıf Bazlı Ders Programı</h3></div>
@@ -1788,7 +1869,7 @@ const eksikGunKodlari = [
 ];
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         // YERİNE BU DOĞRU SATIRI EKLEYİN
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, query, where, orderBy, documentId } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, query, where, orderBy, documentId, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         const firebaseConfig = {
@@ -1846,6 +1927,10 @@ const resmiTatiller = {
         ]
     }
 };
+// ======================================================
+// YENİ EKLENEN SATIR BURADA
+let tumPersonelListesi = [];
+// ======================================================
 function formatDateDDMMYYYY(dateString) {
     if (!dateString || typeof dateString !== 'string') return '---';
     const parts = dateString.split('-');
@@ -1883,7 +1968,119 @@ function isResmiTatil(date) {
             container.appendChild(toast);
             setTimeout(() => { toast.style.animation = 'slideOut 0.3s forwards'; toast.addEventListener('animationend', () => toast.remove()); }, 3000);
         }
+// =========================================================================
+// YENİ: PERSONEL DETAY MODALINI AÇAN VE DOLDURAN FONKSİYON
+// =========================================================================
+async function openPersonelDetayModal(personelId) {
+    const modal = document.getElementById('personel-detay-modal');
+    const title = document.getElementById('personel-detay-modal-title');
+    const bilgilerContainer = document.getElementById('personel-bilgileri-container');
+    const izinContainer = document.getElementById('personel-izin-gecmisi-container');
+    const nobetContainer = document.getElementById('personel-nobet-gecmisi-container');
 
+    // Modal'ı aç ve içeriği temizle
+    title.textContent = 'Personel Profili Yükleniyor...';
+    bilgilerContainer.innerHTML = '<p>Kişisel bilgiler yükleniyor...</p>';
+    izinContainer.innerHTML = '<p style="padding: 20px;">İzin geçmişi yükleniyor...</p>';
+    nobetContainer.innerHTML = '<p style="padding: 20px;">Nöbet geçmişi yükleniyor...</p>';
+    modal.classList.add('open');
+    showSpinner();
+
+    try {
+        // Gerekli tüm verileri paralel olarak çek
+        const [
+            personelDoc,
+            izinSnap,
+            nobetSnap,
+            izinTipiSnap,
+            nobetYeriSnap,
+            neviSnap,
+            gorevSnap
+        ] = await Promise.all([
+            getDoc(doc(db, 'personel', personelId)),
+            getDocs(query(collection(db, 'izinler'), where('personelId', '==', personelId))),
+            getDocs(query(collection(db, 'nobetler'), where('personelId', '==', personelId), orderBy('tarih', 'desc'))),
+            getSettings('ayarlar_izin_tipleri'),
+            getSettings('ayarlar_nobet_yerleri'),
+            getSettings('ayarlar_personel_nevileri'),
+            getSettings('ayarlar_gorevler')
+        ]);
+
+        if (!personelDoc.exists()) {
+            throw new Error('Personel bulunamadı!');
+        }
+        
+        const personel = personelDoc.data();
+        title.textContent = `${personel.ad_soyad} - Personel Profili`;
+
+        // Haritalama için yardımcı nesneler oluştur
+        const izinTipiMap = new Map(izinTipiSnap.docs.map(d => [d.id, d.data().name]));
+        const nobetYeriMap = new Map(nobetYeriSnap.docs.map(d => [d.id, d.data().name]));
+        const neviMap = new Map(neviSnap.docs.map(d => [d.id, d.data().name]));
+        const gorevMap = new Map(gorevSnap.docs.map(d => [d.id, d.data().name]));
+
+        // --- 1. Kişisel Bilgiler Sekmesini Doldur ---
+        bilgilerContainer.innerHTML = `
+            <div class="info-grid">
+                <div class="info-item"><label>T.C. Kimlik No</label><span>${personel.tc_kimlik_no || '---'}</span></div>
+                <div class="info-item"><label>SGK No</label><span>${personel.sgk_no || '---'}</span></div>
+                <div class="info-item"><label>İşe Giriş Tarihi</label><span>${formatDateDDMMYYYY(personel.ise_giris)}</span></div>
+                <div class="info-item"><label>Personel Nevisi</label><span>${neviMap.get(personel.personel_nevisi) || '---'}</span></div>
+                <div class="info-item"><label>Görevi / Branşı</label><span>${gorevMap.get(personel.gorevi_bransi) || '---'}</span></div>
+                <div class="info-item"><label>Sözleşme Türü</label><span>${personel.sozlesme_turu || '---'}</span></div>
+            </div>
+        `;
+
+        // --- 2. İzin Geçmişi Sekmesini Doldur ---
+if (izinSnap.empty) {
+    izinContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Bu personele ait izin kaydı bulunmamaktadır.</p>';
+} else {
+    // Gelen verileri bir diziye çevir
+    const izinler = izinSnap.docs.map(doc => doc.data());
+    
+    // Diziyi başlangıç tarihine göre (en yeniden en eskiye) sırala
+    izinler.sort((a, b) => b.baslangicTarihi.localeCompare(a.baslangicTarihi));
+
+    // Sıralanmış dizi üzerinden tabloyu oluştur
+    let izinTableHTML = '<table class="gorevlendirme-table"><thead><tr><th>İzin Tipi</th><th>Başlangıç</th><th>Bitiş</th><th>Açıklama</th></tr></thead><tbody>';
+    izinler.forEach(izin => {
+        izinTableHTML += `
+            <tr>
+                <td>${izinTipiMap.get(izin.izinTipiId) || 'Bilinmiyor'}</td>
+                <td>${formatDateDDMMYYYY(izin.baslangicTarihi)}</td>
+                <td>${formatDateDDMMYYYY(izin.bitisTarihi)}</td>
+                <td>${izin.aciklama || '---'}</td>
+            </tr>
+        `;
+    });
+    izinContainer.innerHTML = izinTableHTML + '</tbody></table>';
+}
+
+        // --- 3. Nöbet Geçmişi Sekmesini Doldur ---
+        if (nobetSnap.empty) {
+            nobetContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Bu personele ait nöbet kaydı bulunmamaktadır.</p>';
+        } else {
+            let nobetTableHTML = '<table class="gorevlendirme-table"><thead><tr><th>Tarih</th><th>Nöbet Yeri</th></tr></thead><tbody>';
+            nobetSnap.forEach(nobetDoc => {
+                const nobet = nobetDoc.data();
+                nobetTableHTML += `
+                    <tr>
+                        <td>${formatDateDDMMYYYY(nobet.tarih)}</td>
+                        <td>${nobetYeriMap.get(nobet.nobetYeriId) || 'Bilinmiyor'}</td>
+                    </tr>
+                `;
+            });
+            nobetContainer.innerHTML = nobetTableHTML + '</tbody></table>';
+        }
+
+    } catch (error) {
+        console.error("Personel detayları yüklenirken hata:", error);
+        title.textContent = 'Hata!';
+        bilgilerContainer.innerHTML = `<p style="color:red;">Personel bilgileri yüklenemedi: ${error.message}</p>`;
+    } finally {
+        hideSpinner();
+    }
+}
 // =========================================================================
 // YENİ, TAM VE SPINNER ENTEGRE EDİLMİŞ renderDashboardData FONKSİYONU
 // =========================================================================
@@ -2247,14 +2444,15 @@ async function loadZamanCizelgesiAyarlari() {
         console.error("Zaman çizelgesi yüklenirken hata:", e);
     }
 }
-      
+    
+    
 // =========================================================================
 // ADIM 3A: PERSONEL LİSTESİ İÇİN İSKELET EKRAN OLUŞTURAN FONKSİYON
 // =========================================================================
 function showStaffListSkeleton() {
-    const listContainer = document.querySelector('#staff-list .panel-body');
+    const tableArea = document.getElementById('personel-table-area');
     let skeletonHTML = '<div class="table-container"><table class="staff-table"><thead><tr><th>S.N.</th><th>Adı Soyadı</th><th>Cinsiyet</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>';
-    for (let i = 0; i < 5; i++) { // 5 satırlık bir iskelet oluşturalım
+    for (let i = 0; i < 5; i++) {
         skeletonHTML += `
             <tr>
                 <td><div class="skeleton skeleton-cell" style="width: 30px; height: 20px;"></div></td>
@@ -2264,102 +2462,142 @@ function showStaffListSkeleton() {
                 <td><div class="skeleton skeleton-cell" style="width: 120px; height: 20px;"></div></td>
                 <td><div class="skeleton skeleton-cell" style="width: 80px; height: 20px;"></div></td>
                 <td><div class="skeleton skeleton-cell" style="width: 80px; height: 20px;"></div></td>
-                <td><div class="skeleton skeleton-cell" style="width: 140px; height: 35px;"></div></td>
+                <td><div class="skeleton skeleton-cell" style="width: 210px; height: 35px;"></div></td>
             </tr>
         `;
     }
     skeletonHTML += '</tbody></table></div>';
-    listContainer.innerHTML = skeletonHTML;
+    tableArea.innerHTML = skeletonHTML;
 }
-// =========================================================================
 
-          
-       // BU FONKSİYONUN TAMAMINI YAPIŞTIRIN
+// =========================================================================
+// YENİ EKLENEN ANA YÜKLEME FONKSİYONU: fetchStaff
+// =========================================================================
 async function fetchStaff() {
-    const listContainer = document.querySelector('#staff-list .panel-body');
+    // Eğer ana personel listesi zaten doluysa, veritabanından tekrar çekme. Sadece listeyi yeniden çiz.
+    if (tumPersonelListesi.length > 0) {
+        renderPersonelListesi();
+        return;
+    }
+
     showStaffListSkeleton();
     try {
-        const personelSorgusu = query(collection(db, "personel"), orderBy("ad_soyad"));
         const [staffSnap, neviSnap, gorevSnap] = await Promise.all([
-            getDocs(personelSorgusu),
+            getDocs(query(collection(db, "personel"), orderBy("ad_soyad"))),
             getSettings('ayarlar_personel_nevileri'),
             getSettings('ayarlar_gorevler')
         ]);
 
-        const neviMap = Object.fromEntries(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
-        const gorevMap = Object.fromEntries(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
+        // Veritabanından gelen veriyi ana listemize kaydet.
+        tumPersonelListesi = staffSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        if (staffSnap.empty) {
-            listContainer.innerHTML = '<p>Henüz kayıtlı personel bulunmamaktadır.</p>';
-            return;
-        }
+        // Filtreleme select kutularını doldur
+        const neviSelect = document.getElementById('filter-nevi-select');
+        const gorevSelect = document.getElementById('filter-gorev-select');
 
-        const aktifPersonel = [];
-        const ayrilanPersonel = [];
-        
-        // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
-        // Artık ayın ilk gününü değil, bugünün tarihini baz alıyoruz.
-        // Saat, dakika ve saniye bilgilerini sıfırlayarak sadece gün karşılaştırması yapılmasını sağlıyoruz.
-        const bugun = new Date();
-        bugun.setHours(0, 0, 0, 0); 
-        // --- DEĞİŞİKLİK BURADA BİTİYOR ---
+        // Önce mevcut seçenekleri temizle (Tümü hariç)
+        neviSelect.length = 1;
+        gorevSelect.length = 1;
 
-        staffSnap.forEach(doc => {
-            const personel = { id: doc.id, ...doc.data() };
-            const ayrilisTarihiStr = personel.isten_ayrilis;
+        neviSnap.forEach(doc => neviSelect.add(new Option(doc.data().name, doc.id)));
+        gorevSnap.forEach(doc => gorevSelect.add(new Option(doc.data().name, doc.id)));
 
-            if (ayrilisTarihiStr && ayrilisTarihiStr.trim() !== '') {
-                const ayrilisTarihi = new Date(ayrilisTarihiStr);
-                
-                // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
-                // Karşılaştırma artık `bugun` değişkeni ile yapılıyor.
-                // Eğer ayrılış tarihi bugünden önceyse veya tam olarak bugünse, personel "ayrılanlar" listesine eklenir.
-                if (!isNaN(ayrilisTarihi.getTime()) && ayrilisTarihi <= bugun) {
-                    ayrilanPersonel.push(personel);
-                } else {
-                    aktifPersonel.push(personel);
-                }
-                // --- DEĞİŞİKLİK BURADA BİTİYOR ---
+        // Olay dinleyicilerini (event listeners) sadece bir kere, ilk yüklemede ata.
+        document.getElementById('search-personel-input').addEventListener('input', renderPersonelListesi);
+        neviSelect.addEventListener('change', renderPersonelListesi);
+        gorevSelect.addEventListener('change', renderPersonelListesi);
+        document.getElementById('clear-personel-filters-btn').addEventListener('click', () => {
+            document.getElementById('search-personel-input').value = '';
+            document.getElementById('filter-nevi-select').value = '';
+            document.getElementById('filter-gorev-select').value = '';
+            renderPersonelListesi();
+        });
+
+        // İlk listeyi ekrana çiz.
+        renderPersonelListesi();
+
+    } catch (e) {
+        document.getElementById('personel-table-area').innerHTML = '<p style="color:red;">Personel listesi yüklenemedi.</p>';
+        console.error("Personel listesi yüklenirken hata:", e);
+    }
+}
+
+// =========================================================================
+// GÖRÜNTÜLEME FONKSİYONU: renderPersonelListesi
+// =========================================================================
+async function renderPersonelListesi() {
+    const tableContainer = document.getElementById('personel-table-area');
+    tableContainer.innerHTML = '<p>Personel listesi filtreleniyor...</p>';
+    
+    const searchValue = document.getElementById('search-personel-input').value.toLowerCase();
+    const neviValue = document.getElementById('filter-nevi-select').value;
+    const gorevValue = document.getElementById('filter-gorev-select').value;
+
+    let filtrelenmisPersonel = tumPersonelListesi.filter(personel => {
+        const adSoyadMatch = !searchValue || personel.ad_soyad.toLowerCase().includes(searchValue);
+        const neviMatch = !neviValue || personel.personel_nevisi === neviValue;
+        const gorevMatch = !gorevValue || personel.gorevi_bransi === gorevValue;
+        return adSoyadMatch && neviMatch && gorevMatch;
+    });
+
+    const [neviSnap, gorevSnap] = await Promise.all([
+        getSettings('ayarlar_personel_nevileri'),
+        getSettings('ayarlar_gorevler')
+    ]);
+    const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
+    const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
+
+    const aktifPersonel = [];
+    const ayrilanPersonel = [];
+    const bugun = new Date();
+    bugun.setHours(0, 0, 0, 0);
+
+    filtrelenmisPersonel.forEach(personel => {
+        const ayrilisTarihiStr = personel.isten_ayrilis;
+        if (ayrilisTarihiStr && ayrilisTarihiStr.trim() !== '') {
+            const ayrilisTarihi = new Date(ayrilisTarihiStr);
+            if (!isNaN(ayrilisTarihi.getTime()) && ayrilisTarihi <= bugun) {
+                ayrilanPersonel.push(personel);
             } else {
                 aktifPersonel.push(personel);
             }
+        } else {
+            aktifPersonel.push(personel);
+        }
+    });
+
+    const createTableHTML = (personelListesi) => {
+        if (personelListesi.length === 0) {
+            return '<p style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">Bu kriterlere uyan personel bulunmamaktadır.</p>';
+        }
+        let tableHTML = `<div class="table-container"><table class="staff-table"><thead><tr><th>S.N.</th><th>Adı Soyadı</th><th>Cinsiyet</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>`;
+        personelListesi.forEach((s, index) => {
+            const cinsiyet = s.cinsiyet === 'kadin' ? 'Kadın' : (s.cinsiyet === 'erkek' ? 'Erkek' : '---');
+            tableHTML += `<tr>
+                            <td>${index + 1}</td>
+                            <td>${s.ad_soyad || ''}</td>
+                            <td>${cinsiyet}</td>
+                            <td>${neviMap.get(s.personel_nevisi) || 'Bilinmiyor'}</td>
+                            <td>${gorevMap.get(s.gorevi_bransi) || 'Bilinmiyor'}</td>
+                            <td>${formatDateDDMMYYYY(s.ise_giris)}</td>
+                            <td>${formatDateDDMMYYYY(s.isten_ayrilis)}</td>
+                            <td class="actions-cell">
+                                <button class="btn btn-details" data-id="${s.id}" style="background-color:#0dcaf0;">Detay</button>
+                                <button class="btn btn-edit" data-id="${s.id}">Düzenle</button>
+                                <button class="btn btn-delete" data-id="${s.id}">Sil</button>
+                            </td>
+                          </tr>`;
         });
-
-        // Verilen listeye göre HTML tablosu oluşturan yardımcı fonksiyon (Bu kısım aynı kalıyor)
-        const createTableHTML = (personelListesi) => {
-            if (personelListesi.length === 0) {
-                return '<p style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">Bu listede gösterilecek personel bulunmamaktadır.</p>';
-            }
-            let tableHTML = `<div class="table-container"><table class="staff-table"><thead><tr><th>S.N.</th><th>Adı Soyadı</th><th>Cinsiyet</th><th>Personel Nevisi</th><th>Görevi / Branşı</th><th>İşe Giriş</th><th>İşten Ayrılış</th><th>İşlemler</th></tr></thead><tbody>`;
-            
-            personelListesi.forEach((s, index) => {
-                const cinsiyet = s.cinsiyet === 'kadin' ? 'Kadın' : (s.cinsiyet === 'erkek' ? 'Erkek' : '---');
-                tableHTML += `<tr>
-                                <td>${index + 1}</td>
-                                <td>${s.ad_soyad || ''}</td>
-                                <td>${cinsiyet}</td>
-                                <td>${neviMap[s.personel_nevisi] || 'Bilinmiyor'}</td>
-                                <td>${gorevMap[s.gorevi_bransi] || 'Bilinmiyor'}</td>
-                                <td>${formatDateDDMMYYYY(s.ise_giris)}</td>
-                                <td>${formatDateDDMMYYYY(s.isten_ayrilis)}</td>
-                                <td class="actions-cell"><button class="btn btn-edit" data-id="${s.id}">Düzenle</button><button class="btn btn-delete" data-id="${s.id}">Sil</button></td>
-                              </tr>`;
-            });
-            tableHTML += `</tbody></table></div>`;
-            return tableHTML;
-        };
-
-        let finalHTML = '<h3>Aktif Personel Listesi</h3>';
-        finalHTML += createTableHTML(aktifPersonel);
-        finalHTML += '<h3 style="margin-top: 40px; border-top: 2px solid #dee2e6; padding-top: 20px;">Ayrılan Personel Listesi</h3>';
-        finalHTML += createTableHTML(ayrilanPersonel);
-
-        listContainer.innerHTML = finalHTML;
-
-    } catch (e) {
-        listContainer.innerHTML = '<p style="color:red;">Personel listesi yüklenemedi.</p>';
-        console.error(e);
-    }
+        tableHTML += `</tbody></table></div>`;
+        return tableHTML;
+    };
+    
+    let finalHTML = '<h3>Aktif Personel Listesi</h3>';
+    finalHTML += createTableHTML(aktifPersonel);
+    finalHTML += '<h3 style="margin-top: 40px; border-top: 2px solid #dee2e6; padding-top: 20px;">Ayrılan Personel Listesi</h3>';
+    finalHTML += createTableHTML(ayrilanPersonel);
+    
+    tableContainer.innerHTML = finalHTML;
 }
   
         async function loadPersonelForm(staffId = null, staffData = null) {
@@ -4192,27 +4430,23 @@ async function loadAndFilterPersonelList() {
         showToast("Personel listesi yüklenemedi. Ayarlarınızı kontrol edin.", "error");
     }
 }
-// MEVCUT FONKSİYONU SİLİP, YERİNE BU YENİ VERSİYONU YAPIŞTIRIN
 function calculateStatusCounts(personelId) {
-    const personelData = puantajData[personelId];
-    if (!personelData) return {};
+    const personelPuantajVerisi = puantajData[personelId];
+    // Ana personel verisinin ve günlük verileri içeren 'dailyData'nın varlığını kontrol et
+    if (!personelPuantajVerisi || !personelPuantajVerisi.dailyData) {
+        return { N: 0, HT: 0, RT: 0, İ: 0, R: 0, Üİ: 0, S: 0, K: 0, RTÇ: 0 };
+    }
 
-    // DÜZELTME: Toplamlar artık 'Üİ' harflerine göre başlatılıyor.
     const counts = { N: 0, HT: 0, RT: 0, İ: 0, R: 0, Üİ: 0, S: 0, K: 0, RTÇ: 0 };
     
-    for (const date in personelData) {
-        let dayCode = personelData[date].code;
+    // HATA DÜZELTİLDİ: Döngü artık 'dailyData' içindeki tarihleri geziyor.
+    for (const date in personelPuantajVerisi.dailyData) {
+        let dayCode = personelPuantajVerisi.dailyData[date].code;
 
-        // Tutarlılık için eski 'UI' kodunu 'Üİ' olarak kabul et
-        if (dayCode === 'UI') {
+        // Kodlardaki tutarlılığı sağlamak için kontroller
+        if (dayCode === 'UI' || dayCode === 'üi') {
             dayCode = 'Üİ';
         }
-        // Tutarlılık için küçük 'üi' kodunu da 'Üİ' olarak kabul et
-        if (dayCode === 'üi') {
-            dayCode = 'Üİ';
-        }
-
-        // Noktalı büyük 'İ' için tutarlılık kontrolü
         if (dayCode === 'i' || dayCode === 'I') {
             dayCode = 'İ';
         }
@@ -4223,7 +4457,6 @@ function calculateStatusCounts(personelId) {
     }
     return counts;
 }
-
 // =================================================================
 // EKSİK GÜN KODU SEÇİM KUTUSU İÇİN ÖZEL GÖRÜNÜM FONKSİYONLARI
 // =================================================================
@@ -4749,7 +4982,7 @@ async function fetchAndProcessSchedules(year, month) {
 
 
 // MEVCUT generateInitialPuantaj FONKSİYONUNU SİLİP, BU NİHAİ VERSİYONU YAPIŞTIRIN
-async function generateInitialPuantaj() {
+async function generateInitialPuantaj() { SSSSSSSSSSSSSSSSSSSSSSS
     if (isPuantajLocked) {
         showToast('Puantaj kilitli...', 'error');
         return;
@@ -5274,7 +5507,7 @@ function downloadPdf() {
     });
 }
 
-// BU YENİ VE DÜZGÜN ÇALIŞAN KOD BLOĞUNU YAPIŞTIRIN
+// MEVCUT downloadExcel FONKSİYONUNU BU BLOK İLE KOMPLE DEĞİŞTİRİN
 async function downloadExcel() {
     try {
         showToast('Güncel personel verileri çekiliyor...', 'info');
@@ -5376,20 +5609,26 @@ async function downloadExcel() {
         const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
         const gunBasliklari = ["N", "HT", "RT", "İ", "R", "Üİ", "S", "K", "RTÇ"];
         const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
         const grupluPersonel = {
             'Belirsiz Süreli': personelToExport.filter(p => p.sozlesme_turu === 'Belirsiz Süreli'),
             'Belirli Süreli': personelToExport.filter(p => p.sozlesme_turu === 'Belirli Süreli'),
             'Kısmi Süreli': personelToExport.filter(p => p.sozlesme_turu === 'Kısmi Süreli')
         };
+        
+        const grupSiralama = ['Belirli Süreli', 'Belirsiz Süreli', 'Kısmi Süreli'];
+
         const saatBasliklariConfig = {
             'Belirsiz Süreli': { headers: ["Aylık\nToplam", "Fazla\nMesai", "Mesai\nNedeni", "E. G.\nKodu"], keys: ["genelToplam", "fazlaMesai", "mesaiNedeni", "eksikGunKodu"], styleKeys: ["summary-yellow", "summary-overtime", "social-section", "summary-count"] },
             'Belirli Süreli': { headers: ["Aylık\nToplam", "Ek\nDers", "Nöbet", "Rehberlik"], keys: ["genelToplam", "ekDers", "nobet", "rehberlik"], styleKeys: ["summary-yellow", "summary-green", "summary-nobet", "summary-rehberlik"] },
             'Kısmi Süreli':    { headers: ["Aylık\nToplam", "Ek\nDers", "Nöbet", "Rehberlik"], keys: ["genelToplam", "ekDers", "nobet", "rehberlik"], styleKeys: ["summary-yellow", "summary-green", "summary-nobet", "summary-rehberlik"] }
         };
         excelHtml += '<table style="border-collapse:collapse;">';
-        for (const grupAdi in grupluPersonel) {
+
+        grupSiralama.forEach(grupAdi => {
             const personelGrubu = grupluPersonel[grupAdi];
-            if (personelGrubu.length === 0) continue;
+            if (!personelGrubu || personelGrubu.length === 0) return;
+
             const saatConfig = saatBasliklariConfig[grupAdi];
             const colspan = 3 + daysInMonth + saatConfig.headers.length + gunBasliklari.length + 4;
             excelHtml += `<tr><td colspan="${colspan}" style="${styleMap['group-header']} border:0.5pt solid #888888;">${grupAdi} Puantaj Kayıtları</td></tr>`;
@@ -5421,12 +5660,15 @@ async function downloadExcel() {
                 let hoursRowHtml = '';
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const dayData = pData[dateString] || {};
+                    const dayData = pData.dailyData?.[dateString] || {};
                     const dayStyle = styleMap[`status-${dayData.code}`] || '';
                     const dividerStyle = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? styleMap['v-divider'] : '';
                     statusRowHtml += `<td style="${styleMap['default-cell']} ${dayStyle} ${dividerStyle} border:0.5pt solid #888888;">${dayData.code || ''}</td>`;
                     const hourContent = (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') && dayData.hours > 0 ? dayData.hours : '';
-                    hoursRowHtml += `<td style="mso-number-format:'\\@'; ${styleMap['hour-cell']} ${dividerStyle} ${styleMap['h-divider']} border:0.5pt solid #888888;">${hourContent}</td>`;
+                    
+                    // *** NİHAİ DÜZELTME: Sayı formatı '0.#' olarak güncellendi. ***
+                    // Bu format, 4'ü '4' olarak, 7.5'i ise '7.5' olarak gösterir.
+                    hoursRowHtml += `<td style="mso-number-format:'0.#'; ${styleMap['hour-cell']} ${dividerStyle} ${styleMap['h-divider']} border:0.5pt solid #888888;">${hourContent}</td>`;
                 }
                 const saatDegerleri = { 
                     genelToplam: monthlyHours.genelToplam, 
@@ -5439,7 +5681,14 @@ async function downloadExcel() {
                     ht_saat: 0 
                 };
                 saatConfig.keys.forEach((key, index) => {
-                     statusRowHtml += `<td rowspan="2" style="mso-number-format:'\\@'; ${styleMap['default-cell']} ${styleMap[saatConfig.styleKeys[index]]} ${styleMap['v-divider']} border:0.5pt solid #888888;">${saatDegerleri[key]}</td>`;
+                    // Toplamlar için de daha güvenli bir sayı formatı kullanıyoruz.
+                    let formatStyle = "mso-number-format:'General';"; // Nobet, Rehberlik gibi tam sayılar için
+                    if (key === 'mesaiNedeni' || key === 'eksikGunKodu') {
+                        formatStyle = "mso-number-format:'\\@';"; // Metin formatı
+                    } else if (['genelToplam', 'fazlaMesai', 'ekDers'].includes(key)) {
+                        formatStyle = "mso-number-format:'0.#';"; // Ondalıklı olabilecekler için özel format
+                    }
+                    statusRowHtml += `<td rowspan="2" style="${formatStyle} ${styleMap['default-cell']} ${styleMap[saatConfig.styleKeys[index]]} ${styleMap['v-divider']} border:0.5pt solid #888888;">${saatDegerleri[key]}</td>`;
                 });
                 gunBasliklari.forEach(h => {
                     statusRowHtml += `<td rowspan="2" style="${styleMap['summary-count']} ${styleMap['v-divider']} border:0.5pt solid #888888;">${statusCounts[h] || 0}</td>`;
@@ -5447,7 +5696,8 @@ async function downloadExcel() {
                 statusRowHtml += `<td rowspan="2" style="${styleMap['total-worked-day']} ${styleMap['v-divider']} border:0.5pt solid #888888;">${sgkPrimGunu}</td><td rowspan="2" style="${styleMap['social-section']} border:0.5pt solid #888888;">${personel.esDurumu || ''}</td><td rowspan="2" style="${styleMap['social-section']} border:0.5pt solid #888888;">${personel.cocuk0_6 || ''}</td><td rowspan="2" style="${styleMap['social-section']} border:0.5pt solid #888888;">${personel.cocuk6_18 || ''}</td><td rowspan="2" style="border:0.5pt solid #888888;"></td>`;
                 excelHtml += `<tr>${statusRowHtml}</tr><tr>${hoursRowHtml}</tr>`;
             });
-        }
+        });
+
         excelHtml += '</table>';
         const fullHtml = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -5469,7 +5719,6 @@ async function downloadExcel() {
         showToast('Veriler çekilirken bir hata oluştu. Excel oluşturulamadı.', 'error');
     }
 }
-
 async function saveModalChanges() {
     const modalSaveBtn = document.getElementById('modal-save');
     const personelId = modalSaveBtn.dataset.personelId;
@@ -5666,7 +5915,7 @@ renderDashboardData(); // <--- YENİ EKLENEN SATIR BU
 
 
            // EKLENECEK YENİ VE BİRLEŞTİRİLMİŞ KOD BLOĞU
-document.querySelectorAll('.sidebar-nav a').forEach(link => {
+document.querySelectorAll('.nav-link').forEach(link => {
     // "Yeni Personel Ekle" butonu sadece bir modal açtığı için bu genel mantığın dışında tutulur.
     if (link.id === 'open-add-staff-modal') return;
 
@@ -5762,6 +6011,44 @@ personelForm.addEventListener('submit', async function(e) {
     } catch (err) {
         showToast('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'error');
         console.error("Personel kaydetme/güncelleme hatası:", err);
+    }
+});
+// =========================================================================
+// YENİ: PERSONEL DETAY MODALI İÇİN OLAY DİNLEYİCİLERİ
+// =========================================================================
+const personelDetayModal = document.getElementById('personel-detay-modal');
+
+// Personel listesindeki "Detay" butonuna tıklama
+document.getElementById('staff-list').addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-details')) {
+        const personelId = e.target.dataset.id;
+        openPersonelDetayModal(personelId);
+    }
+});
+
+// Modal kapatma butonları
+personelDetayModal.querySelector('.close-modal').addEventListener('click', () => {
+    personelDetayModal.classList.remove('open');
+});
+personelDetayModal.addEventListener('click', (e) => {
+    if (e.target === personelDetayModal) {
+        personelDetayModal.classList.remove('open');
+    }
+});
+
+// Modal içindeki sekmeler arası geçiş
+document.getElementById('personel-detay-tabs').addEventListener('click', e => {
+    if (e.target.matches('.settings-tab-button')) {
+        const targetTabId = e.target.dataset.tab;
+        
+        // Tüm buton ve içeriklerden 'active' sınıfını kaldır
+        personelDetayModal.querySelectorAll('.settings-tab-button, .settings-tab-content').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Tıklanan butonu ve ilgili içeriği 'active' yap
+        e.target.classList.add('active');
+        document.getElementById(targetTabId).classList.add('active');
     }
 });
             document.getElementById('staff-list').addEventListener('click', async (e) => {
@@ -5955,6 +6242,49 @@ if (e.target.classList.contains('btn-delete')) {
                     <button type="submit" class="btn btn-save">Değişiklikleri Kaydet</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+<div id="personel-detay-modal" class="modal">
+    <div class="modal-content" style="max-width: 1000px;">
+        <div class="modal-header">
+            <h3 id="personel-detay-modal-title">Personel Profili</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="settings-tabs" id="personel-detay-tabs">
+                <button class="settings-tab-button active" data-tab="detay-tab-bilgiler">Kişisel Bilgiler</button>
+                <button class="settings-tab-button" data-tab="detay-tab-izinler">İzin Geçmişi</button>
+                <button class="settings-tab-button" data-tab="detay-tab-nobetler">Nöbet Geçmişi</button>
+                <button class="settings-tab-button" data-tab="detay-tab-hizmet">Hizmet Geçmişi</button>
+                <button class="settings-tab-button" data-tab="detay-tab-belgeler">Belgeler</button>
+            </div>
+
+            <div id="detay-tab-bilgiler" class="settings-tab-content active">
+                <div id="personel-bilgileri-container" style="padding: 20px;">
+                    <p>Personel bilgileri yükleniyor...</p>
+                </div>
+            </div>
+
+            <div id="detay-tab-izinler" class="settings-tab-content">
+                <div id="personel-izin-gecmisi-container" class="table-container" style="margin-top: 20px; max-height: 450px; overflow-y: auto;">
+                    <p style="padding: 20px;">İzin geçmişi yükleniyor...</p>
+                </div>
+            </div>
+
+            <div id="detay-tab-nobetler" class="settings-tab-content">
+                <div id="personel-nobet-gecmisi-container" class="table-container" style="margin-top: 20px; max-height: 450px; overflow-y: auto;">
+                    <p style="padding: 20px;">Nöbet geçmişi yükleniyor...</p>
+                </div>
+            </div>
+
+            <div id="detay-tab-hizmet" class="settings-tab-content">
+                 <p style="padding: 20px; text-align: center; color: #777;">Bu özellik yakında eklenecektir.</p>
+            </div>
+
+            <div id="detay-tab-belgeler" class="settings-tab-content">
+                 <p style="padding: 20px; text-align: center; color: #777;">Bu özellik yakında eklenecektir.</p>
+            </div>
         </div>
     </div>
 </div>
