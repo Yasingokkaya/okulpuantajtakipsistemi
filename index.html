@@ -1968,104 +1968,110 @@ function isResmiTatil(date) {
             container.appendChild(toast);
             setTimeout(() => { toast.style.animation = 'slideOut 0.3s forwards'; toast.addEventListener('animationend', () => toast.remove()); }, 3000);
         }
-// =========================================================================
-// YENİ: PERSONEL DETAY MODALINI AÇAN VE DOLDURAN FONKSİYON
-// =========================================================================
+// BU FONKSİYONU KOMPLE DEĞİŞTİRİN
 async function openPersonelDetayModal(personelId) {
     const modal = document.getElementById('personel-detay-modal');
     const title = document.getElementById('personel-detay-modal-title');
     const bilgilerContainer = document.getElementById('personel-bilgileri-container');
     const izinContainer = document.getElementById('personel-izin-gecmisi-container');
     const nobetContainer = document.getElementById('personel-nobet-gecmisi-container');
+    const hizmetContainer = document.getElementById('detay-tab-hizmet');
 
     // Modal'ı aç ve içeriği temizle
     title.textContent = 'Personel Profili Yükleniyor...';
     bilgilerContainer.innerHTML = '<p>Kişisel bilgiler yükleniyor...</p>';
     izinContainer.innerHTML = '<p style="padding: 20px;">İzin geçmişi yükleniyor...</p>';
     nobetContainer.innerHTML = '<p style="padding: 20px;">Nöbet geçmişi yükleniyor...</p>';
+    hizmetContainer.innerHTML = '<p style="padding: 20px;">Hizmet geçmişi yükleniyor...</p>';
     modal.classList.add('open');
     showSpinner();
 
     try {
         // Gerekli tüm verileri paralel olarak çek
         const [
-            personelDoc,
-            izinSnap,
-            nobetSnap,
-            izinTipiSnap,
-            nobetYeriSnap,
-            neviSnap,
-            gorevSnap
+            personelDoc, izinSnap, nobetSnap, izinTipiSnap, nobetYeriSnap,
+            neviSnap, gorevSnap, hizmetGecmisiSnap
         ] = await Promise.all([
             getDoc(doc(db, 'personel', personelId)),
-            getDocs(query(collection(db, 'izinler'), where('personelId', '==', personelId))),
+            getDocs(query(collection(db, 'izinler'), where('personelId', '==', personelId), orderBy('baslangicTarihi', 'desc'))),
             getDocs(query(collection(db, 'nobetler'), where('personelId', '==', personelId), orderBy('tarih', 'desc'))),
             getSettings('ayarlar_izin_tipleri'),
             getSettings('ayarlar_nobet_yerleri'),
             getSettings('ayarlar_personel_nevileri'),
-            getSettings('ayarlar_gorevler')
+            getSettings('ayarlar_gorevler'),
+            getDocs(query(collection(db, 'personel', personelId, 'hizmetGecmisi'), orderBy('baslangicTarihi', 'desc')))
         ]);
 
-        if (!personelDoc.exists()) {
-            throw new Error('Personel bulunamadı!');
-        }
+        if (!personelDoc.exists()) { throw new Error('Personel bulunamadı!'); }
         
         const personel = personelDoc.data();
         title.textContent = `${personel.ad_soyad} - Personel Profili`;
 
-        // Haritalama için yardımcı nesneler oluştur
-        const izinTipiMap = new Map(izinTipiSnap.docs.map(d => [d.id, d.data().name]));
+        const izinTipiDataMap = new Map(izinTipiSnap.docs.map(d => [d.id, d.data()]));
         const nobetYeriMap = new Map(nobetYeriSnap.docs.map(d => [d.id, d.data().name]));
         const neviMap = new Map(neviSnap.docs.map(d => [d.id, d.data().name]));
         const gorevMap = new Map(gorevSnap.docs.map(d => [d.id, d.data().name]));
 
-        // --- 1. Kişisel Bilgiler Sekmesini Doldur ---
+        // --- 1. Kişisel Bilgiler Sekmesi ---
+        const kismiCalismaHTML = personel.kismi_zamanli_calisma ? Object.entries(personel.kismi_zamanli_calisma)
+            .map(([gun, saat]) => `<span>${gun}: ${saat} saat</span>`).join('') : 'Yok';
+
         bilgilerContainer.innerHTML = `
             <div class="info-grid">
+                <div class="info-item"><label>Ad Soyad</label><span>${personel.ad_soyad || '---'}</span></div>
                 <div class="info-item"><label>T.C. Kimlik No</label><span>${personel.tc_kimlik_no || '---'}</span></div>
                 <div class="info-item"><label>SGK No</label><span>${personel.sgk_no || '---'}</span></div>
-                <div class="info-item"><label>İşe Giriş Tarihi</label><span>${formatDateDDMMYYYY(personel.ise_giris)}</span></div>
                 <div class="info-item"><label>Personel Nevisi</label><span>${neviMap.get(personel.personel_nevisi) || '---'}</span></div>
                 <div class="info-item"><label>Görevi / Branşı</label><span>${gorevMap.get(personel.gorevi_bransi) || '---'}</span></div>
                 <div class="info-item"><label>Sözleşme Türü</label><span>${personel.sozlesme_turu || '---'}</span></div>
+                <div class="info-item"><label>İşe Giriş Tarihi</label><span>${formatDateDDMMYYYY(personel.ise_giris)}</span></div>
+                <div class="info-item"><label>İşten Ayrılış Tarihi</label><span>${formatDateDDMMYYYY(personel.isten_ayrilis) || 'Devam Ediyor'}</span></div>
+                <div class="info-item"><label>Cinsiyet</label><span>${personel.cinsiyet === 'kadin' ? 'Kadın' : 'Erkek'}</span></div>
+                <div class="info-item"><label>Eş Durumu</label><span>${personel.es_durumu || '---'}</span></div>
+                <div class="info-item"><label>Çocuk Sayısı (0-6 Yaş)</label><span>${personel.cocuk_0_6 || '0'}</span></div>
+                <div class="info-item"><label>Çocuk Sayısı (6-18 Yaş)</label><span>${personel.cocuk_6_ustu || '0'}</span></div>
+                <div class="info-item full-width"><label>Açıklama</label><span>${personel.aciklama || 'Yok'}</span></div>
+                ${personel.sozlesme_turu === 'Kısmi Süreli' ? `
+                <div class="info-item full-width"><label>Kısmi Çalışma Saatleri</label><div class="card-list" style="max-height: 80px;">${kismiCalismaHTML}</div></div>` : ''}
             </div>
         `;
 
-        // --- 2. İzin Geçmişi Sekmesini Doldur ---
-if (izinSnap.empty) {
-    izinContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Bu personele ait izin kaydı bulunmamaktadır.</p>';
-} else {
-    // Gelen verileri bir diziye çevir
-    const izinler = izinSnap.docs.map(doc => doc.data());
-    
-    // Diziyi başlangıç tarihine göre (en yeniden en eskiye) sırala
-    izinler.sort((a, b) => b.baslangicTarihi.localeCompare(a.baslangicTarihi));
+        // --- 2. İzin Geçmişi Sekmesi ---
+        if (izinSnap.empty) {
+            izinContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Bu personele ait izin kaydı bulunmamaktadır.</p>';
+        } else {
+            let izinTableHTML = '<table class="gorevlendirme-table"><thead><tr><th>İzin Tipi</th><th>Başlangıç</th><th>Bitiş</th><th>Süre</th><th>Açıklama</th></tr></thead><tbody>';
+            izinSnap.forEach(doc => {
+                const izin = doc.data();
+                const izinTipiVerisi = izinTipiDataMap.get(izin.izinTipiId) || { name: 'Bilinmiyor', kod: '' };
+                const sure = calculateNetIzinSuresi(izin.baslangicTarihi, izin.bitisTarihi, personel, izinTipiVerisi.kod);
+                const sureEtiketi = (izinTipiVerisi.kod === 'R' || izinTipiVerisi.kod === 'Üİ') ? 'gün' : 'iş günü';
+                izinTableHTML += `
+                    <tr>
+                        <td>${izinTipiVerisi.name}</td>
+                        <td>${formatDateDDMMYYYY(izin.baslangicTarihi)}</td>
+                        <td>${formatDateDDMMYYYY(izin.bitisTarihi)}</td>
+                        <td>${sure} ${sureEtiketi}</td>
+                        <td>${izin.aciklama || '---'}</td>
+                    </tr>
+                `;
+            });
+            izinContainer.innerHTML = izinTableHTML + '</tbody></table>';
+        }
 
-    // Sıralanmış dizi üzerinden tabloyu oluştur
-    let izinTableHTML = '<table class="gorevlendirme-table"><thead><tr><th>İzin Tipi</th><th>Başlangıç</th><th>Bitiş</th><th>Açıklama</th></tr></thead><tbody>';
-    izinler.forEach(izin => {
-        izinTableHTML += `
-            <tr>
-                <td>${izinTipiMap.get(izin.izinTipiId) || 'Bilinmiyor'}</td>
-                <td>${formatDateDDMMYYYY(izin.baslangicTarihi)}</td>
-                <td>${formatDateDDMMYYYY(izin.bitisTarihi)}</td>
-                <td>${izin.aciklama || '---'}</td>
-            </tr>
-        `;
-    });
-    izinContainer.innerHTML = izinTableHTML + '</tbody></table>';
-}
-
-        // --- 3. Nöbet Geçmişi Sekmesini Doldur ---
+        // --- 3. Nöbet Geçmişi Sekmesi ---
         if (nobetSnap.empty) {
             nobetContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Bu personele ait nöbet kaydı bulunmamaktadır.</p>';
         } else {
-            let nobetTableHTML = '<table class="gorevlendirme-table"><thead><tr><th>Tarih</th><th>Nöbet Yeri</th></tr></thead><tbody>';
-            nobetSnap.forEach(nobetDoc => {
-                const nobet = nobetDoc.data();
+            const gunlerTR = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+            let nobetTableHTML = '<table class="gorevlendirme-table"><thead><tr><th>Tarih</th><th>Gün</th><th>Nöbet Yeri</th></tr></thead><tbody>';
+            nobetSnap.forEach(doc => {
+                const nobet = doc.data();
+                const tarih = new Date(nobet.tarih + 'T00:00:00Z');
                 nobetTableHTML += `
                     <tr>
                         <td>${formatDateDDMMYYYY(nobet.tarih)}</td>
+                        <td>${gunlerTR[tarih.getUTCDay()]}</td>
                         <td>${nobetYeriMap.get(nobet.nobetYeriId) || 'Bilinmiyor'}</td>
                     </tr>
                 `;
@@ -2073,17 +2079,39 @@ if (izinSnap.empty) {
             nobetContainer.innerHTML = nobetTableHTML + '</tbody></table>';
         }
 
+        // --- 4. Hizmet Geçmişi Sekmesini Doldur ---
+        if (hizmetGecmisiSnap.empty) {
+            hizmetContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Bu personele ait hizmet geçmişi kaydı bulunmamaktadır.</p>';
+        } else {
+            let hizmetTableHTML = '<div class="table-container" style="margin-top: 20px;"><table class="gorevlendirme-table"><thead><tr><th>Görev / Unvan</th><th>Sözleşme Türü</th><th>Başlangıç Tarihi</th><th>Bitiş Tarihi</th></tr></thead><tbody>';
+            hizmetGecmisiSnap.forEach(doc => {
+                const kayit = doc.data();
+                const gorevAdi = gorevMap.get(kayit.gorevId) || 'Bilinmiyor';
+                const bitisTarihi = kayit.bitisTarihi ? formatDateDDMMYYYY(kayit.bitisTarihi) : '<strong>Devam Ediyor</strong>';
+                hizmetTableHTML += `
+                    <tr>
+                        <td>${gorevAdi}</td>
+                        <td>${kayit.sozlesmeTuru || '---'}</td>
+                        <td>${formatDateDDMMYYYY(kayit.baslangicTarihi)}</td>
+                        <td>${bitisTarihi}</td>
+                    </tr>
+                `;
+            });
+            hizmetContainer.innerHTML = hizmetTableHTML + '</tbody></table></div>';
+        }
+
     } catch (error) {
         console.error("Personel detayları yüklenirken hata:", error);
         title.textContent = 'Hata!';
         bilgilerContainer.innerHTML = `<p style="color:red;">Personel bilgileri yüklenemedi: ${error.message}</p>`;
+        izinContainer.innerHTML = `<p style="color:red; padding: 20px;">İzin geçmişi yüklenemedi: ${error.message}</p>`;
+        nobetContainer.innerHTML = `<p style="color:red; padding: 20px;">Nöbet geçmişi yüklenemedi: ${error.message}</p>`;
+        hizmetContainer.innerHTML = `<p style="color:red; padding: 20px;">Hizmet geçmişi yüklenemedi: ${error.message}</p>`;
     } finally {
         hideSpinner();
     }
 }
-// =========================================================================
-// YENİ, TAM VE SPINNER ENTEGRE EDİLMİŞ renderDashboardData FONKSİYONU
-// =========================================================================
+
 async function renderDashboardData() {
     showSpinner(); // <-- 1. ADIM: Fonksiyon çalışır çalışmaz yükleme ikonunu gösterir.
 
@@ -4982,7 +5010,7 @@ async function fetchAndProcessSchedules(year, month) {
 
 
 // MEVCUT generateInitialPuantaj FONKSİYONUNU SİLİP, BU NİHAİ VERSİYONU YAPIŞTIRIN
-async function generateInitialPuantaj() { SSSSSSSSSSSSSSSSSSSSSSS
+async function generateInitialPuantaj() {
     if (isPuantajLocked) {
         showToast('Puantaj kilitli...', 'error');
         return;
@@ -5959,10 +5987,10 @@ document.querySelectorAll('.nav-link').forEach(link => {
     });
 });
 
-
-// EKLENECEK GÜNCELLENMİŞ KOD BLOĞU
+// BU KOD BLOĞUNU KOMPLE DEĞİŞTİRİN
 personelForm.addEventListener('submit', async function(e) {
     e.preventDefault();
+    showSpinner(); // İşlem başladığında yükleme ikonunu göster
     const editingId = e.target.dataset.editingId;
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
@@ -5990,27 +6018,41 @@ personelForm.addEventListener('submit', async function(e) {
 
     try {
         if (editingId) {
-            await setDoc(doc(db, "personel", editingId), data, { merge: true });
+            // DÜZENLEME MODU
+            const personelRef = doc(db, "personel", editingId);
+            const docSnap = await getDoc(personelRef);
+            
+            if (docSnap.exists()) {
+                const oldData = docSnap.data();
+                // Görev veya sözleşme türü değişti mi diye kontrol et
+                if (oldData.gorevi_bransi !== data.gorevi_bransi || oldData.sozlesme_turu !== data.sozlesme_turu) {
+                    await updateHizmetGecmisi(editingId, data);
+                }
+            }
+            // Ana personel dökümanını güncelle
+            await setDoc(personelRef, data, { merge: true });
             showToast('Personel başarıyla güncellendi.');
+
         } else {
-            await addDoc(collection(db, "personel"), data);
+            // YENİ EKLEME MODU
+            const newDocRef = await addDoc(collection(db, "personel"), data);
+            // Personeli oluşturduktan sonra, ilk hizmet geçmişi kaydını oluştur
+            await createInitialHizmetGecmisi(newDocRef.id, data);
             showToast('Personel başarıyla eklendi.');
         }
+
         closeModal();
-
-        // Eğer personel listesi ekranı aktifse, listeyi yenile
+        tumPersonelListesi = []; // Ana listeyi boşaltarak yeniden çekilmesini sağla
         if (document.getElementById('staff-list').classList.contains('active')) {
-            fetchStaff();
+            await fetchStaff();
         }
-
-        // *** YENİ EKLENEN SATIR: PUANTAJ VERİSİNİ GÜNCELLE ***
-        // Bu satır, puantaj modülünün kullandığı personel listesini
-        // veritabanından tazeleyerek sorunu çözer.
         await loadAndFilterPersonelList();
         
     } catch (err) {
         showToast('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'error');
         console.error("Personel kaydetme/güncelleme hatası:", err);
+    } finally {
+        hideSpinner(); // İşlem bitince yükleme ikonunu gizle
     }
 });
 // =========================================================================
@@ -6103,6 +6145,65 @@ if (e.target.classList.contains('btn-delete')) {
                 }
             });
 });
+// =========================================================================
+// YENİ EKLENDİ: HİZMET GEÇMİŞİ YÖNETİM FONKSİYONLARI
+// =========================================================================
+
+/**
+ * Yeni eklenen bir personel için hizmet geçmişi alt koleksiyonuna ilk kaydı oluşturur.
+ * @param {string} personelId - Yeni oluşturulan personelin ID'si.
+ * @param {object} personelData - Personelin formdan alınan verileri.
+ */
+async function createInitialHizmetGecmisi(personelId, personelData) {
+    const hizmetGecmisiRef = collection(db, 'personel', personelId, 'hizmetGecmisi');
+    const initialRecord = {
+        gorevId: personelData.gorevi_bransi,
+        sozlesmeTuru: personelData.sozlesme_turu,
+        baslangicTarihi: personelData.ise_giris,
+        bitisTarihi: null // Bu görevin hala aktif olduğunu belirtir
+    };
+    try {
+        await addDoc(hizmetGecmisiRef, initialRecord);
+    } catch (error) {
+        console.error("İlk hizmet geçmişi kaydı oluşturulamadı:", error);
+        showToast("Personelin hizmet geçmişi oluşturulamadı.", "error");
+    }
+}
+
+/**
+ * Bir personelin görevi veya sözleşme türü değiştiğinde hizmet geçmişini günceller.
+ * @param {string} personelId - Güncellenen personelin ID'si.
+ * @param {object} newData - Personelin formdan alınan YENİ verileri.
+ */
+async function updateHizmetGecmisi(personelId, newData) {
+    const hizmetGecmisiRef = collection(db, 'personel', personelId, 'hizmetGecmisi');
+    // Aktif olan (bitiş tarihi olmayan) son kaydı bul
+    const q = query(hizmetGecmisiRef, where("bitisTarihi", "==", null), limit(1));
+
+    try {
+        const snapshot = await getDocs(q);
+        const today = new Date().toISOString().split('T')[0]; // Değişikliğin yapıldığı tarih
+
+        if (!snapshot.empty) {
+            const lastRecordDoc = snapshot.docs[0];
+            // Önceki görevin bitiş tarihini bugünün tarihi olarak güncelle
+            await updateDoc(lastRecordDoc.ref, { bitisTarihi: today });
+        }
+
+        // Yeni görev için yeni bir kayıt ekle
+        const newRecord = {
+            gorevId: newData.gorevi_bransi,
+            sozlesmeTuru: newData.sozlesme_turu,
+            baslangicTarihi: today,
+            bitisTarihi: null // Yeni aktif görev bu
+        };
+        await addDoc(hizmetGecmisiRef, newRecord);
+
+    } catch (error) {
+        console.error("Hizmet geçmişi güncellenirken hata:", error);
+        showToast("Personelin hizmet geçmişi güncellenemedi.", "error");
+    }
+}
 
     </script>
 
@@ -6279,8 +6380,7 @@ if (e.target.classList.contains('btn-delete')) {
             </div>
 
             <div id="detay-tab-hizmet" class="settings-tab-content">
-                 <p style="padding: 20px; text-align: center; color: #777;">Bu özellik yakında eklenecektir.</p>
-            </div>
+    </div>
 
             <div id="detay-tab-belgeler" class="settings-tab-content">
                  <p style="padding: 20px; text-align: center; color: #777;">Bu özellik yakında eklenecektir.</p>
