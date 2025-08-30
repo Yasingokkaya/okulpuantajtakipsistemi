@@ -35,19 +35,100 @@
     z-index: 100; /* Diğer elemanların üzerinde kalmasını sağlar */
     /* EKLENEN YENİ KODLAR BİTİŞİ */
 }
+/* EKLENECEK KOD: Ders Programı Başlıklarını Ortalama */
+#ders-programi .schedule-table th {
+    text-align: center !important;     /* Gün ve Saat başlıklarını yatayda ortalar */
+    vertical-align: middle !important; /* Gün ve Saat başlıklarını dikeyde ortalar */
+}
+/* EKLENECEK KOD: Ders Programı Başlıkları Renk Paleti */
+
+/* Üstteki Gün Başlıkları (Pazartesi, Salı, vb.) için stil */
+#ders-programi .schedule-table thead th {
+    background-color: var(--theme-primary); /* Ana tema rengi (Koyu Mavi) */
+    color: white;                           /* Yazı rengi */
+    font-weight: 600;
+    border-color: #12224A; /* Arka plana uygun daha koyu bir çerçeve rengi */
+}
+
+/* Soldaki Saatler Sütunu (1. Ders, 2. Ders, vb.) için stil */
+#ders-programi .schedule-table tbody th {
+    background-color: #f8f9fa; /* Açık ve temiz bir gri tonu */
+    color: #495057;            /* Okunaklı koyu gri yazı rengi */
+    font-weight: 600;
+    border-color: #dee2e6;     /* Hücre çerçeve rengi */
+}
+/* ======================================================= */
+/* ================================================= */
+/* EKLENECEK KOD: Ders Programı Kontrol Alanı Hizalama Düzeltmesi */
+
+/* Bu alandaki tüm form gruplarını dikeyde en alta hizala (zaten mevcut ayar) */
+.program-ust-kontrol {
+    align-items: flex-end;
+}
+
+/* EKLENECEK KOD BLOĞU */
+.program-ust-kontrol .btn,  /* Bu satır güncellendi: Artık TÜM butonları hedef alıyor */
+.program-ust-kontrol select,
+.program-ust-kontrol input {
+    height: 42px; /* Standart ve hizalı bir yükseklik */
+    box-sizing: border-box; /* Padding ve border'ın yüksekliği etkilemesini önler */
+    vertical-align: middle; /* Dikey hizalamayı iyileştirir */
+}
+
+/* Butonların içindeki yazıyı dikeyde ortalamak için */
+.program-ust-kontrol .view-toggle .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+/* =================================================================== */
 /* EKLENECEK KOD (Daha Kompakt Ders Programı Tablosu İçin) */
 #ders-programi .schedule-table {
     font-size: 0.85em; /* Tablo içindeki genel yazı boyutunu küçültür */
 }
 #ders-programi .schedule-table th, 
 #ders-programi .schedule-table td {
-    height: 80px; /* Hücre yüksekliğini azaltır */
-    padding: 4px; /* Hücre içi boşlukları azaltır */
+    height: 70px; /* Değer 80px'ten 70px'e düşürüldü */
+    padding: 4px; 
 }
 #ders-programi .ders-karti {
     padding: 4px; /* Ders kartı içindeki boşluğu azaltır */
     font-size: 11px; /* Ders kartı yazı boyutunu ayarlar */
 }
+/* EKLENECEK KOD: DERS KARTI BİLGİ KUTUCUĞU (TOOLTIP) STİLLERİ */
+.ders-karti {
+    position: relative; /* Bilgi kutucuğunu konumlandırmak için gereklidir */
+}
+
+/* Bilgi kutucuğunun kendisi (başlangıçta gizli) */
+.ders-karti::after {
+    content: attr(data-tooltip); /* data-tooltip özelliğindeki metni gösterir */
+    position: absolute;
+    bottom: 105%; /* Kartın hemen üzerinde görünür */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #34495e; /* Koyu arka plan */
+    color: white;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    white-space: pre; /* Alt satır karakterlerini (\n) korur */
+    z-index: 10;
+    
+    /* Başlangıçta gizli ve şeffaf yap */
+    visibility: hidden;
+    opacity: 0;
+    
+    /* Yumuşak bir geçiş efekti ekle */
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+/* Fare ile üzerine gelindiğinde bilgi kutucuğunu görünür yap */
+.ders-karti:hover::after {
+    visibility: visible;
+    opacity: 1;
+}
+/* ============================================================== */
 /* ========================================================== */
 /* index.html dosyasındaki <style> etiketlerinin içine ekleyin */
 
@@ -1598,7 +1679,7 @@ td[style*="background-color"] .input-wrapper {
                             <div class="program-actions">
                                 <button id="programi-kaydet-btn" class="btn" style="background-color: var(--theme-accent);">Kaydet</button>
                                 <button id="programi-yayinla-btn" class="btn" style="background-color: var(--success-color);">Yayınla</button>
-                                <button id="btn-otomatik-doldur" class="btn btn-add">Otomatik Ders Programı Oluştur</button>
+                                <button id="btn-otomatik-doldur" class="btn btn-add">Otomatik Doldur</button>
                             </div>
                         </div>
                     </div>
@@ -2012,6 +2093,14 @@ td[style*="background-color"] .input-wrapper {
     <div class="panel-header"><h4>Ders (Branş) Kuralları</h4></div>
     <div class="panel-body">
         <p>Derslerin haftalık saatlerini, yerleşim tercihlerini ve diğer derslerle ilişkilerini buradan yönetin.</p>
+<div class="form-grid" style="grid-template-columns: 1fr; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
+    <div class="form-group">
+        <label for="ders-kural-filtre-sinif">Listeyi Sınıfa Göre Filtrele</label>
+        <select id="ders-kural-filtre-sinif">
+            <option value="">Tüm Sınıfları Göster</option>
+        </select>
+    </div>
+</div>
         
         <div class="form-grid" style="grid-template-columns: 1fr; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
             <div class="form-group">
@@ -2352,43 +2441,81 @@ td[style*="background-color"] .input-wrapper {
 
 
     <script type="module"> 
+// EKLENECEK KOD: YARDIMCI FONKSİYONLAR
+/**
+ * Verilen bir metne (ders adı gibi) özel ve tutarlı bir renk kodu atar.
+ * @param {string} str - Renk üretilecek metin.
+ * @returns {string} - HEX formatında renk kodu (örn: '#A3C4A2').
+ */
+function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    // Rengin çok açık veya çok koyu olmasını engellemek için HSL formatını kullanıyoruz.
+    const h = hash % 360;
+    // Doygunluğu (saturation) %60-%80, parlaklığı (lightness) %70-%80 arasında tutarak pastel tonlar elde ediyoruz.
+    return `hsl(${h}, ${60 + (hash % 20)}%, ${75 + (hash % 10)}%)`;
+}
+
+/**
+ * Verilen bir arka plan rengine göre en iyi okunabilirliğe sahip
+ * yazı rengini (siyah veya beyaz) döndürür.
+ * @param {string} bgColor - HSL formatında arka plan rengi.
+ * @returns {string} - 'black' veya 'white'.
+ */
+function getContrastColor(bgColor) {
+    // HSL'den RGB'ye basit bir parlaklık tahmini yapıyoruz.
+    // Parlaklık değeri (lightness) HSL'nin üçüncü parametresidir.
+    const lightness = parseInt(bgColor.substring(bgColor.lastIndexOf(',') + 1, bgColor.lastIndexOf('%')).trim());
+    // Parlaklık %65'ten fazlaysa siyah, azsa beyaz metin daha okunaklı olur.
+    return (lightness > 65) ? 'black' : 'white';
+}
+// ===============================================
 // =========================================================================
 // ADIM 2B: SPINNER'I KONTROL ETMEK İÇİN BU FONKSİYONLARI EKLEYİN
 // =========================================================================
 function showSpinner() {
     document.getElementById('global-spinner').style.display = 'flex';
 }
-// =========================================================================
-// ADIM 1C: YENİ ONAY PENCERESİ YÖNETİM FONKSİYONUNU EKLEYİN
-// =========================================================================
-function showConfirmationModal(message, onConfirm) {
+
+// EKLENECEK YENİ FONKSİYON
+function showConfirmationModal(message, onConfirm, buttonText = 'Onayla', buttonStyle = 'save') {
     const modal = document.getElementById('confirmation-modal');
     const messageEl = document.getElementById('confirmation-modal-message');
     const confirmBtn = document.getElementById('confirm-action-btn');
     const cancelBtn = document.getElementById('confirm-cancel-btn');
     const closeModalBtn = modal.querySelector('.close-modal');
 
-    messageEl.innerHTML = message; // innerHTML kullanarak metni kalın (strong) yapabilme özelliği
+    messageEl.innerHTML = message;
+    confirmBtn.textContent = buttonText; // Buton metnini dinamik olarak ayarla
 
+    // Buton rengini/stilini dinamik olarak ayarla
+    confirmBtn.classList.remove('btn-delete', 'btn-save', 'btn-add'); // Önceki stilleri temizle
+    if (buttonStyle === 'delete') {
+        confirmBtn.classList.add('btn-delete'); // Kırmızı stil
+    } else if (buttonStyle === 'add') {
+        confirmBtn.classList.add('btn-add'); // Yeşil stil
+    } else {
+        confirmBtn.classList.add('btn-save'); // Turuncu/varsayılan stil
+    }
+    
     modal.classList.add('open');
 
     const close = () => {
         modal.classList.remove('open');
-        // Olay dinleyicilerini temizle ki bir sonraki seferde birikmesinler
-        confirmBtn.replaceWith(confirmBtn.cloneNode(true));
-        cancelBtn.replaceWith(cancelBtn.cloneNode(true));
-        closeModalBtn.replaceWith(closeModalBtn.cloneNode(true));
     };
     
-    confirmBtn.onclick = () => {
-        onConfirm(); // Onaylandığında çalışacak olan asıl işlemi çağır
+    const confirmAction = () => {
+        onConfirm();
         close();
     };
 
+    // Olay dinleyicilerini her seferinde yeniden atayarak birikmeyi önle
+    confirmBtn.onclick = confirmAction;
     cancelBtn.onclick = close;
     closeModalBtn.onclick = close;
 }
-// =========================================================================
 
 function hideSpinner() {
     document.getElementById('global-spinner').style.display = 'none';
@@ -2432,6 +2559,7 @@ import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteD
         const db = getFirestore(app);
 // YENİ EKLENECEK DEĞİŞKENLER
 const auth = getAuth(app);
+let zamanCizelgesiAyarlari = {}; // Zaman Çizelgesi ayarlarını tutacak global değişken
 const loginPanel = document.getElementById('login-panel');
 const appContainer = document.querySelector('.app-container');
 const loginBtn = document.getElementById('login-btn');
@@ -2875,12 +3003,10 @@ function renderBlokeZamanListesi(blokeZamanlar) {
         }
     };
 }
-
-// YERİNE EKLENECEK GÜNCELLENMİŞ KOD BLOĞU
-async function loadAndRenderDersKurallari() {
+// EKLENECEK YENİ FONKSİYON
+async function loadAndRenderDersKurallari(sinifFiltresi = null) {
     try {
-        const [querySnapshot, derslerSnap, personelSnap] = await Promise.all([
-            getDocs(collection(db, "ders_kurallari")),
+        const [derslerSnap, personelSnap] = await Promise.all([
             getSettings('ayarlar_dersler'),
             getDocs(collection(db, 'personel'))
         ]);
@@ -2888,29 +3014,34 @@ async function loadAndRenderDersKurallari() {
         const dersMap = new Map(derslerSnap.docs.map(doc => [doc.id, doc.data().name]));
         const personelMap = new Map(personelSnap.docs.map(doc => [doc.id, doc.data().ad_soyad]));
         
+        // FİLTRELEME MANTIĞI EKLENDİ
+        let queryRef = collection(db, "ders_kurallari");
+        if (sinifFiltresi) {
+            queryRef = query(queryRef, where("seviye", "==", sinifFiltresi));
+        }
+        const querySnapshot = await getDocs(queryRef);
+        // BİTİŞ
+
         const listEl = document.getElementById('ders-kural-listesi');
         listEl.innerHTML = '';
         if (querySnapshot.empty) {
-            listEl.innerHTML = '<li>Henüz ders kuralı eklenmemiş.</li>';
+            listEl.innerHTML = '<li>Bu filtreye uygun ders kuralı bulunamadı.</li>';
             return;
         }
         querySnapshot.forEach(doc => {
             const kural = doc.data();
             const dersAdi = dersMap.get(kural.dersId) || 'Bilinmeyen Ders';
-            
             let ogretmenBilgisi = '';
             if (kural.atananOgretmenId && personelMap.has(kural.atananOgretmenId)) {
                 ogretmenBilgisi = `<span style="color: var(--theme-primary); font-style: italic;"> (Öğr: ${personelMap.get(kural.atananOgretmenId)})</span>`;
             }
-
             const li = document.createElement('li');
             li.innerHTML = `
                 <span style="flex-grow: 1;"><strong>${dersAdi} (${kural.seviye})</strong>${ogretmenBilgisi}: Haftada ${kural.haftalikSaat || '?'} saat, Günlük Max: ${kural.gunlukMaxSaat || '?'}</span>
                 <div class="actions-cell" style="width: auto; min-width: 150px;">
                     <button class="btn btn-edit btn-edit-ders-kurali" data-id="${doc.id}" data-kural='${JSON.stringify(kural)}'>Düzenle</button>
                     <button class="btn btn-delete btn-delete-setting" data-collection="ders_kurallari" data-id="${doc.id}" data-name="Ders Kuralı">Sil</button>
-                </div>
-            `;
+                </div>`;
             listEl.appendChild(li);
         });
     } catch(e) { console.error("Ders kuralları yüklenemedi:", e); }
@@ -3051,6 +3182,7 @@ function renderZorDersKurali(zorDersler, maxSayi, dersMap) {
         gostergeContainer.style.display = 'none';
     }
 }
+
 // --- ANA AYARLAR FONKSİYONU (GÜNCELLENMİŞ VERSİYON) ---
 async function initializeSettings() { 
     const tabsContainer = document.querySelector('.settings-tabs');
@@ -3519,29 +3651,34 @@ async function saveZamanCizelgesiAyarlari() {
     }
 }
 
+// EKLENECEK YENİ KOD
 async function loadZamanCizelgesiAyarlari() {
     try {
         const docSnap = await getDoc(doc(db, "genel_ayarlar", "zamanCizelgesi"));
         if (docSnap.exists()) {
-            const ayarlar = docSnap.data();
-            document.getElementById('setting-dersBaslangic').value = ayarlar.dersBaslangic || '08:30';
-            document.getElementById('setting-toplamDers').value = ayarlar.toplamDers || '8';
-            document.getElementById('setting-dersSuresi').value = ayarlar.dersSuresi || '40';
-            document.getElementById('setting-teneffusSuresi').value = ayarlar.teneffusSuresi || '10';
-            document.getElementById('setting-ogleArasiDersNo').value = ayarlar.ogleArasiDersNo || '4';
-            document.getElementById('setting-ogleArasiSuresi').value = ayarlar.ogleArasiSuresi || '45';
+            zamanCizelgesiAyarlari = docSnap.data();
         } else {
-            // Varsayılan değerleri ayarla
-            document.getElementById('setting-dersBaslangic').value = '08:30';
-            document.getElementById('setting-toplamDers').value = '8';
-            document.getElementById('setting-dersSuresi').value = '40';
-            document.getElementById('setting-teneffusSuresi').value = '10';
-            document.getElementById('setting-ogleArasiDersNo').value = '4';
-            document.getElementById('setting-ogleArasiSuresi').value = '45';
+            // Veritabanında kayıt yoksa varsayılan ayarları kullan
+            zamanCizelgesiAyarlari = {
+                dersBaslangic: '08:30', toplamDers: '8', dersSuresi: '40',
+                teneffusSuresi: '10', ogleArasiDersNo: '4', ogleArasiSuresi: '45'
+            };
         }
     } catch (e) {
         console.error("Zaman çizelgesi yüklenirken hata:", e);
+        // Hata durumunda bile uygulamanın çökmemesi için varsayılanları ata
+        zamanCizelgesiAyarlari = {
+            dersBaslangic: '08:30', toplamDers: '8', dersSuresi: '40',
+            teneffusSuresi: '10', ogleArasiDersNo: '4', ogleArasiSuresi: '45'
+        };
     }
+    // Ayarlar sayfasındaki form alanlarını bu değişkendeki verilerle doldur
+    document.getElementById('setting-dersBaslangic').value = zamanCizelgesiAyarlari.dersBaslangic;
+    document.getElementById('setting-toplamDers').value = zamanCizelgesiAyarlari.toplamDers;
+    document.getElementById('setting-dersSuresi').value = zamanCizelgesiAyarlari.dersSuresi;
+    document.getElementById('setting-teneffusSuresi').value = zamanCizelgesiAyarlari.teneffusSuresi;
+    document.getElementById('setting-ogleArasiDersNo').value = zamanCizelgesiAyarlari.ogleArasiDersNo;
+    document.getElementById('setting-ogleArasiSuresi').value = zamanCizelgesiAyarlari.ogleArasiSuresi;
 }
 
     
@@ -3828,12 +3965,13 @@ let currentView = 'sinif'; // 'sinif' veya 'ogretmen'
 let classList = [];
 let teacherList = [];
 const dersSaatleri = []; // Bu değişkeni global olarak tanımlıyoruz
-
-// "Yayınla" butonu için fonksiyon
+// EKLENECEK YENİ FONKSİYON
 async function publishSchedule() {
     showConfirmationModal(
         `<strong>Tüm Sınıfların Programı Yayınlanacak</strong><br><br>Bu işlem, mevcut programı tüm sınıflar için kaydedecek ve yayınlanmış olarak işaretleyecektir. Devam etmek istiyor musunuz?`,
-        () => saveAllSchedules(true)
+        () => saveAllSchedules(true),
+        'Evet, Yayınla', // Buton Metni
+        'add'             // Buton Stili (Yeşil)
     );
 }
 
@@ -3877,29 +4015,26 @@ async function saveScheduleForClass(sinifAdi, etkinTarih) {
         throw new Error(`${sinifAdi} programı kaydedilemedi.`);
     }
 }
-// YUKARIDA SİLDİĞİNİZ 4 FONKSİYONUN YERİNE BU YENİ BLOKU EKLEYİN
 
-// Ana Başlatma Fonksiyonu (YENİ VERSİYON)
+// Ders Programı modülünü başlatan ana fonksiyon
 async function initializeSchedule() {
     const displayArea = document.getElementById('schedule-display-area');
     displayArea.innerHTML = '<p>Ders programı verileri yükleniyor...</p>';
+    
+    // YENİ EKLENEN SATIR: Ders programı modülü açılır açılmaz ayarları yükle
+    await loadZamanCizelgesiAyarlari();
+
     try {
         const [siniflarSnap, derslerSnap, personelSnap, neviSnap] = await Promise.all([
-            getSettings('ayarlar_siniflar'),
-            getSettings('ayarlar_dersler'),
-            getDocs(query(collection(db, 'personel'), orderBy('ad_soyad'))),
-            getSettings('ayarlar_personel_nevileri')
+            getSettings('ayarlar_siniflar'), getSettings('ayarlar_dersler'),
+            getDocs(query(collection(db, 'personel'), orderBy('ad_soyad'))), getSettings('ayarlar_personel_nevileri')
         ]);
         const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.trim() === 'Eğitim Personeli');
-        if (!egitimPersoneliNevi) {
-            throw new Error('<b>"Eğitim Personeli"</b> adında bir Personel Nevi bulunamadı.');
-        }
+        if (!egitimPersoneliNevi) { throw new Error('<b>"Eğitim Personeli"</b> adında bir Personel Nevi bulunamadı.'); }
         classList = siniflarSnap.docs.map(d => d.data().name);
-        teacherList = personelSnap.docs
-            .filter(p => p.data().personel_nevisi === egitimPersoneliNevi.id)
+        teacherList = personelSnap.docs.filter(p => p.data().personel_nevisi === egitimPersoneliNevi.id)
             .map(doc => ({id: doc.id, name: doc.data().ad_soyad}));
         
-        // Manuel giriş paneli için dropdown'ları doldur
         const dersler = derslerSnap.docs.map(d => ({id: d.id, name: d.data().name}));
         const dersSelect = document.getElementById('dersAdi');
         dersSelect.innerHTML = '<option value="">Ders Seçin...</option>';
@@ -3907,39 +4042,25 @@ async function initializeSchedule() {
         const ogretmenSelect = document.getElementById('ogretmen');
         ogretmenSelect.innerHTML = '<option value="">Öğretmen Seçin...</option>';
         teacherList.forEach(p => ogretmenSelect.add(new Option(p.name, p.id)));
-
-        if (classList.length === 0) {
-            throw new Error('Lütfen <b>Ayarlar > Sınıflar</b> menüsünden en az bir sınıf ekleyin.');
-        }
+        if (classList.length === 0) { throw new Error('Lütfen <b>Ayarlar > Sınıflar</b> menüsünden en az bir sınıf ekleyin.'); }
         window.tumProgramlar = {};
         await generateTimeSlots();
         
-        // --- OLAY DİNLEYİCİLERİNİ (EVENT LISTENERS) ATA ---
         document.getElementById('sinif-gorunum-btn').addEventListener('click', () => switchView('sinif'));
         document.getElementById('ogretmen-gorunum-btn').addEventListener('click', () => switchView('ogretmen'));
-        // EKLENECEK YENİ KOD BLOĞU
-document.getElementById('grup-secim-dropdown').addEventListener('change', (e) => {
-    const selectedValue = e.target.value;
-    if (currentView === 'sinif') {
-        loadScheduleForClass(selectedValue);
-    } else {
-        const selectedOption = e.target.options[e.target.selectedIndex];
-        loadScheduleForTeacher(selectedValue, selectedOption.text);
-    }
-    // EKLENEN SATIR: Dropdown her değiştiğinde havuzun da güncellenmesini sağlar.
-    renderYerlestirmeHavuzu();
-});
-        
-        // Diğer butonlar
+        document.getElementById('grup-secim-dropdown').addEventListener('change', (e) => {
+            const selectedValue = e.target.value;
+            if (currentView === 'sinif') { loadScheduleForClass(selectedValue); } 
+            else { const selectedOption = e.target.options[e.target.selectedIndex]; loadScheduleForTeacher(selectedValue, selectedOption.text); }
+            renderYerlestirmeHavuzu();
+        });
         document.getElementById('ekleBtn').addEventListener('click', () => addLesson(false));
         document.getElementById('programi-kaydet-btn').addEventListener('click', () => saveAllSchedules(false));
         document.getElementById('programi-yayinla-btn').addEventListener('click', publishSchedule);
         document.getElementById('btn-otomatik-doldur').addEventListener('click', runAutomaticScheduler);
         
-        // Varsayılan görünümü yükle
         await switchView('sinif');
-await renderYerlestirmeHavuzu(); // Havuzu ilk defa doldur
-
+        await renderYerlestirmeHavuzu();
     } catch (error) {
         console.error("Ders programı başlatılırken hata:", error);
         displayArea.innerHTML = `<p style="color:red; font-weight:bold; text-align:center; line-height:1.6;">${error.message}</p>`;
@@ -4018,17 +4139,16 @@ async function loadScheduleForTeacher(teacherId, teacherName) {
     document.getElementById('aktif-versiyon-bilgisi').textContent = `${teacherName} adlı öğretmenin programı görüntüleniyor.`;
     document.getElementById('versiyon-listesi').innerHTML = '<li>Öğretmen görünümünde versiyon listesi bulunmamaktadır.</li>';
 }
-// EKLENECEK YENİ KOD
-// Ders programı tablosunu dinamik ders saatleri ve öğle arasına göre çizer.
+// EKLENECEK YENİ FONKSİYON
+// Ders programı tablosunu dinamik ders saatleri, renkler ve bilgi kutucukları ile çizer.
 function renderSchedule() {
     const displayArea = document.getElementById('schedule-display-area');
     const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
-    const ogleArasiDersNo = parseInt(document.getElementById('setting-ogleArasiDersNo').value) || 4;
+    const ogleArasiDersNo = parseInt(zamanCizelgesiAyarlari.ogleArasiDersNo) || 4;
 
     let tableHTML = '<table class="schedule-table"><thead><tr><th>Saatler</th>';
     gunler.forEach(gun => tableHTML += `<th>${gun}</th>`);
     tableHTML += '</tr></thead><tbody>';
-
     const mevcutProgram = window.tumProgramlar[window.aktifGrup] || {};
 
     dersSaatleri.forEach((slot) => {
@@ -4037,14 +4157,33 @@ function renderSchedule() {
             const dersData = mevcutProgram[gun]?.[slot.baslangic];
             const conflictClass = dersData && dersData.hasConflict ? 'has-conflict' : '';
             tableHTML += `<td data-gun="${gun}" data-saat="${slot.baslangic}">`;
+            
+            // --- GÜNCELLENEN BÖLÜM BAŞLANGICI ---
             if (dersData) {
+                // 1. DERS ADINA GÖRE RENKLERİ OLUŞTUR
+                const bgColor = stringToColor(dersData.dersAdi);
+                const textColor = getContrastColor(bgColor);
+
+                // 2. BİLGİ KUTUCUĞU (TOOLTIP) METNİNİ OLUŞTUR
+                // Not: Derslik verisi eklendiğinde buraya kolayca dahil edilebilir.
+                const tooltipText = `Öğretmen: ${dersData.ogretmen || 'Atanmamış'}`;
+                
                 const strongText = currentView === 'sinif' ? dersData.ogretmen : dersData.sinif;
-                tableHTML += `<div class="ders-karti ${conflictClass}"><button class="delete-lesson-btn" title="Dersi Sil">×</button><strong>${strongText || ''}</strong><span>${dersData.dersAdi || ''}</span></div>`;
+
+                // 3. DERS KARTINI YENİ ÖZELLİKLERLE OLUŞTUR
+                tableHTML += `<div class="ders-karti ${conflictClass}" 
+                                   style="background-color: ${bgColor}; color: ${textColor};" 
+                                   data-tooltip="${tooltipText}">
+                                   <button class="delete-lesson-btn" title="Dersi Sil">×</button>
+                                   <strong>${strongText || ''}</strong>
+                                   <span>${dersData.dersAdi || ''}</span>
+                              </div>`;
             }
+            // --- GÜNCELLENEN BÖLÜM BİTİŞİ ---
+
             tableHTML += `</td>`;
         });
         tableHTML += '</tr>';
-        // YENİ EKLENEN DİNAMİK KONTROL: Öğle arasını, ayarlarda belirtilen dersten sonra ekler.
         if (slot.dersNo === ogleArasiDersNo) {
             tableHTML += '<tr><td colspan="6" style="background:#e9ecef;font-weight:bold; height: 35px; vertical-align: middle;">ÖĞLE ARASI</td></tr>';
         }
@@ -4052,7 +4191,6 @@ function renderSchedule() {
 
     displayArea.innerHTML = tableHTML + `</tbody></table>`;
 
-    // Silme ve Sürükle-Bırak olaylarını tekrar bağla (Bu kısım aynı kalıyor)
     if (currentView === 'sinif') {
         document.querySelectorAll('.delete-lesson-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -4065,6 +4203,8 @@ function renderSchedule() {
         document.querySelectorAll('.delete-lesson-btn').forEach(btn => btn.style.display = 'none');
     }
 }
+
+
 // =========================================================================
 // EKSİK OLDUĞU İÇİN YENİ EKLENEN FONKSİYONLARIN BAŞLANGICI
 // =========================================================================
@@ -4133,89 +4273,92 @@ async function deleteScheduleVersion(tarih) {
         async () => {
             showSpinner();
             showToast(`${formatDateDDMMYYYY(tarih)} versiyonu tüm sınıflardan siliniyor...`, 'info');
-            try {
-                // classList dizisindeki her sınıf için bir silme işlemi oluştur
-                const deletePromises = classList.map(sinifAdi => {
-                    const sanitizedSinifAdi = sinifAdi.replace(/\//g, '-');
-                    const docRef = doc(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar", tarih);
-                    // Hata olsa bile diğerlerinin silinmesine devam et (örn: bir sınıfta o versiyon yoksa)
-                    return deleteDoc(docRef).catch(err => {
-                        if (err.code !== 'not-found') {
-                            console.error(`${sinifAdi} için versiyon silinirken hata:`, err);
-                        }
-                    });
-                });
-
-                // Tüm silme işlemlerini aynı anda çalıştır
-                await Promise.all(deletePromises);
-
-                showToast('Program versiyonu tüm sınıflardan başarıyla silindi.', 'success');
-                // Mevcut sınıfın en güncel halini ve versiyon listesini tekrar yükle
-                await loadScheduleForClass(window.aktifGrup);
-            } catch (error) {
-                console.error("Toplu versiyon silme sırasında hata:", error);
-                showToast('Silme işlemi sırasında bir hata oluştu.', 'error');
-            } finally {
-                hideSpinner();
+            // EKLENECEK YENİ KOD BLOĞU
+try {
+    // classList dizisindeki her sınıf için bir silme işlemi oluştur
+    const deletePromises = classList.map(sinifAdi => {
+        const sanitizedSinifAdi = sinifAdi.replace(/\//g, '-');
+        const docRef = doc(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar", tarih);
+        // Hata olsa bile diğerlerinin silinmesine devam et (örn: bir sınıfta o versiyon yoksa)
+        return deleteDoc(docRef).catch(err => {
+            if (err.code !== 'not-found') {
+                console.error(`${sinifAdi} için versiyon silinirken hata:`, err);
             }
+        });
+    });
+
+    // Tüm silme işlemlerini aynı anda çalıştır
+    await Promise.all(deletePromises);
+
+    showToast('Program versiyonu tüm sınıflardan başarıyla silindi.', 'success');
+    
+    // Mevcut sınıfın en güncel halini ve versiyon listesini tekrar yükle
+    await loadScheduleForClass(window.aktifGrup);
+
+    // EKLENEN SATIR: Program ve versiyon listesi yüklendikten sonra havuzu da güncelle.
+    renderYerlestirmeHavuzu();
+
+} catch (error) {
+    console.error("Toplu versiyon silme sırasında hata:", error);
+    showToast('Silme işlemi sırasında bir hata oluştu.', 'error');
+} finally {
+    hideSpinner();
+}
         }
     );
 }
-// EKLENECEK YENİ KOD
+// EKLENECEK 3 YENİ FONKSİYON
+
 // Ayarlar'dan aldığı verilere göre ders saatlerini dinamik olarak oluşturur.
 function generateTimeSlots() {
-    dersSaatleri.length = 0; // Global saatler dizisini temizle
+    dersSaatleri.length = 0;
 
-    // Ayarlar sekmesindeki input'lardan değerleri al
-    const baslangicSaatiStr = document.getElementById('setting-dersBaslangic').value || '08:30';
-    const toplamDers = parseInt(document.getElementById('setting-toplamDers').value) || 8;
-    const dersSuresi = parseInt(document.getElementById('setting-dersSuresi').value) || 40;
-    const teneffusSuresi = parseInt(document.getElementById('setting-teneffusSuresi').value) || 10;
-    const ogleArasiDersNo = parseInt(document.getElementById('setting-ogleArasiDersNo').value) || 4;
-    const ogleArasiSuresi = parseInt(document.getElementById('setting-ogleArasiSuresi').value) || 45;
+    // Değerleri artık formdan değil, global ayar değişkeninden oku
+    const baslangicSaatiStr = zamanCizelgesiAyarlari.dersBaslangic || '08:30';
+    const toplamDers = parseInt(zamanCizelgesiAyarlari.toplamDers) || 8;
+    const dersSuresi = parseInt(zamanCizelgesiAyarlari.dersSuresi) || 40;
+    const teneffusSuresi = parseInt(zamanCizelgesiAyarlari.teneffusSuresi) || 10;
+    const ogleArasiDersNo = parseInt(zamanCizelgesiAyarlari.ogleArasiDersNo) || 4;
+    const ogleArasiSuresi = parseInt(zamanCizelgesiAyarlari.ogleArasiSuresi) || 45;
 
     let suankiZaman = new Date();
     const [saat, dakika] = baslangicSaatiStr.split(':');
     suankiZaman.setHours(parseInt(saat), parseInt(dakika), 0, 0);
 
     for (let i = 1; i <= toplamDers; i++) {
-        // Eğer bir önceki ders, öğle arası verilecek ders ise, öğle arası süresini ekle
         if (i > 1 && (i - 1) === ogleArasiDersNo) {
             suankiZaman.setMinutes(suankiZaman.getMinutes() + ogleArasiSuresi);
         }
-
         let baslangic = new Date(suankiZaman);
         suankiZaman.setMinutes(suankiZaman.getMinutes() + dersSuresi);
         let bitis = new Date(suankiZaman);
-
         dersSaatleri.push({
             dersNo: i,
             baslangic: baslangic.toTimeString().substring(0, 5),
             bitis: bitis.toTimeString().substring(0, 5)
         });
-        
-        // Son ders değilse ve öğle arası hemen sonra gelmiyorsa normal teneffüs ekle
         if (i < toplamDers && i !== ogleArasiDersNo) {
             suankiZaman.setMinutes(suankiZaman.getMinutes() + teneffusSuresi);
         }
     }
-
-    // Ders programı ve ayarlar modülündeki saat seçme menülerini güncelle
     const saatSelectleri = [document.getElementById('saat'), document.getElementById('genel-bloke-saat'), document.getElementById('d-saat-select'), document.getElementById('edit-d-saat-select')];
     saatSelectleri.forEach(select => {
         if (select) {
+            const mevcutDeger = select.value;
             select.innerHTML = '';
             dersSaatleri.forEach(slot => select.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.baslangic)));
+            select.value = mevcutDeger;
         }
     });
-
     return Promise.resolve();
 }
 
+// BU ŞEKİLDE GÜNCELLEYİN
 function deleteLesson(gun, saat) {
     if (window.tumProgramlar[window.aktifGrup]?.[gun]?.[saat]) {
         delete window.tumProgramlar[window.aktifGrup][gun][saat];
         renderSchedule();
+        renderYerlestirmeHavuzu(); // <-- EKLENMESİ GEREKEN SATIR BUDUR
         showToast('Ders kaldırıldı. Kaydetmeyi unutmayın.', 'info');
     }
 }
@@ -4632,6 +4775,17 @@ async function initializeGorevlendirme() {
 
     if (sinifSelect && sinifSelect.options.length === 0) {
         const siniflarSnap = await getSettings('ayarlar_siniflar');
+// EKLENECEK KOD: FİLTRE MENÜSÜNÜ DOLDURMA VE OLAY EKLEME
+const dersKuralFiltreSelect = document.getElementById('ders-kural-filtre-sinif');
+siniflarSnap.forEach(doc => {
+    dersKuralFiltreSelect.add(new Option(doc.data().name, doc.data().name));
+});
+
+dersKuralFiltreSelect.addEventListener('change', (e) => {
+    const secilenSinif = e.target.value;
+    loadAndRenderDersKurallari(secilenSinif || null);
+});
+// ========================================================
         siniflarSnap.forEach(doc => sinifSelect.add(new Option(doc.data().name, doc.data().name)));
     }
     if (bransSelect && bransSelect.options.length === 0) {
@@ -7827,7 +7981,7 @@ async function updateHizmetGecmisi(personelId, newData) {
             <p id="confirmation-modal-message" style="font-size: 1.1em; line-height: 1.5;"></p>
             <div class="confirmation-buttons" style="margin-top: 25px;">
                 <button id="confirm-cancel-btn" class="btn" style="background-color: #6c757d;">İptal</button>
-                <button id="confirm-action-btn" class="btn btn-confirm" style="background-color: var(--danger-color);">Onayla ve Sil</button>
+                <button id="confirm-action-btn" class="btn btn-confirm">Onayla</button>
             </div>
         </div>
     </div>
