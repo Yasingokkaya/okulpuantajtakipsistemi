@@ -2065,7 +2065,9 @@ td[style*="background-color"] .input-wrapper {
     <span class="icon">🌐</span>
     <span class="title">Genel Kurallar</span>
 </div>
-   
+   <div class="settings-card" data-tab="seminer-donemi">
+    <span class="icon">🗓️</span>
+    <span class="title">Seminer Dönemleri</span>
 </div>
 <div id="nevi-tab" class="settings-tab-content">
 	
@@ -2140,69 +2142,8 @@ td[style*="background-color"] .input-wrapper {
         <button id="zaman-cizelgesi-kaydet-btn" class="btn btn-save">Çizelge Ayarlarını Kaydet</button>
     </div>
 </div>
-
-<div id="programlama-kurallari-tab" class="settings-tab-content">
 <div id="ders-brans-kurallari-tab" class="settings-tab-content">
-<div id="ogrenci-kurallari-tab" class="settings-tab-content">
-<div id="derslik-yonetimi-tab" class="settings-tab-content">
-<div id="genel-kurallar-tab" class="settings-tab-content">
-    <button class="btn btn-back-to-settings">⬅️ Ayarlar Menüsüne Geri Dön</button>
-    <h3 style="margin-top: 15px;">Genel Kurallar (Tüm Okul İçin Geçerli)</h3>
-    
-    <div class="form-group">
-        <label>Genel Bloke Zamanlar (Tören, Etkinlik vb.)</label>
-        <p style="font-size: 0.9em; margin-top: 0;">Burada seçilen zaman dilimlerine hiçbir sınıfa ders atanmaz.</p>
-       <div class="add-setting-form">
-            <select id="genel-bloke-gun" style="flex:2;"><option>Pazartesi</option><option>Salı</option><option>Çarşamba</option><option>Perşembe</option><option>Cuma</option></select>
-            <select id="genel-bloke-saat" style="flex:1;"></select>
-            <button id="genel-bloke-ekle-btn" class="btn btn-add" style="flex:1;">Bloke Et</button>
-       </div>
-        <ul id="genel-bloke-listesi" class="settings-list" style="max-height: 100px;"></ul>
-    </div>
-</div>
-    <button class="btn btn-back-to-settings">⬅️ Ayarlar Menüsüne Geri Dön</button>
-    <h3 style="margin-top: 15px;">Derslik Yönetimi (Fiziksel Kısıtlar)</h3>
-
-    <p>Fen Lab, Spor Salonu gibi özel ve tek olan derslikleri tanımlayarak çakışmaları önleyin.</p>
-    <div class="add-setting-form" style="align-items: flex-end;">
-         <input type="text" id="derslik-adi-input" placeholder="Örn: Fen Laboratuvarı" style="flex:2;">
-         <select id="derslik-tipi-select" style="flex:1;"><option value="Standart">Standart</option><option value="Laboratuvar">Laboratuvar</option><option value="Spor Salonu">Spor Salonu</option><option value="Atölye">Atölye</option></select>
-         <button id="derslik-ekle-btn" class="btn btn-add" style="flex:1;">Yeni Derslik Ekle</button>
-    </div>
-    <ul id="derslik-listesi" class="settings-list"></ul>
-</div>
-    <button class="btn btn-back-to-settings">⬅️ Ayarlar Menüsüne Geri Dön</button>
-    <h3 style="margin-top: 15px;">Öğrenci ve Sınıf Odaklı Kurallar</h3>
-
-    <div id="zor-ders-form-container">
-        <label>Zorlayıcı Derslerin Dağılımı</label>
-        <p style="font-size: 0.9em; margin-top: 0;">Öğrencilerin bir günde göreceği zor ders sayısını sınırlayın.</p>
-        <div class="add-setting-form" style="align-items: flex-end;">
-            <select id="kural-zor-dersler-sec" multiple="" style="min-height: 100px; flex:3;"></select>
-            <input type="number" id="kural-gunluk-max-zor-ders" placeholder="Max Sayı" style="flex:1;">
-            <button id="zor-ders-kural-kaydet-btn" class="btn btn-save" style="flex:1;">Kaydet</button>
-        </div>
-    </div>
-    <div id="zor-ders-kural-gosterge" style="display: none; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; justify-content: space-between; align-items: center;">
-        <div>
-            <label style="font-weight: bold; color: var(--theme-primary); display: block; margin-bottom: 10px;">Tanımlanmış Kural</label>
-            <div style="display: flex; align-items: baseline; gap: 25px;">
-                <div>
-                    <p style="margin:0 0 5px 0;"><strong>Zorlayıcı olarak seçilen dersler:</strong></p>
-                    <ul id="zor-dersler-gosterge-listesi" style="margin: 0; padding-left: 20px; list-style-type: square;"></ul>
-                </div>
-                <p><strong>Bir günde en fazla <span id="max-zor-ders-gosterge" style="font-weight: bold; font-size: 1.2em;"></span> zor ders olabilir.</strong></p>
-            </div>
-        </div>
-        <div class="button-group" style="text-align: right; flex-shrink: 0; padding-left: 20px;">
-            <button id="zor-kural-duzenle-btn" class="btn btn-edit">Kuralı Düzenle</button>
-            <button id="zor-kural-sil-btn" class="btn btn-delete">Kuralı Sil</button>
-        </div>
-    </div>
-</div>
-    <button class="btn btn-back-to-settings">⬅️ Ayarlar Menüsüne Geri Dön</button>
     <h3 style="margin-top: 15px;">Ders (Branş) Kuralları</h3>
-
     <p>Derslerin haftalık saatlerini, yerleşim tercihlerini ve diğer derslerle ilişkilerini buradan yönetin.</p>
     <div class="form-grid" style="grid-template-columns: 1fr; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
         <div class="form-group">
@@ -2238,23 +2179,12 @@ td[style*="background-color"] .input-wrapper {
                 <input type="number" id="kural-gunluk-max-saat" placeholder="Örn: 2">
             </div>
         </div>
-        <a href="#" id="toggle-detayli-kurallar" style="display: block; margin: 10px 0; color: var(--theme-primary); text-decoration: none; font-weight: 600;">
-            ▶ Detaylı Kuralları Göster/Gizle
-        </a>
+        <a href="#" id="toggle-detayli-kurallar" style="display: block; margin: 10px 0; color: var(--theme-primary); text-decoration: none; font-weight: 600;">▶ Detaylı Kuralları Göster/Gizle</a>
         <div id="detayli-kurallar-container" style="display: none; background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
             <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-                <div class="form-group">
-                    <label>Blok Ders</label>
-                    <select id="kural-blok-ders"><option value="evet">Evet</option><option value="hayir">Hayır</option></select>
-                </div>
-                <div class="form-group">
-                    <label>Gereken Derslik Tipi</label>
-                    <select id="kural-derslik-tipi"></select>
-                </div>
-                <div class="form-group">
-                    <label>Yerleşim Tercihi</label>
-                    <select id="kural-yerlesim-tercihi"><option value="farketmez">Fark Etmez</option><option value="sabah">Sadece Sabah</option><option value="ogle">Sadece Öğleden Sonra</option><option value="ilk_ders_olmasin">İlk Ders Olmasın</option><option value="son_ders_olmasin">Son Ders Olmasin</option></select>
-                </div>
+                <div class="form-group"><label>Blok Ders</label><select id="kural-blok-ders"><option value="evet">Evet</option><option value="hayir">Hayır</option></select></div>
+                <div class="form-group"><label>Gereken Derslik Tipi</label><select id="kural-derslik-tipi"></select></div>
+                <div class="form-group"><label>Yerleşim Tercihi</label><select id="kural-yerlesim-tercihi"><option value="farketmez">Fark Etmez</option><option value="sabah">Sadece Sabah</option><option value="ogle">Sadece Öğleden Sonra</option><option value="ilk_ders_olmasin">İlk Ders Olmasın</option><option value="son_ders_olmasin">Son Ders Olmasin</option></select></div>
             </div>
             <div class="form-group" style="margin-top: 15px;">
                 <label>Birlikte Gitmemesi Gereken Dersler (Art arda gelmesin)</label>
@@ -2268,8 +2198,72 @@ td[style*="background-color"] .input-wrapper {
     <ul id="ders-kural-listesi" class="settings-list"></ul>
 </div>
 
+<div id="ogrenci-kurallari-tab" class="settings-tab-content">
+    <h3 style="margin-top: 15px;">Öğrenci ve Sınıf Odaklı Kurallar</h3>
+    <div id="zor-ders-form-container">
+        <label>Zorlayıcı Derslerin Dağılımı</label>
+        <p style="font-size: 0.9em; margin-top: 0;">Öğrencilerin bir günde göreceği zor ders sayısını sınırlayın.</p>
+        <div class="add-setting-form" style="align-items: flex-end;">
+            <select id="kural-zor-dersler-sec" multiple="" style="min-height: 100px; flex:3;"></select>
+            <input type="number" id="kural-gunluk-max-zor-ders" placeholder="Max Sayı" style="flex:1;">
+            <button id="zor-ders-kural-kaydet-btn" class="btn btn-save" style="flex:1;">Kaydet</button>
+        </div>
+    </div>
+    <div id="zor-ders-kural-gosterge" style="display: none; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; justify-content: space-between; align-items: center;">
+        <div>
+            <label style="font-weight: bold; color: var(--theme-primary); display: block; margin-bottom: 10px;">Tanımlanmış Kural</label>
+            <div style="display: flex; align-items: baseline; gap: 25px;">
+                <div>
+                    <p style="margin:0 0 5px 0;"><strong>Zorlayıcı olarak seçilen dersler:</strong></p>
+                    <ul id="zor-dersler-gosterge-listesi" style="margin: 0; padding-left: 20px; list-style-type: square;"></ul>
+                </div>
+                <p><strong>Bir günde en fazla <span id="max-zor-ders-gosterge" style="font-weight: bold; font-size: 1.2em;"></span> zor ders olabilir.</strong></p>
+            </div>
+        </div>
+        <div class="button-group" style="text-align: right; flex-shrink: 0; padding-left: 20px;">
+            <button id="zor-kural-duzenle-btn" class="btn btn-edit">Kuralı Düzenle</button>
+            <button id="zor-kural-sil-btn" class="btn btn-delete">Kuralı Sil</button>
+        </div>
+    </div>
+</div>
+
+<div id="derslik-yonetimi-tab" class="settings-tab-content">
+    <h3 style="margin-top: 15px;">Derslik Yönetimi (Fiziksel Kısıtlar)</h3>
+    <p>Fen Lab, Spor Salonu gibi özel ve tek olan derslikleri tanımlayarak çakışmaları önleyin.</p>
+    <div class="add-setting-form" style="align-items: flex-end;">
+         <input type="text" id="derslik-adi-input" placeholder="Örn: Fen Laboratuvarı" style="flex:2;">
+         <select id="derslik-tipi-select" style="flex:1;"><option value="Standart">Standart</option><option value="Laboratuvar">Laboratuvar</option><option value="Spor Salonu">Spor Salonu</option><option value="Atölye">Atölye</option></select>
+         <button id="derslik-ekle-btn" class="btn btn-add" style="flex:1;">Yeni Derslik Ekle</button>
+    </div>
+    <ul id="derslik-listesi" class="settings-list"></ul>
+</div>
+
+<div id="genel-kurallar-tab" class="settings-tab-content">
+    <h3 style="margin-top: 15px;">Genel Kurallar (Tüm Okul İçin Geçerli)</h3>
+    <div class="form-group">
+        <label>Genel Bloke Zamanlar (Tören, Etkinlik vb.)</label>
+        <p style="font-size: 0.9em; margin-top: 0;">Burada seçilen zaman dilimlerine hiçbir sınıfa ders atanmaz.</p>
+       <div class="add-setting-form">
+            <select id="genel-bloke-gun" style="flex:2;"><option>Pazartesi</option><option>Salı</option><option>Çarşamba</option><option>Perşembe</option><option>Cuma</option></select>
+            <select id="genel-bloke-saat" style="flex:1;"></select>
+            <button id="genel-bloke-ekle-btn" class="btn btn-add" style="flex:1;">Bloke Et</button>
+       </div>
+        <ul id="genel-bloke-listesi" class="settings-list" style="max-height: 100px;"></ul>
+    </div>
+</div>
+
+<div id="seminer-donemi-tab" class="settings-tab-content">
+    <p>Belirli süreli personelin ek derslerinin farklı hesaplanacağı seminer, hizmet içi eğitim gibi özel dönemleri buradan yönetebilirsiniz.</p>
+    <div class="add-setting-form" style="grid-template-columns: 2fr 1fr 1fr auto; display: grid;">
+        <input type="text" id="add-seminer-donemi-ad-input" placeholder="Dönem Adı (Örn: Eylül Semineri)">
+        <input type="date" id="add-seminer-donemi-baslangic-input">
+        <input type="date" id="add-seminer-donemi-bitis-input">
+        <button id="add-seminer-donemi-btn" class="btn">Ekle</button>
+    </div>
+    <ul id="seminer-donemi-list" class="settings-list"></ul>
+</div>
+
 <div id="ogretmen-kural-tab" class="settings-tab-content">
-    <button class="btn btn-back-to-settings">⬅️ Ayarlar Menüsüne Geri Dön</button>
     <h3>Öğretmen Kuralları</h3>
     
     <div class="form-group">
@@ -3349,6 +3343,8 @@ function renderZorDersKurali(zorDersler, maxSayi, dersMap) {
         gostergeContainer.style.display = 'none';
     }
 }
+
+// MEVCUT initializeSettings FONKSİYONUNU SİLİP BUNU YAPIŞTIRIN
 async function initializeSettings() {
     const settingsContainer = document.getElementById('settings');
     // Fonksiyon daha önce başarıyla çalıştıysa tekrar çalıştırma (guard clause)
@@ -3406,16 +3402,42 @@ async function initializeSettings() {
                         showToast('Ayar başarıyla silindi.');
                         // Listeyi yeniden çizmek için ilgili render fonksiyonunu tekrar çağır
                         const listId = collectionName.replace('ayarlar_', '').replace(/_/g, '-') + '-list';
-                        const personelNevileri = (await getSettings('ayarlar_personel_nevileri')).docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-                        await renderSettingsList(collectionName, listId, personelNevileri);
+                        if(collectionName === 'ayarlar_seminer_donemleri') {
+                           await renderSeminerDonemleri(); // *** YENİ EKLENDİ ***
+                        } else {
+                           const personelNevileri = (await getSettings('ayarlar_personel_nevileri')).docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+                           await renderSettingsList(collectionName, listId, personelNevileri);
+                        }
                     }
                 );
             }
-          if (e.target.matches('.btn-edit-setting')) {
-    // Yorum satırını kaldırıp, console.log'u siliyoruz.
-    openSettingEditModal(e.target.dataset.id, e.target.dataset.collection, e.target.dataset.name);
-}
+            if (e.target.matches('.btn-edit-setting')) {
+                openSettingEditModal(e.target.dataset.id, e.target.dataset.collection, e.target.dataset.name);
+            }
         });
+        
+        // *** YENİ EKLENDİ: Seminer Dönemi Ekleme Butonu ***
+        document.getElementById('add-seminer-donemi-btn').addEventListener('click', async () => {
+            const adInput = document.getElementById('add-seminer-donemi-ad-input');
+            const baslangicInput = document.getElementById('add-seminer-donemi-baslangic-input');
+            const bitisInput = document.getElementById('add-seminer-donemi-bitis-input');
+            
+            if (!adInput.value || !baslangicInput.value || !bitisInput.value) {
+                return showToast('Lütfen tüm alanları doldurun.', 'error');
+            }
+            
+            await addSetting('ayarlar_seminer_donemleri', { 
+                name: adInput.value,
+                baslangic: baslangicInput.value,
+                bitis: bitisInput.value
+            });
+            showToast('Seminer dönemi eklendi.');
+            adInput.value = '';
+            baslangicInput.value = '';
+            bitisInput.value = '';
+            await renderSeminerDonemleri();
+        });
+
 
         // === VERİ YÜKLEME VE ARAYÜZÜ HAZIRLAMA ===
         const [neviSnapshot, derslerSnap, personelSnap, siniflarSnap] = await Promise.all([
@@ -3426,38 +3448,19 @@ async function initializeSettings() {
         ]);
         
         const personelNevileri = neviSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-       // Öğretmen Kuralları Menüsünü Dolduran Kod
-// Öğretmen Kuralları Menüsünü Dolduran Kod (Hata Ayıklama Versiyonu)
+       
         const kuralOgretmenSelect = document.getElementById('kural-ogretmen-sec');
         const ogretmenKuralFormu = document.getElementById('ogretmen-kural-formu');
         if (kuralOgretmenSelect && ogretmenKuralFormu) {
-            
-            const egitimPersoneliNevi = personelNevileri.find(nevi => 
-                nevi.name.trim().toLocaleLowerCase('tr-TR') === 'eğitim personeli'
-            );
+            const egitimPersoneliNevi = personelNevileri.find(nevi => nevi.name.trim().toLocaleLowerCase('tr-TR') === 'eğitim personeli');
             const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
-            
-            // ================= KONTROL NOKTASI 1 =================
-            console.log("SİSTEMİN BULDUĞU 'EĞİTİM PERSONELİ' TÜRÜNÜN ID'Sİ:", egitimPersoneliNeviId);
-            // =======================================================
-
             kuralOgretmenSelect.innerHTML = '<option value="">Lütfen Bir Öğretmen Seçin...</option>';
-            
-            // forEach döngüsüne 'index' parametresini ekliyoruz
-            personelSnap.forEach((doc, index) => {
+            personelSnap.forEach((doc) => {
                 const personel = doc.data();
-
-                // ================= KONTROL NOKTASI 2 (Sadece ilk personel için çalışacak) =================
-                if(index === 0) {
-                   console.log("LİSTEDEKİ İLK PERSONELİN KAYITLI OLDUĞU NEVİ ID'Sİ:", personel.personel_nevisi);
-                }
-                // =======================================================================================
-
                 if (personel.personel_nevisi === egitimPersoneliNeviId) {
                     kuralOgretmenSelect.add(new Option(personel.ad_soyad, doc.id));
                 }
             });
-            
             const ogretmenKuralBilgi = document.getElementById('ogretmen-kural-bilgi');
             kuralOgretmenSelect.addEventListener('change', (e) => {
                 const ogretmenId = e.target.value;
@@ -3484,7 +3487,8 @@ async function initializeSettings() {
             renderSettingsList('ayarlar_siniflar', 'sinif-list'),
             renderSettingsList('ayarlar_nobet_yerleri', 'nobet-yeri-list'),
             renderSettingsList('ayarlar_izin_tipleri', 'izin-tipi-list'),
-            renderSettingsList('ayarlar_derslikler', 'derslik-listesi')
+            renderSettingsList('ayarlar_derslikler', 'derslik-listesi'),
+            renderSeminerDonemleri() // *** YENİ EKLENDİ ***
         ]);
         
         // Programlama kuralları ve zaman çizelgesi ayarlarını yükle
@@ -3500,6 +3504,61 @@ async function initializeSettings() {
         showToast('Ayarlar yüklenemedi. Lütfen sayfayı yenileyin.', 'error');
         // Hata durumunda, tekrar denenebilmesi için 'initialized' işaretini geri al
         settingsContainer.dataset.initialized = 'false';
+    }
+}
+// YUKARIDAKİ FONKSİYONUN YERİNE BU VERSİYONU KULLANIN
+async function renderSeminerDonemleri() {
+    const listElement = document.getElementById('seminer-donemi-list');
+    if (!listElement) return;
+    listElement.innerHTML = '<li>Yükleniyor...</li>';
+    try {
+        // DEĞİŞİKLİK: orderBy("baslangic", "desc") sorgusu kaldırıldı.
+        // Artık veritabanı indeksi gerekmeyecek.
+        const snapshot = await getDocs(query(collection(db, "ayarlar_seminer_donemleri")));
+        
+        if (snapshot.empty) {
+            listElement.innerHTML = '<li>Henüz seminer dönemi eklenmemiş.</li>';
+            return;
+        }
+
+        // Verileri tarihe göre JavaScript içinde sıralayalım.
+        const donemler = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        donemler.sort((a, b) => new Date(b.baslangic) - new Date(a.baslangic));
+
+        listElement.innerHTML = '';
+        donemler.forEach(item => { // Artık sıralanmış 'donemler' dizisini kullanıyoruz.
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>
+                    <strong>${item.name}</strong> 
+                    <small>(${formatDateDDMMYYYY(item.baslangic)} - ${formatDateDDMMYYYY(item.bitis)})</small>
+                </span>
+                <div class="actions-cell" style="width: auto; min-width: 120px;">
+                    <button class="btn btn-delete btn-delete-setting" data-id="${item.id}" data-collection="ayarlar_seminer_donemleri" data-name="${item.name}">Sil</button>
+                </div>
+            `;
+            listElement.appendChild(li);
+        });
+    } catch (e) {
+        listElement.innerHTML = '<li>Veri yüklenemedi.</li>';
+        console.error("Error rendering seminer dönemleri:", e);
+    }
+}
+
+// Seminer dönemlerini global bir değişkene çeken yardımcı fonksiyon
+async function fetchSeminarPeriods() {
+    try {
+        const snapshot = await getDocs(query(collection(db, "ayarlar_seminer_donemleri")));
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                baslangic: new Date(data.baslangic + 'T00:00:00Z'), // Saat dilimi sorunlarını önlemek için Z ekliyoruz
+                bitis: new Date(data.bitis + 'T23:59:59Z')
+            };
+        });
+    } catch (error) {
+        console.error("Seminer dönemleri çekilirken hata:", error);
+        return []; // Hata durumunda boş dizi dön
     }
 }
 
@@ -6083,13 +6142,12 @@ function initializeCustomSelects() {
         select.addEventListener('blur', () => handleCustomSelectDisplay(select));
     });
 }
-
-// ================= BU FONKSİYONUN TAMAMINI EKLEYİN =================
-function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
+// MEVCUT renderPuantajTable FONKSİYONUNU BU BLOK İLE DEĞİŞTİRİN
+function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni, calculatedHoursMap) {
     const container = document.getElementById('puantaj-table-container');
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
-
+    
     let finalHTML = `<h2 id="puantaj-baslik" style="text-align: center; color: var(--theme-primary); margin-bottom: 25px;">${baslikMetni}</h2>`;
 
     if (!aktifPersonelListesi || aktifPersonelListesi.length === 0 || !puantajData) {
@@ -6100,35 +6158,21 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     const personelPuantajData = Object.keys(puantajData).reduce((acc, personelId) => {
         const personelInfo = aktifPersonelListesi.find(p => p.id === personelId);
         if (personelInfo) {
-            acc[personelId] = {
-                ...personelInfo,
-                ...puantajData[personelId]
-            };
+            acc[personelId] = { ...personelInfo, ...puantajData[personelId] };
         }
         return acc;
     }, {});
 
-
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const gunler = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-    
-    // 1. İstenen grup sıralamasını bir dizi (array) olarak tanımlıyoruz.
     const grupSiralama = ['Belirli Süreli', 'Belirsiz Süreli', 'Kısmi Süreli'];
 
-    // 2. Personelleri gruplara ayırırken her grubu kendi içinde A'dan Z'ye sıralıyoruz.
     const grupluPersonel = {
-        'Belirsiz Süreli': Object.values(personelPuantajData)
-            .filter(p => p.sozlesmeTuru === 'Belirsiz Süreli')
-            .sort((a, b) => a.ad.localeCompare(b.ad, 'tr')),
-        'Belirli Süreli': Object.values(personelPuantajData)
-            .filter(p => p.sozlesmeTuru === 'Belirli Süreli')
-            .sort((a, b) => a.ad.localeCompare(b.ad, 'tr')),
-        'Kısmi Süreli': Object.values(personelPuantajData)
-            .filter(p => p.sozlesmeTuru === 'Kısmi Süreli')
-            .sort((a, b) => a.ad.localeCompare(b.ad, 'tr'))
+        'Belirsiz Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Belirsiz Süreli').sort((a, b) => a.ad.localeCompare(b.ad, 'tr')),
+        'Belirli Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Belirli Süreli').sort((a, b) => a.ad.localeCompare(b.ad, 'tr')),
+        'Kısmi Süreli': Object.values(personelPuantajData).filter(p => p.sozlesmeTuru === 'Kısmi Süreli').sort((a, b) => a.ad.localeCompare(b.ad, 'tr'))
     };
 
-    // 3. Tanımladığımız sıralama dizisi üzerinden dönüyoruz.
     grupSiralama.forEach(grupAdi => {
         const personelGrubu = grupluPersonel[grupAdi];
         if (personelGrubu.length === 0) return;
@@ -6136,27 +6180,27 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
         const ayAdi = document.getElementById('select-month').options[month].text;
         const yeniGrupBasligi = `${ayAdi} ${year} Ayı Personel Puantaj Kayıtları ( ${grupAdi.toLocaleUpperCase('tr-TR')} )`;
         finalHTML += `<h3 style="margin-top: 30px; padding: 10px; background-color: #343a40; color: white; border-radius: 5px;">${yeniGrupBasligi}</h3>`;
-        
         let tableHTML = `<table class="puantaj-table"><thead><tr><th rowspan="2">Personel</th><th rowspan="2">Unvan</th><th rowspan="2" class="vertical-divider">İşe Giriş<br>İşten Çıkış</th><th colspan="${daysInMonth}">Aylık Puantaj Durumu</th><th colspan="${(grupAdi === 'Belirsiz Süreli') ? 4 : 4}" class="vertical-divider">Aylık Saat Toplamları</th><th colspan="9" class="vertical-divider">Aylık Gün Toplamları</th><th rowspan="2" class="vertical-divider">Sgk Prim Günü</th><th colspan="3">Sosyal Yardımlar</th><th rowspan="2">İmza</th></tr><tr>`;
-        
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
             const dividerClass = (new Date(year, month, day).getDay() === 0 || day === daysInMonth) ? 'vertical-divider' : '';
             tableHTML += `<th class="col-day ${dividerClass}">${day}<br>${gunler[date.getDay()]}</th>`;
         }
-        
         tableHTML += `<th>Aylık Toplam</th>${(grupAdi === 'Belirsiz Süreli') ? '<th>Fazla Mesai</th><th>Mesai Nedeni</th><th>E. G.<br>Kodu</th>' : `<th>Ek Ders</th><th>Nöbet</th><th class="vertical-divider">Rehberlik</th>`}<th>N</th><th>HT</th><th>RT</th><th>İ</th><th>R</th><th>Üİ</th><th>S</th><th>K</th><th class="vertical-divider">RTÇ</th><th>Eş Durumu</th><th>Çocuk 0-6</th><th>Çocuk 6-18</th></tr></thead><tbody>`;
 
         personelGrubu.forEach(personel => {
             if (!personel.dailyData) { return; }
             let ayrilisTarihiGoster = '---';
-            if (personel.isten_ayrilis) {
+            if (personel.isten_ayrilis && personel.isten_ayrilis !== '---') {
                 const ayrilisDate = new Date(personel.isten_ayrilis + 'T00:00:00Z');
                 if (ayrilisDate.getUTCFullYear() === year && ayrilisDate.getUTCMonth() === month) {
                     ayrilisTarihiGoster = formatDateDDMMYYYY(personel.isten_ayrilis);
                 }
             }
-            const monthlyHours = calculateMonthlyHours(personel.id);
+            
+            // *** DEĞİŞİKLİK BURADA: Hesaplama yerine haritadan hazır veriyi alıyoruz ***
+            const monthlyHours = calculatedHoursMap.get(personel.id) || { genelToplam: 0, ekDers: 0 };
+            
             const nobetSaat = nobetVerisi[personel.id] || 0;
             const rehberlikSaat = calculateEffectiveRehberlikHours(personel.id, year, month, personelPuantajData);
             const statusCounts = calculateStatusCounts(personel.id);
@@ -6170,7 +6214,7 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
                 tableHTML += `<td class="status-cell status-${dayData.code} ${dividerClass}" data-personel-id="${personel.id}" data-date="${dateString}">${dayData.code || ''}</td>`;
             }
             
-           let eksikGunKoduSelect = '';
+            let eksikGunKoduSelect = '';
             if (grupAdi === 'Belirsiz Süreli') {
                 let options = '<option value=""></option>';
                 eksikGunKodlari.forEach(item => {
@@ -6202,7 +6246,6 @@ function renderPuantajTable(nobetVerisi, aktifPersonelListesi, baslikMetni) {
     attachCellListeners();
     initializeCustomSelects();
 }
-// =======================================================================
 let puantajInitialized = false;
 let puantajPersonelList = [];
 let puantajData = {};
@@ -6214,80 +6257,84 @@ let isPuantajLocked = false;
 let currentPuantajDocRef = null;
 // =================== 1. ADIM: EKSİK FONKSİYONLARI BURAYA EKLEYİN ===================
 
+// MEVCUT loadPuantajDataForCurrentMonth FONKSİYONUNU BU BLOK İLE DEĞİŞTİRİN
 async function loadPuantajDataForCurrentMonth() {
     const year = document.getElementById('input-year').value;
     const month = document.getElementById('select-month').value;
     const docId = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}`;
     currentPuantajDocRef = doc(db, "kayitli_puantajlar", docId);
+    
+    const container = document.getElementById('puantaj-table-container');
+    container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4>Puantaj verileri yükleniyor ve hesaplamalar yapılıyor...</h4></div>`;
+
     try {
         const ayAdi = document.getElementById('select-month').options[month].text;
         const baslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
 
         const docSnap = await getDoc(currentPuantajDocRef);
-       if (docSnap.exists()) {
+        if (docSnap.exists()) {
             const data = docSnap.data();
             puantajData = data.puantajData || {};
             overtimeReasons = data.overtimeReasons || {};
-            missingDayCodes = data.missingDayCodes || {}; // Eksik gün kodlarını yükle
+            missingDayCodes = data.missingDayCodes || {};
             isPuantajLocked = data.isLocked || false;
             showToast('Kaydedilmiş puantaj verisi yüklendi.', 'success');
         } else {
             puantajData = {};
             overtimeReasons = {};
-            missingDayCodes = {}; // Puantaj yoksa kodları da sıfırla
+            missingDayCodes = {};
             isPuantajLocked = false;
             showToast('Bu ay için kaydedilmiş bir puantaj yok.', 'info');
         }
         updateLockStatusUI();
 
-        // === BAŞLANGIÇ: DOĞRU FİLTRELEME MANTIĞI ===
         const ayinIlkGunu = new Date(Date.UTC(year, month, 1));
         const ayinSonGunu = new Date(Date.UTC(year, month + 1, 0));
 
         const aktifPersonelList = puantajPersonelList.filter(personel => {
             const girisStr = personel.ise_giris;
             const ayrilisStr = personel.isten_ayrilis;
-
-            // İşe giriş tarihi yoksa veya geçersizse personeli gösterme.
             if (!girisStr) return false;
             const girisDate = new Date(girisStr + 'T00:00:00Z');
             if (isNaN(girisDate.getTime())) return false;
-
-            // Kural 1: İşe giriş tarihi, baktığımız ayın son gününden sonra olamaz.
             const iseBaslamisMi = girisDate <= ayinSonGunu;
-
-            // Kural 2: İşten ayrılış tarihi, baktığımız ayın ilk gününden önce olamaz.
-            let istenAyrilmamisMi = true; // Varsayılan olarak true
+            let istenAyrilmamisMi = true;
             if (ayrilisStr && ayrilisStr.trim() !== '' && ayrilisStr.trim() !== '---') {
                 const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
                 if (!isNaN(ayrilisDate.getTime())) {
                     istenAyrilmamisMi = ayrilisDate >= ayinIlkGunu;
                 }
             }
-
-            // Personel, ancak her iki kuralı da sağlıyorsa o ayın listesinde yer alabilir.
             return iseBaslamisMi && istenAyrilmamisMi;
         });
-        // === BİTİŞ: DOĞRU FİLTRELEME MANTIĞI ===
 
         const selectedPersonelId = document.getElementById('personel-filter-select').value;
         let displayList = aktifPersonelList;
-
         if (selectedPersonelId && selectedPersonelId !== 'all') {
             displayList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
         }
 
         const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
 
-        // Tabloyu filtrelenmiş 'displayList' ile çiz
-        renderPuantajTable(nobetVerisi, displayList, baslikMetni);
+        // *** ÖNEMLİ DÜZELTME BURADA BAŞLIYOR ***
+        // Tüm personelin saat hesaplamalarını ASENKRON olarak ve ÖNCEDEN yapıyoruz.
+        const calculatedHoursMap = new Map();
+        const hourCalculationPromises = displayList.map(async (personel) => {
+            const hours = await calculateMonthlyHours(personel.id);
+            calculatedHoursMap.set(personel.id, hours);
+        });
+        await Promise.all(hourCalculationPromises);
+        // *** ÖNEMLİ DÜZELTME BURADA BİTİYOR ***
 
-        renderGrandTotals(nobetVerisi, displayList);
+        // Artık render fonksiyonlarına hesaplanmış hazır veriyi gönderiyoruz.
+        renderPuantajTable(nobetVerisi, displayList, baslikMetni, calculatedHoursMap);
+        renderGrandTotals(nobetVerisi, displayList, calculatedHoursMap);
         renderLegend();
         attachCellListeners();
     } catch (error) {
         console.error("Puantaj verisi yüklenirken hata: ", error);
         showToast("Puantaj verisi yüklenemedi.", "error");
+        container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4 style="color: var(--danger-color);">Puantaj yüklenirken bir hata oluştu. Lütfen Console'u kontrol edin.</h4></div>`;
     }
 }
 
@@ -6556,9 +6603,7 @@ async function fetchAndProcessSchedules(year, month) {
     
     return personelScheduleData;
 }
-
-
-// MEVCUT generateInitialPuantaj FONKSİYONUNU SİLİP, BU NİHAİ VERSİYONU YAPIŞTIRIN
+// MEVCUT generateInitialPuantaj FONKSİYONUNU BU BLOK İLE DEĞİŞTİRİN
 async function generateInitialPuantaj() {
     if (isPuantajLocked) {
         showToast('Puantaj kilitli...', 'error');
@@ -6581,13 +6626,10 @@ async function generateInitialPuantaj() {
         let aktifPersonelList = puantajPersonelList.filter(personel => {
             const girisStr = personel.ise_giris;
             const ayrilisStr = personel.isten_ayrilis;
-
             if (!girisStr) return false;
             const girisDate = new Date(girisStr + 'T00:00:00Z');
             if (isNaN(girisDate.getTime())) return false;
-
             const iseBaslamisMi = girisDate <= ayinSonGunu;
-
             let istenAyrilmamisMi = true;
             if (ayrilisStr && ayrilisStr.trim() !== '' && ayrilisStr.trim() !== '---') {
                 const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
@@ -6603,10 +6645,11 @@ async function generateInitialPuantaj() {
             aktifPersonelList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
         }
 
-        const [personelScheduleData, nobetVerisi, izinVerisi] = await Promise.all([
+        const [personelScheduleData, nobetVerisi, izinVerisi, seminarPeriods] = await Promise.all([
             fetchAndProcessSchedules(year, month),
             fetchAndCalculateNobetData(year, month),
-            fetchIzinDataForPuantaj(year, month)
+            fetchIzinDataForPuantaj(year, month),
+            fetchSeminarPeriods()
         ]);
 
         const gunlerTR = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
@@ -6614,18 +6657,7 @@ async function generateInitialPuantaj() {
 
         aktifPersonelList.forEach(personel => {
             puantajData[personel.id] = {
-                ad: personel.ad,
-                unvan: personel.unvan,
-                neviAdi: personel.neviAdi,
-                sozlesmeTuru: personel.sozlesme_turu,
-                maasKarsiligi: personel.maasKarsiligi,
-                rehberlik_gorevi: personel.rehberlik_gorevi,
-                esDurumu: personel.esDurumu,
-                cocuk0_6: personel.cocuk0_6,
-                cocuk6_18: personel.cocuk6_18,
-                ise_giris: personel.ise_giris,
-                isten_ayrilis: personel.isten_ayrilis,
-                kismi_zamanli_calisma: personel.kismi_zamanli_calisma,
+                ad: personel.ad, unvan: personel.unvan, neviAdi: personel.neviAdi, sozlesmeTuru: personel.sozlesme_turu, maasKarsiligi: personel.maasKarsiligi, rehberlik_gorevi: personel.rehberlik_gorevi, esDurumu: personel.esDurumu, cocuk0_6: personel.cocuk0_6, cocuk6_18: personel.cocuk6_18, ise_giris: personel.ise_giris, isten_ayrilis: personel.isten_ayrilis, kismi_zamanli_calisma: personel.kismi_zamanli_calisma,
                 dailyData: {}
             };
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -6633,6 +6665,7 @@ async function generateInitialPuantaj() {
                 const dateUTC = new Date(Date.UTC(year, month, day));
                 const dateString = dateUTC.toISOString().split('T')[0];
                 let code = '', hours = 0;
+                
                 if (personel.isten_ayrilis && personel.isten_ayrilis !== '---') {
                     const ayrilisTarihiUTC = new Date(personel.isten_ayrilis + 'T00:00:00Z');
                     if (dateUTC > ayrilisTarihiUTC) {
@@ -6640,51 +6673,72 @@ async function generateInitialPuantaj() {
                         continue;
                     }
                 }
-                const leaveCodeForDay = izinVerisi[personel.id]?.[dateString];
-                const dayOfWeek = dateUTC.getDay();
-                const dayOfWeekTR = gunlerTR[dayOfWeek];
-                if (leaveCodeForDay && (leaveCodeForDay === 'R' || leaveCodeForDay === 'Üİ')) {
-                    code = leaveCodeForDay;
-                }
-                if (code === '') {
-                    if (personel.sozlesme_turu === 'Kısmi Süreli') {
-                        if (isResmiTatil(dateUTC)) { code = 'E'; }
-                        else {
-                            // HATA BURADAYDI: scheduleData -> personelScheduleData olarak düzeltildi.
-                            const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
-                            const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
-                            const scheduledHours = parseInt(personel.kismi_zamanli_calisma?.[dayOfWeekTR] || gununDersSaati || 0);
-                            code = (scheduledHours > 0) ? 'Y' : 'E';
-                            hours = scheduledHours;
-                        }
+                
+                const isSeminarDay = seminarPeriods.some(p => dateUTC >= p.baslangic && dateUTC <= p.bitis);
+                if (isSeminarDay && personel.sozlesme_turu === 'Belirli Süreli') {
+                    const dayOfWeek = dateUTC.getUTCDay();
+                    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                        code = 'N';
+                        hours = 8;
                     } else {
-                        if (isResmiTatil(dateUTC)) { code = 'RT'; }
-                        else {
-                            let isWeekend = (personel.sozlesme_turu === 'Belirli Süreli') ? (dayOfWeek === 6 || dayOfWeek === 0) : (dayOfWeek === 0);
-                            if (isWeekend) { code = 'HT'; }
-                            else {
-                                code = 'N';
+                        code = 'HT';
+                        hours = 0;
+                    }
+                } 
+                else {
+                    const leaveCodeForDay = izinVerisi[personel.id]?.[dateString];
+                    const dayOfWeek = dateUTC.getDay();
+                    const dayOfWeekTR = gunlerTR[dayOfWeek];
+                    if (leaveCodeForDay && (leaveCodeForDay === 'R' || leaveCodeForDay === 'Üİ')) {
+                        code = leaveCodeForDay;
+                    }
+                    if (code === '') {
+                        if (personel.sozlesme_turu === 'Kısmi Süreli') {
+                            if (isResmiTatil(dateUTC)) { code = 'E'; } else {
                                 const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
                                 const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
-                                if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
-                                    hours = 4;
-                                } else {
-                                    hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : gununDersSaati;
+                                const scheduledHours = parseInt(personel.kismi_zamanli_calisma?.[dayOfWeekTR] || gununDersSaati || 0);
+                                code = (scheduledHours > 0) ? 'Y' : 'E';
+                                hours = scheduledHours;
+                            }
+                        } else {
+                            if (isResmiTatil(dateUTC)) { code = 'RT'; } else {
+                                let isWeekend = (personel.sozlesme_turu === 'Belirli Süreli') ? (dayOfWeek === 6 || dayOfWeek === 0) : (dayOfWeek === 0);
+                                if (isWeekend) { code = 'HT'; } else {
+                                    code = 'N';
+                                    const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
+                                    const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
+                                    if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
+                                        hours = 4;
+                                    } else {
+                                        hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : gununDersSaati;
+                                    }
                                 }
                             }
                         }
-                    }
-                    if (leaveCodeForDay && (code === 'N' || code === 'Y')) {
-                         code = leaveCodeForDay;
-                         hours = 0;
+                        if (leaveCodeForDay && (code === 'N' || code === 'Y')) {
+                             code = leaveCodeForDay;
+                             hours = 0;
+                        }
                     }
                 }
                 puantajData[personel.id]['dailyData'][dateString] = { code, hours, notes: '' };
             }
         });
+        
+        // ================= YENİ EKLENEN DÜZELTME BLOĞU =================
+        // Puantaj verileri oluşturulduktan sonra, saat hesaplamalarını yapıyoruz.
+        const calculatedHoursMap = new Map();
+        const hourCalculationPromises = aktifPersonelList.map(async (personel) => {
+            const hours = await calculateMonthlyHours(personel.id);
+            calculatedHoursMap.set(personel.id, hours);
+        });
+        await Promise.all(hourCalculationPromises);
+        // =================================================================
 
-        renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni);
-        renderGrandTotals(nobetVerisi, aktifPersonelList);
+        // Render fonksiyonlarını artık hesaplanmış verilerle çağırıyoruz.
+        renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni, calculatedHoursMap);
+        renderGrandTotals(nobetVerisi, aktifPersonelList, calculatedHoursMap);
         renderLegend();
         attachCellListeners();
         showToast('Puantaj başarıyla oluşturuldu!', 'success');
@@ -6805,12 +6859,16 @@ async function generateIndividualPuantaj() {
         showToast('Bireysel puantaj oluşturulamadı.', 'error');
     }
 } 
+
 // BU FONKSİYONUN TAMAMINI YENİSİYLE DEĞİŞTİRİN
-function calculateMonthlyHours(personelId) {
+async function calculateMonthlyHours(personelId) {
     const personelPuantajVerisi = puantajData[personelId];
     if (!personelPuantajVerisi || !personelPuantajVerisi.dailyData) {
         return { genelToplam: 0, ekDers: 0 };
     }
+    
+    // YENİ: Seminer dönemlerini asenkron olarak çek
+    const seminarPeriods = await fetchSeminarPeriods();
 
     const sozlesmeTuru = personelPuantajVerisi.sozlesmeTuru || '';
     const unvan = personelPuantajVerisi.unvan || '';
@@ -6821,82 +6879,66 @@ function calculateMonthlyHours(personelId) {
     const dailyData = personelPuantajVerisi.dailyData;
 
     if (unvan.includes('Okul Müdürü') || unvan.includes('Rehber Öğretmen') || unvan.includes('Rehberlik')) {
+        // Bu personeller için hesaplama aynı kalıyor
         if (sozlesmeTuru === 'Belirsiz Süreli') {
-            Object.values(dailyData).forEach(dayData => {
-                if (dayData.code === 'N') {
-                    genelToplam += (dayData.hours || 0);
-                }
-            });
+            Object.values(dailyData).forEach(dayData => { if (dayData.code === 'N') genelToplam += (dayData.hours || 0); });
         } else {
-            Object.values(dailyData).forEach(dayData => {
-                if (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') {
-                    genelToplam += (dayData.hours || 0);
-                }
-            });
+            Object.values(dailyData).forEach(dayData => { if (['N', 'RTÇ', 'Y', 'K'].includes(dayData.code)) genelToplam += (dayData.hours || 0); });
         }
-        Object.keys(dailyData).forEach(dateString => {
-            const dayData = dailyData[dateString];
-            if (dayData.code === 'N' || dayData.code === 'RTÇ') {
-                ekDers += 4;
-            }
-        });
+        Object.keys(dailyData).forEach(dateString => { if (['N', 'RTÇ'].includes(dailyData[dateString].code)) ekDers += 4; });
         return { genelToplam, ekDers };
     }
 
     if (unvan.includes('Müdür Yardımcısı')) {
+        // Bu personeller için hesaplama aynı kalıyor
         const yardimciSchedule = [0, 4, 4, 4, 3, 3, 0];
         Object.keys(dailyData).forEach(dateString => {
-            const dayData = dailyData[dateString];
-            if (dayData.code === 'N' || dayData.code === 'RTÇ') {
+            if (['N', 'RTÇ'].includes(dailyData[dateString].code)) {
                 const date = new Date(dateString + 'T00:00:00');
-                const dayOfWeek = date.getDay();
-                ekDers += yardimciSchedule[dayOfWeek];
+                ekDers += yardimciSchedule[date.getDay()];
             }
         });
         genelToplam = ekDers;
         return { genelToplam, ekDers };
     }
-
-    if (sozlesmeTuru === 'Belirsiz Süreli') {
-        Object.values(dailyData).forEach(dayData => {
-            if (dayData.code === 'N') {
-                genelToplam += (dayData.hours || 0);
-            }
-        });
-    } else {
-        Object.values(dailyData).forEach(dayData => {
-            if (dayData.code === 'N' || dayData.code === 'RTÇ' || dayData.code === 'Y' || dayData.code === 'K') {
-                genelToplam += (dayData.hours || 0);
-            }
-        });
-    }
+    
+    // Diğer tüm personel için genel toplam saatlerini hesapla
+    Object.values(dailyData).forEach(dayData => {
+        if (['N', 'RTÇ', 'Y', 'K'].includes(dayData.code)) {
+            genelToplam += (dayData.hours || 0);
+        }
+    });
 
     const neviAdi = personelPuantajVerisi.neviAdi || '';
-    if (sozlesmeTuru === 'Kısmi Süreli') {
-        ekDers = 0;
-    } else if (!neviAdi.includes('Eğitim Personeli')) {
+    if (sozlesmeTuru === 'Kısmi Süreli' || !neviAdi.includes('Eğitim Personeli')) {
         ekDers = genelToplam;
-    } else {
-        const maasKarsiligiHaftalik = parseInt(personelPuantajVerisi.maasKarsiligi) || 0;
-        if (maasKarsiligiHaftalik === 0) {
-            ekDers = genelToplam;
-        } else {
-            const workWeeks = new Set();
-            const getWeek = (d) => {
-                d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-                d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-                const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-                return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-            };
+    } else { // Belirli Süreli Eğitim Personeli için ana mantık
+        let normalGunSaatleri = 0;
+        let seminarEkDers = 0;
+        const workWeeks = new Set();
+        const getWeek = (d) => { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); };
 
-            Object.keys(dailyData).forEach(dateString => {
-                if (dailyData[dateString].code === 'N' || dailyData[dateString].code === 'RTÇ' || dailyData[dateString].code === 'Y' || dailyData[dateString].code === 'K') {
-                    workWeeks.add(getWeek(new Date(dateString + 'T00:00:00')));
-                }
-            });
-            const toplamMaasKarsiligi = workWeeks.size * maasKarsiligiHaftalik;
-            ekDers = Math.max(0, genelToplam - toplamMaasKarsiligi);
+        for (const dateString in dailyData) {
+            const dayData = dailyData[dateString];
+            const dateUTC = new Date(dateString + 'T00:00:00Z');
+            
+            // YENİ MANTIK: Günü seminer veya normal olarak ayır
+            const isSeminarDay = seminarPeriods.some(p => dateUTC >= p.baslangic && dateUTC <= p.bitis);
+            
+            if (isSeminarDay && ['N', 'RTÇ', 'Y', 'K'].includes(dayData.code)) {
+                 seminarEkDers += 4; // Seminer günü ise doğrudan 4 saat ek ders ekle
+                 workWeeks.add(getWeek(dateUTC));
+            } else if (['N', 'RTÇ', 'Y', 'K'].includes(dayData.code)) {
+                normalGunSaatleri += (dayData.hours || 0); // Normal gün ise saatleri topla
+                workWeeks.add(getWeek(dateUTC));
+            }
         }
+        
+        const maasKarsiligiHaftalik = parseInt(personelPuantajVerisi.maasKarsiligi) || 0;
+        const toplamMaasKarsiligi = workWeeks.size * maasKarsiligiHaftalik;
+        const normalGunlerdenEkDers = Math.max(0, normalGunSaatleri - toplamMaasKarsiligi);
+        
+        ekDers = normalGunlerdenEkDers + seminarEkDers;
     }
 
     return { genelToplam, ekDers: Math.round(ekDers) };
@@ -6984,19 +7026,19 @@ function renderLegend() {
     }
 }
 
-
-// ======================= YERİNE BU YENİ FONKSİYONU EKLEYİN =======================
-function renderGrandTotals(nobetVerisi = {}, personelListesi) {
+// MEVCUT renderGrandTotals FONKSİYONUNU BU BLOK İLE DEĞİŞTİRİN
+function renderGrandTotals(nobetVerisi = {}, personelListesi, calculatedHoursMap) {
     const year = parseInt(document.getElementById('input-year').value);
     const month = parseInt(document.getElementById('select-month').value);
 
     let totalEkders = 0, totalNobet = 0, totalRehberlik = 0;
 
-    // DEĞİŞİKLİK: Artık tüm listeyi değil, fonksiyona gönderilen
-    // filtrelenmiş listeyi (personelListesi) kullanıyoruz.
     personelListesi.forEach(personel => {
+        // *** DEĞİŞİKLİK BURADA: Hesaplama yerine haritadan hazır veriyi alıyoruz ***
+        const monthlyHours = calculatedHoursMap.get(personel.id) || { ekDers: 0 };
+
         if (personel.neviAdi.includes('Eğitim Personeli') || personel.unvan.includes('Müdür')) {
-            totalEkders += calculateMonthlyHours(personel.id).ekDers;
+            totalEkders += monthlyHours.ekDers;
         }
 
         totalNobet += nobetVerisi[personel.id] || 0;
@@ -7007,23 +7049,36 @@ function renderGrandTotals(nobetVerisi = {}, personelListesi) {
     document.getElementById('total-nobet').textContent = totalNobet + " Saat";
     document.getElementById('total-rehberlik').textContent = totalRehberlik + " Saat";
 }
-// ==============================================================================
-    
         
+// MEVCUT openEditModal FONKSİYONUNU BU BLOK İLE DEĞİŞTİRİN
+function openEditModal(personelId, date) {
+    // YENİ EKLENEN KONTROL: Puantaj kilitliyse düzenlemeyi engelle
+    if (isPuantajLocked) {
+        showToast('Puantaj kilitli olduğu için düzenleme yapılamaz.', 'error');
+        return;
+    }
 
-        function openEditModal(personelId, date) {
-            const personel = puantajPersonelList.find(p => p.id == personelId);
-            const dayData = puantajData[personelId]?.[date];
-            if(!personel || !dayData) return;
-            document.getElementById('p-modal-title').textContent = `${personel.ad} - ${formatDateDDMMYYYY(date)}`;
-            document.getElementById('modal-status').value = dayData.code;
-            document.getElementById('modal-hours').value = dayData.hours;
-            document.getElementById('modal-notes').value = dayData.notes;
-            const modalSaveBtn = document.getElementById('modal-save');
-            modalSaveBtn.dataset.personelId = personelId;
-            modalSaveBtn.dataset.date = date;
-            document.getElementById('edit-modal-overlay').style.display = 'flex';
-        }
+    const personel = puantajPersonelList.find(p => p.id == personelId);
+    
+    // HATA BURADAYDI: Veriye 'dailyData' üzerinden erişilmesi gerekiyordu.
+    const dayData = puantajData[personelId]?.dailyData?.[date];
+
+    if(!personel || !dayData) {
+        // Bu return, veri bulunamadığında fonksiyonun hata vermeden sonlanmasını sağlar.
+        return; 
+    }
+    
+    document.getElementById('p-modal-title').textContent = `${personel.ad} - ${formatDateDDMMYYYY(date)}`;
+    document.getElementById('modal-status').value = dayData.code;
+    document.getElementById('modal-hours').value = dayData.hours;
+    document.getElementById('modal-notes').value = dayData.notes || ''; // Not yoksa boş string ata
+    
+    const modalSaveBtn = document.getElementById('modal-save');
+    modalSaveBtn.dataset.personelId = personelId;
+    modalSaveBtn.dataset.date = date;
+    
+    document.getElementById('edit-modal-overlay').style.display = 'flex';
+}
 
 
 
