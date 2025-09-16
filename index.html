@@ -2967,18 +2967,27 @@
                     </div>
                 </div>
             </div>
+
+
             <div id="super-admin-panel" class="module">
-                <div class="panel">
-                    <div class="panel" style="margin-top: 25px;">
-                        <div class="panel-header">
-                            <h3>Tüm Okullar ve Yöneticileri</h3>
-                        </div>
-                        <div class="panel-body" id="all-admins-list-container">
-                            <p>Yönetici listesi yükleniyor...</p>
-                        </div>
+                <div class="panel" style="margin-bottom: 25px;">
+                    <div class="panel-header">
+                        <h3>Yeni Okul Ekle</h3>
                     </div>
+                    <div class="panel-body">
+                        <form id="newSchoolForm">
+                            <div class="form-group">
+                                <label for="newSchoolName">Yeni Okulun Adı</label>
+                                <input type="text" id="newSchoolName" placeholder="Örn: Özel İsabet İlkokulu" required>
+                            </div>
+                            <div class="button-group" style="margin-top: 25px;">
+                                <button type="submit" class="btn btn-save">Yeni Okulu Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
 
-
+                <div class="panel">
                     <div class="panel-header">
                         <h3>Süper Admin Paneli - Yeni Okul Yöneticisi Ekle</h3>
                     </div>
@@ -3005,6 +3014,14 @@
                             </div>
                         </form>
                         <div id="newUserStatus" style="margin-top: 20px; font-weight: bold;"></div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: 25px;">
+                    <div class="panel-header">
+                        <h3>Tüm Okullar ve Yöneticileri</h3>
+                    </div>
+                    <div class="panel-body" id="all-admins-list-container">
                     </div>
                 </div>
             </div>
@@ -3274,7 +3291,6 @@
                             </div>
                             <ul id="ders-kural-listesi" class="settings-list"></ul>
                         </div>
-
                         <div id="ogrenci-kurallari-tab" class="settings-tab-content">
                             <h3 style="margin-top: 15px;">Öğrenci ve Sınıf Odaklı Kurallar</h3>
                             <div id="zor-ders-form-container">
@@ -3370,59 +3386,65 @@
                             </div>
                             <ul id="seminer-donemi-list" class="settings-list"></ul>
                         </div>
-
-                        <div id="ogretmen-kural-tab" class="settings-tab-content">
-                            <h3>Öğretmen Kuralları</h3>
-
-                            <div class="form-group">
-                                <label for="kural-ogretmen-sec">Ayarları Düzenlenecek Öğretmen</label>
-                                <select id="kural-ogretmen-sec"></select>
-                            </div>
-                            <div id="ogretmen-kural-bilgi"
-                                style="background-color:#f8f9fa; border:1px solid #dee2e6; padding:15px 20px; border-radius:8px; margin-top: 20px; text-align: center;">
-                                <p style="margin:0; font-size:1em; color:var(--dark-text-color);">Kurallarını
-                                    görüntülemek ve düzenlemek için lütfen yukarıdaki listeden bir öğretmen seçin.</p>
-                            </div>
-
-                            <div id="ogretmen-kural-formu"
-                                style="border-top: 1px solid var(--border-color); padding-top: 20px; display:none;">
-
-                                <div
-                                    style="background-color:#f8f9fa; border:1px solid #dee2e6; padding:15px 20px; border-radius:8px; margin-bottom: 25px; font-size: 0.9em; line-height: 1.6;">
-                                    <h4 style="margin-top:0; color:var(--dark-text-color);">Kişisel Zaman Planlaması
-                                        (Bloke ve Tercih Edilmeyen Günler)</h4>
-                                    <p style="margin-bottom:0;">Hücrelere tıklayarak algoritmanın ders atama davranışını
-                                        kişisel programınıza göre şekillendirebilirsiniz:
-                                        <br>• <strong>Müsait:</strong> Varsayılan durum, ders atanabilir.
-                                        <br>• <strong>Tercihen Boş:</strong> Algoritmanın mümkünse ders atamayacağı,
-                                        ancak zorunlu hallerde kullanabileceği zamanlar (örn: Pazartesi ilk saatler).
-                                        <br>• <strong>Kesinlikle Boş (Bloke):</strong> Algoritmanın asla ders
-                                        atayamayacağı, tamamen bloke edilmiş zamanlar (örn: Toplantı, başka görev vb.).
-                                    </p>
+                        <div id="ogretmen-kural-modal" class="modal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3>Öğretmen Kurallarını Düzenle</h3>
+                                    <button class="close-modal">&times;</button>
                                 </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label for="kural-ogretmen-sec">Ayarları Düzenlenecek Öğretmen</label>
+                                        <select id="kural-ogretmen-sec"></select>
+                                    </div>
+                                    <div id="ogretmen-kural-bilgi"
+                                        style="background-color:#f8f9fa; border:1px solid #dee2e6; padding:15px 20px; border-radius:8px; margin-top: 20px; text-align: center;">
+                                        <p style="margin:0; font-size:1em; color:var(--dark-text-color);">Kurallarını
+                                            görüntülemek ve düzenlemek için lütfen yukarıdaki listeden bir öğretmen
+                                            seçin.</p>
+                                    </div>
 
-                                <div class="table-container" style="margin-bottom: 25px;">
-                                    <table id="ogretmen-kural-tablosu" class="schedule-table"></table>
-                                </div>
+                                    <div id="ogretmen-kural-formu"
+                                        style="border-top: 1px solid var(--border-color); padding-top: 20px; display:none;">
 
-                                <div class="form-grid">
-                                    <div class="form-group"><label for="ogretmen-max-gunluk-ders">Maksimum Günlük Ders
-                                            Saati</label><input type="number" id="ogretmen-max-gunluk-ders"
-                                            placeholder="Örn: 8"></div>
-                                    <div class="form-group"><label for="ogretmen-max-ardisik-ders">Maksimum Ardışık Ders
-                                            Saati</label><input type="number" id="ogretmen-max-ardisik-ders"
-                                            placeholder="Örn: 3"></div>
-                                    <div class="form-group"><label for="ogretmen-gunluk-denge">Günlük Ders Yükü Dengesi
-                                            (Max Fark)</label><input type="number" id="ogretmen-gunluk-denge"
-                                            placeholder="Örn: 2 Saat"></div>
-                                    <div class="form-group"><label for="ogretmen-max-bosluk">Gündeki Maksimum
-                                            Boşluk</label><input type="number" id="ogretmen-max-bosluk"
-                                            placeholder="Örn: 1 Saat"></div>
-                                </div>
+                                        <div
+                                            style="background-color:#f8f9fa; border:1px solid #dee2e6; padding:15px 20px; border-radius:8px; margin-bottom: 25px; font-size: 0.9em; line-height: 1.6;">
+                                            <h4 style="margin-top:0; color:var(--dark-text-color);">Kişisel Zaman
+                                                Planlaması
+                                                (Bloke ve Tercih Edilmeyen Günler)</h4>
+                                            <p style="margin-bottom:0;">Hücrelere tıklayarak algoritmanın ders atama
+                                                davranışını
+                                                kişisel programınıza göre şekillendirebilirsiniz.
+                                            </p>
+                                        </div>
 
-                                <div style="grid-column: 1 / -1; margin-top: 20px;">
-                                    <button id="ogretmen-kural-kaydet-btn" class="btn btn-save"
-                                        style="width: 100%;">Öğretmen Kurallarını Kaydet</button>
+                                        <div class="table-container" style="margin-bottom: 25px;">
+                                            <table id="ogretmen-kural-tablosu" class="schedule-table"></table>
+                                        </div>
+
+                                        <div class="form-grid">
+                                            <div class="form-group"><label for="ogretmen-max-gunluk-ders">Maksimum
+                                                    Günlük Ders
+                                                    Saati</label><input type="number" id="ogretmen-max-gunluk-ders"
+                                                    placeholder="Örn: 8"></div>
+                                            <div class="form-group"><label for="ogretmen-max-ardisik-ders">Maksimum
+                                                    Ardışık Ders
+                                                    Saati</label><input type="number" id="ogretmen-max-ardisik-ders"
+                                                    placeholder="Örn: 3"></div>
+                                            <div class="form-group"><label for="ogretmen-gunluk-denge">Günlük Ders Yükü
+                                                    Dengesi
+                                                    (Max Fark)</label><input type="number" id="ogretmen-gunluk-denge"
+                                                    placeholder="Örn: 2 Saat"></div>
+                                            <div class="form-group"><label for="ogretmen-max-bosluk">Gündeki Maksimum
+                                                    Boşluk</label><input type="number" id="ogretmen-max-bosluk"
+                                                    placeholder="Örn: 1 Saat"></div>
+                                        </div>
+
+                                        <div class="button-group" style="margin-top: 20px;">
+                                            <button id="ogretmen-kural-kaydet-btn" class="btn btn-save"
+                                                style="width: 100%;">Öğretmen Kurallarını Kaydet</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3932,61 +3954,152 @@
             </div>
         </template>
 
-
-
-
         <script type="module">
 
+
+
+
+
+            async function handleAdminsListClick(e) {
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                const action = button.dataset.action;
+                const uid = button.dataset.uid;
+                const email = button.dataset.email;
+                const okulId = button.dataset.okulId;
+                const okulAdi = button.dataset.okulAdi;
+
+                if (action === 'edit-password') {
+                    openPasswordModal(uid, email);
+                }
+                if (action === 'delete-admin') {
+                    showConfirmationModal(
+                        `<strong>${email}</strong> e-posta adresli yöneticiyi kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+                        async () => {
+                            const kullaniciSil = httpsCallable(functions, 'kullaniciSil');
+                            await kullaniciSil({ uid: uid });
+                            renderAllAdminsList();
+                        }
+                    );
+                }
+                if (action === 'toggle-status') {
+                    const okulDocRef = doc(db, "okullar", okulId);
+                    const okulDoc = await getDoc(okulDocRef);
+                    const yeniDurum = okulDoc.data().durum === 'pasif' ? 'aktif' : 'pasif';
+                    await updateDoc(okulDocRef, { durum: yeniDurum });
+                    renderAllAdminsList();
+                    populateSchoolsDropdown();
+                }
+                if (action === 'delete-school') {
+                    showConfirmationModal(
+                        `<strong>DİKKAT!</strong><br><br><strong>${okulAdi}</strong> adlı okulu ve bağlı yöneticileri kalıcı olarak silmek üzeresiniz. Bu işlem geri alınamaz.`,
+                        async () => {
+                            const okuluSil = httpsCallable(functions, 'okuluSil');
+                            await okuluSil({ okulId: okulId });
+                            renderAllAdminsList();
+                            populateSchoolsDropdown();
+                        }
+                    );
+                }
+            }
+
+
             function initializeSuperAdminPanel() {
+                const newSchoolForm = document.getElementById('newSchoolForm');
+                newSchoolForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const okulAdiInput = document.getElementById('newSchoolName');
+                    const okulAdi = okulAdiInput.value.trim();
+
+                    if (!okulAdi) {
+                        showToast('Okul adı boş bırakılamaz.', 'error');
+                        return;
+                    }
+
+                    try {
+                        showSpinner();
+                        await addDoc(collection(db, "okullar"), {
+                            adi: okulAdi
+                        });
+                        showToast(`'${okulAdi}' adlı okul başarıyla eklendi.`, 'success');
+                        okulAdiInput.value = '';
+                        populateSchoolsDropdown();
+                        renderAllAdminsList();
+                    } catch (error) {
+                        console.error("Yeni okul eklenirken hata:", error);
+                        showToast('Okul eklenirken bir hata oluştu.', 'error');
+                    } finally {
+                        hideSpinner();
+                    }
+                });
+
                 populateSchoolsDropdown();
                 renderAllAdminsList();
 
                 const newUserForm = document.getElementById('newUserForm');
-                newUserForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const email = document.getElementById('newUserEmail').value;
-                    const password = document.getElementById('newUserPassword').value;
-                    const okulId = document.getElementById('schoolSelect').value;
-                    const statusDiv = document.getElementById('newUserStatus');
 
-                    if (!email || !password || !okulId) {
-                        statusDiv.textContent = 'Lütfen tüm alanları doldurun.';
-                        statusDiv.style.color = 'red';
-                        return;
-                    }
+                // Forma daha önce dinleyici eklenip eklenmediğini kontrol et
+                if (!newUserForm.dataset.listenerAttached) {
+                    newUserForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const email = document.getElementById('newUserEmail').value;
+                        const password = document.getElementById('newUserPassword').value;
+                        const okulId = document.getElementById('schoolSelect').value;
+                        const statusDiv = document.getElementById('newUserStatus');
 
-                    statusDiv.textContent = 'Kullanıcı oluşturuluyor, lütfen bekleyin...';
-                    statusDiv.style.color = 'orange';
+                        if (!email || !password || !okulId) {
+                            statusDiv.textContent = 'Lütfen tüm alanları doldurun.';
+                            statusDiv.style.color = 'red';
+                            return;
+                        }
 
-                    const yeniKullaniciOlustur = httpsCallable(functions, 'yeniKullaniciOlustur');
-                    try {
-                        const result = await yeniKullaniciOlustur({
-                            email: email,
-                            password: password,
-                            okulId: okulId,
-                            rol: 'admin'
-                        });
+                        statusDiv.textContent = 'Kullanıcı oluşturuluyor, lütfen bekleyin...';
+                        statusDiv.style.color = 'orange';
 
-                        statusDiv.textContent = result.data.result;
-                        statusDiv.style.color = 'green';
-                        newUserForm.reset();
-                        renderAllAdminsList();
-                    } catch (error) {
-                        console.error('Cloud function hatası:', error);
-                        statusDiv.textContent = `Hata: ${error.message}`;
-                        statusDiv.style.color = 'red';
-                    }
-                });
+                        // Düzeltilmiş v2 Çağrısı
+                        const yeniKullaniciOlustur = httpsCallable(functions, 'yeniKullaniciOlustur');
+                        try {
+                            const result = await yeniKullaniciOlustur({
+                                email: email,
+                                password: password,
+                                okulId: okulId,
+                                rol: 'admin'
+                            });
+                            statusDiv.textContent = result.data.result;
+                            statusDiv.style.color = 'green';
+                            newUserForm.reset();
+                            renderAllAdminsList();
+                        } catch (error) {
+                            console.error('Cloud function hatası:', error);
+                            statusDiv.textContent = `Hata: ${error.message}`;
+                            statusDiv.style.color = 'red';
+                        }
+                    });
+
+                    // Dinleyici eklendiğine dair bir işaret bırak
+                    newUserForm.dataset.listenerAttached = 'true';
+                }
+
+                const adminListContainer = document.getElementById('all-admins-list-container');
+                if (adminListContainer && !adminListContainer.dataset.listenerAttached) {
+                    adminListContainer.addEventListener('click', handleAdminsListClick);
+                    adminListContainer.dataset.listenerAttached = 'true';
+                }
             }
+
 
             async function renderAllAdminsList() {
                 const container = document.getElementById('all-admins-list-container');
-                container.innerHTML = '<p>Yönetici listesi yükleniyor...</p>';
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(450px, 1fr))';
+                container.style.gap = '20px';
+                container.innerHTML = '<p style="grid-column: 1 / -1;">Yönetici listesi yükleniyor...</p>';
 
-                const tumKullanicilariListele = httpsCallable(functions, 'tumKullanicilariListele');
+                const tumOkullariListele = httpsCallable(functions, 'tumOkullariListele');
 
                 try {
-                    const result = await tumKullanicilariListele();
+                    const result = await tumOkullariListele();
                     const okullar = result.data.okullar;
 
                     if (!okullar || okullar.length === 0) {
@@ -3994,54 +4107,85 @@
                         return;
                     }
 
+                    const aktifOkullar = okullar.filter(okul => okul.durum !== 'pasif').sort((a, b) => a.adi.localeCompare(b.adi));
+                    const pasifOkullar = okullar.filter(okul => okul.durum === 'pasif').sort((a, b) => a.adi.localeCompare(b.adi));
+
                     let html = '';
-                    okullar.forEach(okul => {
-                        html += `
-                <div class="kontrol-paneli-bolumu" style="margin-bottom: 20px;">
-                    <h4 style="margin-top: 0; color: var(--theme-primary); border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px;">
-                        ${okul.adi || 'İsimsiz Okul'}
-                    </h4>
-            `;
+
+                    const generateOkulHTML = (okul) => {
+                        const isPassive = okul.durum === 'pasif';
+                        const statusLabel = isPassive ? '<span style="color: #e74c3c; font-weight: bold;">(Pasif)</span>' : '';
+                        const toggleStatusBtnText = isPassive ? 'Aktif Yap' : 'Pasif Yap';
+                        const toggleStatusBtnClass = isPassive ? 'btn-add' : 'btn-edit';
+
+                        let okulHTML = `
+            <div class="kontrol-paneli-bolumu" style="margin-bottom: 20px; ${isPassive ? 'background-color: #fceae8;' : ''}">
+                <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px;">
+                     <h4 style="margin: 0; color: var(--theme-primary);">
+                        ${okul.adi || 'İsimsiz Okul'} ${statusLabel}
+                     </h4>
+                     <div style="display: flex; gap: 8px;">
+                        <button class="btn ${toggleStatusBtnClass}" data-okul-id="${okul.id}" data-action="toggle-status" style="font-size: 12px; padding: 5px 10px;">${toggleStatusBtnText}</button>
+                        <button class="btn btn-delete" data-okul-id="${okul.id}" data-okul-adi="${okul.adi}" data-action="delete-school" style="font-size: 12px; padding: 5px 10px;">Okulu Sil</button>
+                     </div>
+                </div>`;
 
                         if (okul.admins && okul.admins.length > 0) {
-                            html += '<ul class="settings-list" style="margin-top: 0;">';
+                            okulHTML += '<ul class="settings-list" style="margin-top: 0;">';
                             okul.admins.forEach(admin => {
-                                html += `
-                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
-                            <span>${admin.email}</span>
-                            <button class="btn btn-edit-password btn-save" data-uid="${admin.uid}" data-email="${admin.email}" style="font-size: 12px; padding: 5px 10px; background-color: var(--theme-accent);">Şifre Değiştir</button>
-                            <button class="btn btn-delete" data-uid="${admin.uid}" style="font-size: 12px; padding: 5px 10px;">Yöneticiyi Sil</button>
-                        </li>
-                    `;
+                                okulHTML += `
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+                        <span>${admin.email}</span>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-edit-password" data-uid="${admin.uid}" data-email="${admin.email}" data-action="edit-password" style="font-size: 12px; padding: 5px 10px; background-color: var(--theme-accent);">Şifre Değiştir</button>
+                            <button class="btn btn-delete" data-uid="${admin.uid}" data-email="${admin.email}" data-action="delete-admin" style="font-size: 12px; padding: 5px 10px;">Yöneticiyi Sil</button>
+                        </div>
+                    </li>`;
                             });
-                            html += '</ul>';
+                            okulHTML += '</ul>';
                         } else {
-                            html += '<p style="font-style: italic; color: #666;">Bu okula atanmış bir yönetici bulunmuyor.</p>';
+                            okulHTML += '<p style="font-style: italic; color: #666;">Bu okula atanmış bir yönetici bulunmuyor.</p>';
                         }
-                        html += '</div>';
-                    });
+                        okulHTML += '</div>';
+                        return okulHTML;
+                    };
+
+                    if (aktifOkullar.length > 0) {
+                        html += '<div style="grid-column: 1 / -1;"><h3>Aktif Okullar</h3></div>';
+                        aktifOkullar.forEach(okul => html += generateOkulHTML(okul));
+                    }
+
+                    if (pasifOkullar.length > 0) {
+                        html += '<div style="grid-column: 1 / -1; margin-top: 20px; border-top: 2px solid #ccc; padding-top: 10px;"><h3>Pasif Okullar</h3></div>';
+                        pasifOkullar.forEach(okul => html += generateOkulHTML(okul));
+                    }
 
                     container.innerHTML = html;
 
-                    container.addEventListener('click', (e) => {
-                        const button = e.target.closest('button');
-                        if (!button) return;
-
-                        const uid = button.dataset.uid;
-                        const email = button.dataset.email;
-
-                        if (button.classList.contains('btn-edit-password')) {
-                            openPasswordModal(uid, email);
-                        }
-
-                        if (button.classList.contains('btn-delete')) {
-                            alert(`Bu özellik henüz aktif değil. Silinecek Kullanıcı ID: ${uid}`);
-                        }
-                    });
-
                 } catch (error) {
                     console.error("Yönetici listesi çekilirken hata:", error);
-                    container.innerHTML = `<p style="color: red;">Yönetici listesi yüklenemedi: ${error.message}</p>`;
+                    document.getElementById('all-admins-list-container').innerHTML = `<p style="color: red;">Yönetici listesi yüklenemedi: ${error.message}</p>`;
+                }
+            }
+
+
+            async function populateSchoolsDropdown() {
+                const select = document.getElementById('schoolSelect');
+                try {
+                    const q = query(collection(db, "okullar"), where("durum", "!=", "pasif"), orderBy("adi"));
+                    const querySnapshot = await getDocs(q);
+
+                    select.innerHTML = '<option value="">Lütfen bir okul seçin...</option>';
+
+                    querySnapshot.forEach((doc) => {
+                        const okulAdi = doc.data().adi;
+                        const okulId = doc.id;
+                        const option = new Option(okulAdi, okulId);
+                        select.add(option);
+                    });
+                } catch (error) {
+                    console.error("Okullar yüklenirken hata:", error);
+                    select.innerHTML = '<option value="">Okullar yüklenemedi!</option>';
                 }
             }
 
@@ -4090,39 +4234,6 @@
                 });
             });
 
-            async function populateSchoolsDropdown() {
-                const select = document.getElementById('schoolSelect');
-                try {
-                    const q = query(collection(db, "okullar"), orderBy("adi"));
-                    const querySnapshot = await getDocs(q);
-
-                    select.innerHTML = '<option value="">Lütfen bir okul seçin...</option>';
-
-                    querySnapshot.forEach((doc) => {
-                        const okulAdi = doc.data().adi;
-                        const okulId = doc.id;
-                        const okulAdiLower = okulAdi.toLowerCase();
-                        const option = new Option(okulAdi, okulId);
-                        option.classList.add('okul-secim-opsiyon');
-
-                        if (okulAdiLower.includes('anaokulu')) {
-                            option.classList.add('option-anaokulu');
-                        } else if (okulAdiLower.includes('ilkokul')) {
-                            option.classList.add('option-ilkokul');
-                        } else if (okulAdiLower.includes('ortaokul')) {
-                            option.classList.add('option-ortaokul');
-                        } else {
-                            option.classList.add('option-diger');
-                        }
-
-                        select.add(option);
-                    });
-                } catch (error) {
-                    console.error("Okullar yüklenirken hata:", error);
-                    select.innerHTML = '<option value="">Okullar yüklenemedi!</option>';
-                }
-            }
-
             let isAppInitialized = false;
             function initializeApplicationUI() {
                 if (isAppInitialized) return;
@@ -4166,6 +4277,7 @@
                             if (targetId === 'puantaj') initializePuantaj();
                             if (targetId === 'izin-takip') initializeIzinTakip();
                             if (targetId === 'ders-programi') initializeSchedule();
+                            if (targetId === 'super-admin-panel') initializeSuperAdminPanel();
                         }
                     });
                 });
@@ -5853,24 +5965,37 @@
 
 
             document.addEventListener('DOMContentLoaded', () => {
+                // --- YENİ KODU EKLEYİN ---
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         try {
-                            const idTokenResult = await user.getIdTokenResult();
+                            const idTokenResult = await user.getIdTokenResult(true);
                             const claims = idTokenResult.claims;
+                            const isSuperAdmin = claims.superadmin === true;
+
+                            // Okul ID'sini sadece süper admin olmayanlar için al
                             currentUserOkulId = claims.okulId;
 
                             const superAdminLink = document.getElementById('super-admin-link');
 
-                            if (claims.superadmin === true) {
+                            if (isSuperAdmin) {
+                                // Eğer süper admin ise, okul ID'si kontrolü yapmadan doğrudan uygulamayı başlat.
                                 superAdminLink.style.display = 'block';
                                 await initializeSchoolSelector();
-                            } else {
+
+                                loginPanel.style.display = 'none';
+                                appContainer.style.display = 'flex';
+                                // Süper admin ilk başta bir okul seçmemiş olabileceğinden,
+                                // başlangıçta bir okul verisi yüklemeye zorlamayalım.
+                                // İlgili paneller açıldığında veriler zaten yüklenecek.
+                                initializeApplicationUI();
+                                document.getElementById('super-admin-panel').classList.add('active'); // Doğrudan super admin panelini aç
+
+                            } else if (currentUserOkulId) {
+                                // Eğer normal bir admin ise ve okul ID'si varsa, uygulamayı başlat.
                                 superAdminLink.style.display = 'none';
                                 document.getElementById('school-selector-container').style.display = 'none';
-                            }
 
-                            if (currentUserOkulId) {
                                 loginPanel.style.display = 'none';
                                 appContainer.style.display = 'flex';
                                 await loadSharedData();
@@ -5878,6 +6003,7 @@
                                 await renderDashboardData();
 
                             } else {
+                                // Eğer süper admin değilse VE okul ID'si yoksa, o zaman hata ver.
                                 alert("Hata: Hesabınız bir okula atanmamış. Lütfen sistem yöneticisi ile iletişime geçin.");
                                 await signOut(auth);
                             }
@@ -5912,6 +6038,8 @@
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
             const functions = getFunctions(app);
+            window.firebaseFunctions = functions;
+            window.httpsCallable = httpsCallable;
             let currentUserOkulId = null;
 
             const auth = getAuth(app);
@@ -6877,6 +7005,76 @@
                     gostergeContainer.style.display = 'none';
                 }
             }
+            async function saveOgretmenKurallari() {
+                const ogretmenId = document.getElementById('kural-ogretmen-sec').value;
+                if (!ogretmenId) {
+                    return showToast('Lütfen önce kurallarını kaydedeceğiniz öğretmeni seçin.', 'error');
+                }
+
+                const zamanPlanlari = {};
+                document.querySelectorAll('#ogretmen-kural-tablosu td').forEach(cell => {
+                    if (cell.id) { // Sadece id'si olan (veri içeren) hücreleri al
+                        zamanPlanlari[cell.id] = cell.dataset.status || 'musait';
+                    }
+                });
+
+                const kuralData = {
+                    okulId: currentUserOkulId,
+                    zamanPlanlari,
+                    maxGunlukDers: document.getElementById('ogretmen-max-gunluk-ders').value || null,
+                    maxArdisikDers: document.getElementById('ogretmen-max-ardisik-ders').value || null,
+                    gunlukDenge: document.getElementById('ogretmen-gunluk-denge').value || null,
+                    maxBosluk: document.getElementById('ogretmen-max-bosluk').value || null,
+                };
+
+                try {
+                    await setDoc(doc(db, "ogretmen_kurallari", ogretmenId), kuralData);
+                    showToast('Öğretmen kuralları başarıyla kaydedildi.', 'success');
+                } catch (e) {
+                    console.error("Öğretmen kuralları kaydedilemedi:", e);
+                    showToast('Kurallar kaydedilirken bir hata oluştu.', 'error');
+                }
+            }
+            async function saveDersKurali() {
+                const dersId = document.getElementById('kural-ders-sec').value;
+                const secilenSeviyeler = Array.from(document.getElementById('kural-seviye-sec').selectedOptions).map(opt => opt.value);
+
+                if (!dersId || secilenSeviyeler.length === 0) {
+                    return showToast('Lütfen bir Ders ve en az bir Sınıf Seviyesi seçin.', 'error');
+                }
+
+                const kuralDataTemel = {
+                    okulId: currentUserOkulId,
+                    dersId: dersId,
+                    atananOgretmenId: document.getElementById('kural-ogretmen-ata-sec').value || null,
+                    haftalikSaat: document.getElementById('kural-haftalik-saat').value || null,
+                    gunlukMaxSaat: document.getElementById('kural-gunluk-max-saat').value || null,
+                    blokDers: document.getElementById('kural-blok-ders').value,
+                    gerekenDerslikTipi: document.getElementById('kural-derslik-tipi').value,
+                    yerlesimTercihi: document.getElementById('kural-yerlesim-tercihi').value,
+                    yasakliDersler: Array.from(document.getElementById('kural-yasakli-dersler-sec').selectedOptions).map(opt => opt.value)
+                };
+
+                try {
+                    const promises = secilenSeviyeler.map(seviye => {
+                        const kuralData = { ...kuralDataTemel, seviye: seviye };
+                        return addDoc(collection(db, "ders_kurallari"), kuralData);
+                    });
+
+                    await Promise.all(promises);
+                    showToast(`${secilenSeviyeler.length} sınıf seviyesi için ders kuralı başarıyla eklendi.`);
+
+                    // Formu ve listeyi temizle/yenile
+                    document.getElementById('ders-kurali-detaylari').style.display = 'none';
+                    document.getElementById('kural-ders-sec').value = '';
+                    loadAndRenderDersKurallari();
+
+                } catch (e) {
+                    console.error("Ders kuralı kaydedilemedi:", e);
+                    showToast('Kural kaydedilirken bir hata oluştu.', 'error');
+                }
+            }
+            // --- YUKARIDAKİ HATALI FONKSİYONUN YERİNE BUNU YAPIŞTIRIN ---
             async function initializeSettings() {
                 const settingsContainer = document.getElementById('settings');
                 if (settingsContainer.dataset.initialized === 'true') return;
@@ -6888,9 +7086,19 @@
                     grid.addEventListener('click', (e) => {
                         const card = e.target.closest('.settings-card');
                         if (!card) return;
+
                         const tabId = card.dataset.tab;
-                        const targetPane = document.getElementById(`${tabId}-tab`);
                         const cardTitle = card.querySelector('.title').textContent;
+
+                        if (tabId === 'ogretmen-kural') {
+                            const modal = document.getElementById('ogretmen-kural-modal');
+                            if (modal) {
+                                modal.classList.add('open');
+                            }
+                            return;
+                        }
+
+                        const targetPane = document.getElementById(`${tabId}-tab`);
                         if (targetPane && panelTitle && backBtn) {
                             panelTitle.textContent = cardTitle;
                             backBtn.classList.remove('hidden');
@@ -6958,6 +7166,46 @@
                         getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId), orderBy('ad_soyad'))),
                         getSettings('ayarlar_siniflar')
                     ]);
+                    // Öğrenci Kuralları - Zorlayıcı Dersler seçim kutusunu doldur
+                    const zorDerslerSelect = document.getElementById('kural-zor-dersler-sec');
+                    if (zorDerslerSelect) {
+                        zorDerslerSelect.innerHTML = ''; // Mevcut seçenekleri temizle
+                        derslerSnap.forEach(doc => {
+                            zorDerslerSelect.add(new Option(doc.data().name, doc.id));
+                        });
+                    }
+                    const dersKuralFiltreSelect = document.getElementById('ders-kural-filtre-sinif');
+                    if (dersKuralFiltreSelect) {
+                        if (dersKuralFiltreSelect.options.length <= 1) {
+                            siniflarSnap.forEach(doc => {
+                                dersKuralFiltreSelect.add(new Option(doc.data().name, doc.data().name));
+                            });
+                        }
+
+                        dersKuralFiltreSelect.addEventListener('change', (e) => {
+                            const secilenSinif = e.target.value;
+                            loadAndRenderDersKurallari(secilenSinif || null);
+                        });
+                    }
+                    const kuralDersSecimSelect = document.getElementById('kural-ders-sec');
+                    if (kuralDersSecimSelect) {
+                        kuralDersSecimSelect.innerHTML = '<option value="">Lütfen Kural Eklenecek Dersi Seçin...</option>';
+                        derslerSnap.forEach(doc => {
+                            kuralDersSecimSelect.add(new Option(doc.data().name, doc.id));
+                        });
+                        kuralDersSecimSelect.addEventListener('change', (e) => {
+                            const detayFormu = document.getElementById('ders-kurali-detaylari');
+                            if (e.target.value) {
+                                detayFormu.style.display = 'block';
+                                document.getElementById('editing-ders-kurali-id').value = '';
+                                if (detayFormu.querySelector('form')) {
+                                    detayFormu.querySelector('form').reset();
+                                }
+                            } else {
+                                detayFormu.style.display = 'none';
+                            }
+                        });
+                    }
                     const personelNevileri = neviSnapshot.docs.map(doc => ({
                         id: doc.id,
                         name: doc.data().name
@@ -7000,6 +7248,68 @@
                         renderSettingsList('ayarlar_derslikler', 'derslik-listesi'),
                         renderSeminerDonemleri()
                     ]);
+
+                    document.getElementById('zaman-cizelgesi-kaydet-btn').addEventListener('click', saveZamanCizelgesiAyarlari);
+
+                    document.getElementById('ogretmen-kural-kaydet-btn').addEventListener('click', saveOgretmenKurallari);
+
+                    document.getElementById('genel-bloke-ekle-btn').addEventListener('click', async () => {
+                        const gunSelect = document.getElementById('genel-bloke-gun');
+                        const saatSelect = document.getElementById('genel-bloke-saat');
+                        const secilenGun = gunSelect.value;
+                        const secilenSaat = saatSelect.value;
+                        if (!secilenGun || !secilenSaat) {
+                            showToast('Lütfen gün ve saat seçimi yapın.', 'error');
+                            return;
+                        }
+                        try {
+                            const docRef = doc(db, "programlama_kurallari", currentUserOkulId);
+                            const docSnap = await getDoc(docRef);
+                            let mevcutKurallar = { blokeZamanlar: [] };
+                            if (docSnap.exists()) {
+                                mevcutKurallar = docSnap.data();
+                                if (!mevcutKurallar.blokeZamanlar) {
+                                    mevcutKurallar.blokeZamanlar = [];
+                                }
+                            }
+                            const yeniBlokeZaman = { gun: secilenGun, saat: secilenSaat };
+                            const alreadyExists = mevcutKurallar.blokeZamanlar.some(
+                                zaman => zaman.gun === yeniBlokeZaman.gun && zaman.saat === yeniBlokeZaman.saat
+                            );
+                            if (alreadyExists) {
+                                showToast('Bu zaman dilimi zaten bloke edilmiş.', 'info');
+                                return;
+                            }
+                            mevcutKurallar.blokeZamanlar.push(yeniBlokeZaman);
+                            await saveGenelKurallar({ blokeZamanlar: mevcutKurallar.blokeZamanlar });
+                            renderBlokeZamanListesi(mevcutKurallar.blokeZamanlar);
+                            showToast('Zaman dilimi başarıyla bloke edildi.', 'success');
+                        } catch (error) {
+                            console.error("Bloke zaman eklenirken hata:", error);
+                            showToast('İşlem sırasında bir hata oluştu.', 'error');
+                        }
+                    });
+
+                    document.getElementById('derslik-ekle-btn').addEventListener('click', async () => {
+                        const adInput = document.getElementById('derslik-adi-input');
+                        const tipSelect = document.getElementById('derslik-tipi-select');
+                        const derslikAdi = adInput.value.trim();
+                        const derslikTipi = tipSelect.value;
+                        if (!derslikAdi) {
+                            showToast('Lütfen bir derslik adı girin.', 'error');
+                            return;
+                        }
+                        try {
+                            await addSetting('ayarlar_derslikler', { name: derslikAdi, type: derslikTipi });
+                            showToast('Derslik başarıyla eklendi.', 'success');
+                            adInput.value = '';
+                            await renderSettingsList('ayarlar_derslikler', 'derslik-listesi');
+                        } catch (error) {
+                            console.error("Derslik eklenirken hata:", error);
+                            showToast('Derslik eklenirken bir hata oluştu.', 'error');
+                        }
+                    });
+
                     await loadZamanCizelgesiAyarlari();
                     await generateTimeSlots();
                     createVisualScheduler();
@@ -7663,7 +7973,7 @@
                     if (select) {
                         const mevcutDeger = select.value;
                         select.innerHTML = '';
-                        dersSaatleri.forEach(slot => select.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.baslangic)));
+                        dersSaatleri.forEach(slot => select.add(new Option(`${slot.dersNo}. Ders (${slot.baslangic}-${slot.bitis})`, slot.dersNo)));
                         select.value = mevcutDeger;
                     }
                 });
@@ -7994,16 +8304,9 @@
                 const yazdirBtn = document.getElementById('btn-gorev-yazdir');
                 if (sinifSelect && sinifSelect.options.length === 0) {
                     const siniflarSnap = await getSettings('ayarlar_siniflar');
-                    const dersKuralFiltreSelect = document.getElementById('ders-kural-filtre-sinif');
-                    siniflarSnap.forEach(doc => {
-                        dersKuralFiltreSelect.add(new Option(doc.data().name, doc.data().name));
-                    });
-                    dersKuralFiltreSelect.addEventListener('change', (e) => {
-                        const secilenSinif = e.target.value;
-                        loadAndRenderDersKurallari(secilenSinif || null);
-                    });
                     siniflarSnap.forEach(doc => sinifSelect.add(new Option(doc.data().name, doc.data().name)));
                 }
+
                 if (bransSelect && bransSelect.options.length === 0) {
                     const derslerSnap = await getSettings('ayarlar_dersler');
                     derslerSnap.forEach(doc => bransSelect.add(new Option(doc.data().name, doc.data().name)));
