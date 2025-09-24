@@ -5532,33 +5532,63 @@
             function resetApplicationState() {
                 console.log("Uygulama durumu sıfırlanıyor...");
 
+                // Global state değişkenlerini sıfırla
+                currentUserOkulId = null;
+                isCurrentUserSuperAdmin = false;
+                tumPersonelListesi = [];
+                puantajData = {};
+                overtimeReasons = {};
+                missingDayCodes = {};
+                isPuantajLocked = false;
+                currentPuantajDocRef = null;
+                window.tumProgramlar = {};
+                window.classList = [];
+                window.teacherList = [];
+                geciciDetaylar = [];
+                duzenlenenGorevDetaylari = [];
 
+                // Arayüzdeki tüm modülleri gizle ve ana sayfayı (boş haliyle) göster
+                document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+                document.getElementById('dashboard').classList.add('active');
+
+                // Menüdeki aktif seçimleri kaldır
+                document.querySelectorAll('.nav-link, .accordion-trigger').forEach(el => el.classList.remove('active'));
+                document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+
+
+                // Dashboard verilerini ve diğer tabloları temizle
                 const elementsToReset = {
                     'db-aktif-personel': { property: 'textContent', value: '...' },
                     'db-gunun-nobetcileri-list': { property: 'innerHTML', value: '...' },
                     'db-bugun-izinliler-list': { property: 'innerHTML', value: '...' },
                     'db-bugun-gorevli-list': { property: 'innerHTML', value: '...' },
+                    'db-aylik-ekders': { property: 'textContent', value: '...' },
+                    'db-aylik-nobet': { property: 'textContent', value: '...' },
+                    'db-aylik-rehberlik': { property: 'textContent', value: '...' },
+                    'db-aylik-raporlular-list': { property: 'innerHTML', value: '...' },
                     'personel-table-area': { property: 'innerHTML', value: '' },
                     'gorevlendirme-tbody': { property: 'innerHTML', value: '' },
                     'nobet-rapor-tbody': { property: 'innerHTML', value: '' },
                     'izin-kayitlari-tbody': { property: 'innerHTML', value: '' },
-                    'puantaj-table-container': { property: 'innerHTML', value: '' }
+                    'puantaj-table-container': { property: 'innerHTML', value: '' },
+                    'schedule-display-area': { property: 'innerHTML', value: '' },
+                    'yerlestirme-havuzu-container': { property: 'innerHTML', value: '' },
+                    'versiyon-listesi': { property: 'innerHTML', value: '' }
                 };
 
                 for (const id in elementsToReset) {
                     const el = document.getElementById(id);
-                    if (el) { // Eğer element varsa, içeriğini değiştir. Yoksa hata verme, devam et.
+                    if (el) {
                         const config = elementsToReset[id];
                         el[config.property] = config.value;
                     }
                 }
-
-
-                window.tumPersonelListesi = [];
-                window.puantajData = {};
-                window.classList = [];
-                window.teacherList = [];
-                window.tumProgramlar = {};
+                // Okul seçiciyi gizle ve sıfırla
+                const selectorContainer = document.getElementById('school-selector-container');
+                if (selectorContainer) selectorContainer.style.display = 'none';
+                if (window.schoolSlimSelect) {
+                    window.schoolSlimSelect.setData([]);
+                }
             }
 
             async function loadDataForCurrentSchool() {
@@ -6083,7 +6113,7 @@
                                 if (okullar.length > 0) {
                                     let varsayilanOkul = okullar.find(okul => okul.adi.toLowerCase().includes('ortaokul'));
                                     if (!varsayilanOkul) {
-                                        varsayilanOkul = okullar[0]; // Ortaokul bulunamazsa ilk okulu seç
+                                        varsayilanOkul = okullar[0];
                                     }
                                     currentUserOkulId = varsayilanOkul.id;
 
@@ -6093,7 +6123,7 @@
                                     }
                                 } else {
                                     showToast('Sistemde hiç aktif okul bulunamadı!', 'error');
-                                    initializeApplicationUI(); // UI'ı yine de başlat ki en azından menüler görünsün
+                                    initializeApplicationUI();
                                     return;
                                 }
                             } else {
@@ -6107,7 +6137,6 @@
                                 }
                             }
 
-
                             await loadSharedData();
                             initializeApplicationUI();
                             await renderDashboardData();
@@ -6118,10 +6147,13 @@
                             await signOut(auth);
                         }
                     } else {
+                        // KULLANICI ÇIKIŞ YAPTIĞINDA VEYA OTURUM YOKSA
                         currentUserOkulId = null;
                         isCurrentUserSuperAdmin = false;
                         loginPanel.style.display = 'flex';
                         appContainer.style.display = 'none';
+                        // Her ihtimale karşı state'i burada da SIFIRLA
+                        resetApplicationState();
                     }
                 });
             });
@@ -6150,6 +6182,7 @@
             let isCurrentUserSuperAdmin = false;
 
             const auth = getAuth(app);
+            window.auth = auth; // Konsoldan erişim için bu satırı ekleyin
             let zamanCizelgesiAyarlari = {};
             const loginPanel = document.getElementById('login-panel');
             const appContainer = document.querySelector('.app-container');
@@ -6184,6 +6217,8 @@
             logoutBtn.addEventListener('click', async () => {
                 try {
                     await signOut(auth);
+                    // Çıkış başarılı olduğunda state'i SIFIRLA
+                    resetApplicationState();
                     showToast('Başarıyla çıkış yapıldı.', 'info');
                 } catch (error) {
                     console.error("Çıkış hatası:", error);
