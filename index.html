@@ -3147,7 +3147,7 @@
                             <ul id="izin-tipi-list" class="settings-list"></ul>
                         </div>
 
-                        
+
 
                         <div id="zaman-cizelgesi-tab" class="settings-tab-content">
 
@@ -5509,19 +5509,19 @@
                         getSettings('ayarlar_siniflar'),
                         getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId), orderBy('ad_soyad'))),
                         getSettings('ayarlar_personel_nevileri'),
-                        getSettings('ayarlar_dersler') 
+                        getSettings('ayarlar_dersler')
                     ]);
 
                     // 2. ADIM: Global değişkenleri dolduruyoruz.
                     window.classList = siniflarSnap.docs.map(d => d.data().name);
-                    
+
                     const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.trim().includes('Eğitim Personeli'));
                     const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
 
                     window.teacherList = personelSnap.docs
                         .filter(p => p.data().personel_nevisi === egitimPersoneliNeviId)
                         .map(doc => ({ id: doc.id, name: doc.data().ad_soyad }));
-                    
+
                     // 3. ADIM: Ders Kuralları filtresindeki açılır listeleri dolduruyoruz. (Bu kodlar artık doğru yerde)
                     const dersFiltreSelect = document.getElementById('kural-filter-ders-select');
                     const sinifFiltreSelect = document.getElementById('kural-filter-sinif-select');
@@ -7358,14 +7358,15 @@
 
 
 
-async function initializeSettings() {
+            async function initializeSettings() {
                 const settingsContainer = document.getElementById('settings');
-                if (settingsContainer.dataset.initialized === 'true') return;
 
-                try {
+                // --- BÖLÜM 1: BİR KERELİK KURULUM (Olay Dinleyicileri) ---
+                // Bu bölüm, sadece ilk defa çalışır ve butonlara tıklama olaylarını ekler.
+                if (settingsContainer.dataset.initialized !== 'true') {
+                    console.log("Ayarlar modülü olay dinleyicileri ilk kez kuruluyor...");
+
                     const grid = document.getElementById('settings-grid');
-                    const contentPanes = settingsContainer.querySelectorAll('.settings-tab-content');
-                    const panelTitle = document.getElementById('settings-panel-title');
                     const backBtn = document.getElementById('settings-back-btn');
 
                     grid.addEventListener('click', (e) => {
@@ -7380,53 +7381,22 @@ async function initializeSettings() {
                         }
                         const targetPane = document.getElementById(`${tabId}-tab`);
                         if (targetPane) {
-                            panelTitle.textContent = cardTitle;
+                            document.getElementById('settings-panel-title').textContent = cardTitle;
                             backBtn.classList.remove('hidden');
                             grid.style.display = 'none';
-                            contentPanes.forEach(pane => pane.classList.remove('active'));
+                            settingsContainer.querySelectorAll('.settings-tab-content').forEach(pane => pane.classList.remove('active'));
                             targetPane.classList.add('active');
                         }
                     });
 
                     if (backBtn) {
                         backBtn.addEventListener('click', () => {
-                            panelTitle.textContent = 'Uygulama Ayarları';
+                            document.getElementById('settings-panel-title').textContent = 'Uygulama Ayarları';
                             backBtn.classList.add('hidden');
-                            contentPanes.forEach(pane => pane.classList.remove('active'));
+                            settingsContainer.querySelectorAll('.settings-tab-content').forEach(pane => pane.classList.remove('active'));
                             grid.style.display = 'grid';
                         });
                     }
-
-                    const [neviSnapshot, derslerSnap, personelSnap, siniflarSnap, dersliklerSnap] = await Promise.all([
-                        getSettings('ayarlar_personel_nevileri'),
-                        getSettings('ayarlar_dersler'),
-                        getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId), orderBy('ad_soyad'))),
-                        getSettings('ayarlar_siniflar'),
-                        getSettings('ayarlar_derslikler')
-                    ]);
-                    const personelNevileri = neviSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-
-                    // Hatanın çözümü: Filtre listelerini doldurma ve dinleyici ekleme işlemleri buraya taşındı.
-                    const egitimPersoneliNevi = personelNevileri.find(nevi => nevi.name.trim().toLocaleLowerCase('tr-TR') === 'eğitim personeli');
-                    const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
-                    
-                    const dersFiltreSelect = document.getElementById('kural-filter-ders-select');
-                    const sinifFiltreSelect = document.getElementById('kural-filter-sinif-select');
-                    const ogretmenFiltreSelect = document.getElementById('kural-filter-ogretmen-select');
-
-                    if (dersFiltreSelect && sinifFiltreSelect && ogretmenFiltreSelect) {
-                        derslerSnap.forEach(doc => dersFiltreSelect.add(new Option(doc.data().name, doc.id)));
-                        siniflarSnap.forEach(doc => sinifFiltreSelect.add(new Option(doc.data().name, doc.data().name)));
-                        personelSnap.forEach(doc => {
-                            if (doc.data().personel_nevisi === egitimPersoneliNeviId) {
-                                ogretmenFiltreSelect.add(new Option(doc.data().ad_soyad, doc.id));
-                            }
-                        });
-                        dersFiltreSelect.addEventListener('change', loadAndRenderDersKurallari);
-                        sinifFiltreSelect.addEventListener('change', loadAndRenderDersKurallari);
-                        ogretmenFiltreSelect.addEventListener('change', loadAndRenderDersKurallari);
-                    }
-                    // Bitiş: Hata çözümü
 
                     document.getElementById('add-nevi-btn').addEventListener('click', async () => {
                         const input = document.getElementById('add-nevi-input');
@@ -7440,20 +7410,10 @@ async function initializeSettings() {
                     document.getElementById('add-ders-btn').addEventListener('click', async () => {
                         const adInput = document.getElementById('add-ders-input');
                         const kisaltmaInput = document.getElementById('add-ders-kisaltma-input');
-                        const dersAdi = adInput.value.trim();
-                        const dersKisaltma = kisaltmaInput.value.trim().toUpperCase();
-
-                        if (!dersAdi || !dersKisaltma) {
-                            return showToast('Lütfen dersin tam adını ve kısaltmasını girin.', 'error');
-                        }
-                        if (dersKisaltma.length > 3) {
-                            return showToast('Kısaltma en fazla 3 harf olmalıdır.', 'error');
-                        }
-
-                        await addSetting('ayarlar_dersler', { name: dersAdi, kisaltma: dersKisaltma });
+                        if (!adInput.value.trim() || !kisaltmaInput.value.trim()) return showToast('Lütfen dersin tam adını ve kısaltmasını girin.', 'error');
+                        await addSetting('ayarlar_dersler', { name: adInput.value.trim(), kisaltma: kisaltmaInput.value.trim().toUpperCase() });
                         showToast('Ders başarıyla eklendi.');
-                        adInput.value = '';
-                        kisaltmaInput.value = '';
+                        adInput.value = ''; kisaltmaInput.value = '';
                         await renderSettingsList('ayarlar_dersler', 'ders-list');
                     });
 
@@ -7464,14 +7424,13 @@ async function initializeSettings() {
                         await addSetting('ayarlar_gorevler', { name: input.value.trim(), neviId: neviSelect.value });
                         showToast('Görev/Branş eklendi.');
                         input.value = '';
-                        await renderSettingsList('ayarlar_gorevler', 'gorev-list', personelNevileri);
+                        await renderSettingsList('ayarlar_gorevler', 'gorev-list', []); // Re-fetch inside render
                     });
-                    
+
                     document.getElementById('add-nobet-yeri-btn').addEventListener('click', async () => {
                         const input = document.getElementById('add-nobet-yeri-input');
-                        const nobetYeriAdi = input.value.trim();
-                        if (!nobetYeriAdi) return showToast('Lütfen bir nöbet yeri adı girin.', 'error');
-                        await addSetting('ayarlar_nobet_yerleri', { name: nobetYeriAdi });
+                        if (!input.value.trim()) return showToast('Lütfen bir nöbet yeri adı girin.', 'error');
+                        await addSetting('ayarlar_nobet_yerleri', { name: input.value.trim() });
                         showToast('Nöbet yeri eklendi.');
                         input.value = '';
                         await renderSettingsList('ayarlar_nobet_yerleri', 'nobet-yeri-list');
@@ -7479,9 +7438,8 @@ async function initializeSettings() {
 
                     document.getElementById('add-sinif-btn').addEventListener('click', async () => {
                         const input = document.getElementById('add-sinif-input');
-                        const sinifAdi = input.value.trim();
-                        if (!sinifAdi) return showToast('Lütfen bir sınıf adı girin.', 'error');
-                        await addSetting('ayarlar_siniflar', { name: sinifAdi });
+                        if (!input.value.trim()) return showToast('Lütfen bir sınıf adı girin.', 'error');
+                        await addSetting('ayarlar_siniflar', { name: input.value.trim() });
                         showToast('Sınıf eklendi.');
                         input.value = '';
                         await renderSettingsList('ayarlar_siniflar', 'sinif-list');
@@ -7510,217 +7468,104 @@ async function initializeSettings() {
 
                     document.getElementById('zaman-cizelgesi-kaydet-btn').addEventListener('click', saveZamanCizelgesiAyarlari);
                     document.getElementById('ogretmen-kural-kaydet-btn').addEventListener('click', saveOgretmenKurallari);
-                    document.getElementById('zor-ders-kural-kaydet-btn').addEventListener('click', async () => {
-                        const secilenDersler = Array.from(document.getElementById('kural-zor-dersler-sec').selectedOptions).map(opt => opt.value);
-                        const maxSayi = parseInt(document.getElementById('kural-gunluk-max-zor-ders').value);
-                        if (secilenDersler.length === 0 || isNaN(maxSayi) || maxSayi <= 0) return showToast('Lütfen zor dersleri ve geçerli bir maksimum sayı seçin.', 'error');
-                        await saveGenelKurallar({ zorDersler: secilenDersler, maxZorDersSayisi: maxSayi });
-                        showToast('Zorlayıcı ders kuralı kaydedildi.', 'success');
-                        await loadGenelKurallar();
-                    });
-                    const kuralOgretmenSelect = document.getElementById('kural-ogretmen-sec');
-                    kuralOgretmenSelect.innerHTML = '<option value="">Lütfen Bir Öğretmen Seçin...</option>';
-                    personelSnap.forEach((doc) => {
-                        if (doc.data().personel_nevisi === egitimPersoneliNeviId) {
-                            kuralOgretmenSelect.add(new Option(doc.data().ad_soyad, doc.id));
-                        }
-                    });
-
-                    const ogretmenKuralFormu = document.getElementById('ogretmen-kural-formu');
-                    const ogretmenKuralBilgi = document.getElementById('ogretmen-kural-bilgi');
-                    kuralOgretmenSelect.addEventListener('change', (e) => {
-                        const ogretmenId = e.target.value;
-                        if (ogretmenId) {
-                            loadOgretmenKurallari(ogretmenId);
-                            ogretmenKuralFormu.style.display = 'block';
-                            ogretmenKuralBilgi.style.display = 'none';
-                        } else {
-                            ogretmenKuralFormu.style.display = 'none';
-                            ogretmenKuralBilgi.style.display = 'block';
-                        }
-                    });
-
-                    const gorevNeviSelect = document.getElementById('gorev-nevi-select');
-                    gorevNeviSelect.innerHTML = '<option value="">Personel Nevi Seçin...</option>';
-                    personelNevileri.forEach(nevi => gorevNeviSelect.add(new Option(nevi.name, nevi.id)));
-
-                    const zorDerslerSelect = document.getElementById('kural-zor-dersler-sec');
-                    zorDerslerSelect.innerHTML = '';
-                    derslerSnap.forEach(doc => zorDerslerSelect.add(new Option(doc.data().name, doc.id)));
-
-                    const dersKuralFiltreSelect = document.getElementById('ders-kural-filtre-sinif');
-                    const kuralSeviyeSecSelect = document.getElementById('kural-seviye-sec');
-                    const kuralDersSecSelect = document.getElementById('kural-ders-sec');
-                    const dersKuraliDetaylariDiv = document.getElementById('ders-kurali-detaylari');
-
-                    const kuralOgretmenAtaSelect = document.getElementById('kural-ogretmen-ata-sec');
-                    kuralOgretmenAtaSelect.innerHTML = '<option value="">Öğretmen Seç (İsteğe Bağlı)</option>';
-                    personelSnap.forEach(doc => {
-                        if (doc.data().personel_nevisi === egitimPersoneliNeviId) {
-                            kuralOgretmenAtaSelect.add(new Option(doc.data().ad_soyad, doc.id));
-                        }
-                    });
-
-                    dersKuralFiltreSelect.innerHTML = '<option value="">Tüm Sınıfları Göster</option>';
-                    kuralSeviyeSecSelect.innerHTML = '';
-                    siniflarSnap.forEach(doc => {
-                        const sinifAdi = doc.data().name;
-                        dersKuralFiltreSelect.add(new Option(sinifAdi, sinifAdi));
-                        kuralSeviyeSecSelect.add(new Option(sinifAdi, sinifAdi));
-                    });
-
-                    kuralDersSecSelect.innerHTML = '<option value="">Lütfen Bir Ders Seçin...</option>';
-                    derslerSnap.forEach(doc => {
-                        kuralDersSecSelect.add(new Option(doc.data().name, doc.id));
-                    });
-
-                    dersKuralFiltreSelect.addEventListener('change', () => {
-                        loadAndRenderDersKurallari();
-                    });
-
-                    kuralDersSecSelect.addEventListener('change', () => {
-                        if (kuralDersSecSelect.value) {
-                            dersKuraliDetaylariDiv.style.display = 'block';
-                            document.getElementById('editing-ders-kurali-id').value = '';
-                            document.getElementById('ders-kural-ekle-btn').textContent = "Kural Ekle/Güncelle";
-                            document.getElementById('kural-seviye-sec').disabled = false;
-                        } else {
-                            dersKuraliDetaylariDiv.style.display = 'none';
-                        }
+                    document.getElementById('ders-kural-ekle-btn').addEventListener('click', saveDersKurali);
+                    document.getElementById('derslik-ekle-btn').addEventListener('click', async () => {
+                        const adInput = document.getElementById('derslik-adi-input');
+                        const tipSelect = document.getElementById('derslik-tipi-select');
+                        if (!adInput.value.trim()) return showToast('Lütfen bir derslik adı girin.', 'error');
+                        await addSetting('ayarlar_derslikler', { name: adInput.value.trim(), type: tipSelect.value });
+                        showToast('Derslik eklendi.');
+                        adInput.value = '';
+                        await renderSettingsList('ayarlar_derslikler', 'derslik-listesi');
                     });
 
                     settingsContainer.addEventListener('click', async (e) => {
                         const target = e.target;
-                        if (target.matches('.btn-delete-setting')) {
-                            const collectionName = target.dataset.collection;
-                            const id = target.dataset.id;
-                            const name = target.dataset.name;
+                        if (!target.matches('.btn-delete-setting, .btn-edit-setting, .btn-edit-ders-kurali')) return;
 
+                        const collectionName = target.dataset.collection;
+                        const id = target.dataset.id;
+                        const name = target.dataset.name;
+
+                        if (target.matches('.btn-delete-setting')) {
                             showConfirmationModal(`<strong>${name}</strong> adlı kaydı silmek istediğinizden emin misiniz?`, async () => {
                                 await deleteSetting(collectionName, id);
                                 showToast('Kayıt başarıyla silindi.');
-
-                                switch (collectionName) {
-                                    case 'ayarlar_personel_nevileri':
-                                        await renderSettingsList(collectionName, 'nevi-list');
-                                        break;
-                                    case 'ayarlar_gorevler':
-                                        await renderSettingsList(collectionName, 'gorev-list', personelNevileri);
-                                        break;
-                                    case 'ayarlar_izin_tipleri':
-                                        await renderSettingsList(collectionName, 'izin-tipi-list');
-                                        break;
-                                    case 'ayarlar_nobet_yerleri':
-                                        await renderSettingsList(collectionName, 'nobet-yeri-list');
-                                        break;
-                                    case 'ayarlar_dersler':
-                                        await renderSettingsList(collectionName, 'ders-list');
-                                        break;
-                                    case 'ayarlar_siniflar':
-                                        await renderSettingsList(collectionName, 'sinif-list');
-                                        break;
-                                    case 'ayarlar_derslikler':
-                                        await renderSettingsList(collectionName, 'derslik-listesi');
-                                        break;
-                                    case 'ders_kurallari':
-                                        await loadAndRenderDersKurallari();
-                                        break;
-                                    case 'ayarlar_seminer_donemleri':
-                                        await renderSeminerDonemleri();
-                                        break;
-                                    default:
-                                        console.warn("Bilinmeyen koleksiyon için liste yenilenemedi:", collectionName);
+                                // Re-render the specific list
+                                const listId = document.querySelector(`#${collectionName.replace('ayarlar_', '').replace(/_/g, '-')}-list, #${collectionName.replace(/_/g, '-')}-list, #${collectionName.replace(/_/g, '-')}-tbody`)?.id;
+                                if (listId && listId.includes('tbody')) {
+                                    await loadAndRenderDersKurallari();
+                                } else if (listId) {
+                                    await renderSettingsList(collectionName, listId);
                                 }
                             });
                         }
-
                         if (target.matches('.btn-edit-setting')) {
-                            openSettingEditModal(target.dataset.id, target.dataset.collection, target.dataset.name, target.dataset.kisaltma);
+                            openSettingEditModal(id, collectionName, name, target.dataset.kisaltma);
                         }
-
                         if (target.matches('.btn-edit-ders-kurali')) {
                             const kuralData = JSON.parse(target.dataset.kural);
                             document.getElementById('kural-ders-sec').value = kuralData.dersId;
                             document.getElementById('ders-kurali-detaylari').style.display = 'block';
-                            document.getElementById('editing-ders-kurali-id').value = target.dataset.id;
-                            const seviyeSelect = document.getElementById('kural-seviye-sec');
-                            seviyeSelect.value = kuralData.seviye;
-                            seviyeSelect.disabled = true;
+                            document.getElementById('editing-ders-kurali-id').value = id;
+                            document.getElementById('kural-seviye-sec').value = kuralData.seviye;
+                            document.getElementById('kural-seviye-sec').disabled = true;
                             document.getElementById('kural-ogretmen-ata-sec').value = kuralData.atananOgretmenId || '';
                             document.getElementById('kural-haftalik-saat').value = kuralData.haftalikSaat || '';
                             document.getElementById('kural-gunluk-max-saat').value = kuralData.gunlukMaxSaat || '';
                             document.getElementById('ders-kural-ekle-btn').textContent = "Değişiklikleri Güncelle";
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                     });
 
-                    const toggleBtn = document.getElementById('toggle-detayli-kurallar');
-                    const detayliKurallarContainer = document.getElementById('detayli-kurallar-container');
+                    settingsContainer.dataset.initialized = 'true';
+                }
 
-                    toggleBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (detayliKurallarContainer.style.display === 'none') {
-                            detayliKurallarContainer.style.display = 'block';
-                            toggleBtn.textContent = '▼ Detaylı Kuralları Gizle';
-                        } else {
-                            detayliKurallarContainer.style.display = 'none';
-                            toggleBtn.textContent = '▶ Detaylı Kuralları Göster';
+                // --- BÖLÜM 2: VERİ YÜKLEME VE GÖRÜNTÜLEME ---
+                // Bu bölüm, Ayarlar'a her tıklandığında çalışır ve güncel verileri çeker.
+                try {
+                    console.log(`Ayarlar verileri '${currentUserOkulId}' okulu için yeniden yükleniyor...`);
+                    showSpinner();
+
+                    const [neviSnapshot, derslerSnap, personelSnap, siniflarSnap, dersliklerSnap] = await Promise.all([
+                        getSettings('ayarlar_personel_nevileri'),
+                        getSettings('ayarlar_dersler'),
+                        getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId), orderBy('ad_soyad'))),
+                        getSettings('ayarlar_siniflar'),
+                        getSettings('ayarlar_derslikler')
+                    ]);
+
+                    const personelNevileri = neviSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+                    const egitimPersoneliNevi = personelNevileri.find(nevi => nevi.name.trim().toLocaleLowerCase('tr-TR') === 'eğitim personeli');
+                    const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
+
+                    // Filtreleri temizle ve yeniden doldur
+                    const selectorsToPopulate = [
+                        { id: 'kural-filter-ders-select', snap: derslerSnap, text: 'Tüm Dersler', valueKey: 'id' },
+                        { id: 'kural-filter-sinif-select', snap: siniflarSnap, text: 'Tüm Sınıflar', valueKey: 'name' },
+                        { id: 'gorev-nevi-select', snap: neviSnapshot, text: 'Personel Nevi Seçin...', valueKey: 'id' },
+                        { id: 'kural-ogretmen-sec', snap: personelSnap, text: 'Lütfen Bir Öğretmen Seçin...', valueKey: 'id', filter: (d) => d.data().personel_nevisi === egitimPersoneliNeviId },
+                        { id: 'kural-ogretmen-ata-sec', snap: personelSnap, text: 'Öğretmen Seç (İsteğe Bağlı)', valueKey: 'id', filter: (d) => d.data().personel_nevisi === egitimPersoneliNeviId },
+                        { id: 'kural-seviye-sec', snap: siniflarSnap, text: '', valueKey: 'name', isMultiple: true },
+                        { id: 'kural-ders-sec', snap: derslerSnap, text: 'Lütfen Bir Ders Seçin...', valueKey: 'id' }
+                    ];
+
+                    selectorsToPopulate.forEach(s => {
+                        const select = document.getElementById(s.id);
+                        if (select) {
+                            select.innerHTML = s.text ? `<option value="">${s.text}</option>` : '';
+                            s.snap.docs.forEach(doc => {
+                                if (!s.filter || s.filter(doc)) {
+                                    select.add(new Option(doc.data().ad_soyad || doc.data().name, s.valueKey === 'id' ? doc.id : doc.data().name));
+                                }
+                            });
                         }
                     });
-                    
-                    document.getElementById('ders-kural-ekle-btn').addEventListener('click', saveDersKurali);
-                    
-                    document.getElementById('zor-kural-duzenle-btn').addEventListener('click', () => {
-                        document.getElementById('zor-ders-kural-gosterge').style.display = 'none';
-                        document.getElementById('zor-ders-form-container').style.display = 'block';
-                    });
-                    
-                    document.getElementById('zor-kural-sil-btn').addEventListener('click', () => {
-                        showConfirmationModal(
-                            'Tanımlanmış olan "Zorlayıcı Ders Kuralı" kalıcı olarak silinecektir. Emin misiniz?',
-                            async () => {
-                                await saveGenelKurallar({ zorDersler: null, maxZorDersSayisi: null });
-                                showToast('Zorlayıcı ders kuralı başarıyla silindi.', 'success');
-                                await loadGenelKurallar();
-                            }
-                        );
-                    });
 
-                    document.getElementById('derslik-ekle-btn').addEventListener('click', async () => {
-                        const adInput = document.getElementById('derslik-adi-input');
-                        const tipSelect = document.getElementById('derslik-tipi-select');
-                        const derslikAdi = adInput.value.trim();
-                        const derslikTipi = tipSelect.value;
-                        if (!derslikAdi) return showToast('Lütfen bir derslik adı girin.', 'error');
-                        await addSetting('ayarlar_derslikler', { name: derslikAdi, type: derslikTipi });
-                        showToast('Derslik başarıyla eklendi.');
-                        adInput.value = '';
-                        tipSelect.value = 'Standart';
-                        await renderSettingsList('ayarlar_derslikler', 'derslik-listesi');
-                    });
-                    
-                    document.getElementById('genel-bloke-ekle-btn').addEventListener('click', async () => {
-                        const gun = document.getElementById('genel-bloke-gun').value;
-                        const saat = document.getElementById('genel-bloke-saat').value;
-                        if (!gun || !saat) return showToast('Lütfen gün ve saat seçin.', 'error');
-                        const docRef = doc(db, "programlama_kurallari", currentUserOkulId);
-                        const docSnap = await getDoc(docRef);
-                        const mevcutKurallar = docSnap.exists() ? docSnap.data() : {};
-                        const blokeZamanlar = mevcutKurallar.blokeZamanlar || [];
-                        const isDuplicate = blokeZamanlar.some(z => z.gun === gun && z.saat === saat);
-                        if (isDuplicate) return showToast('Bu zaman dilimi zaten bloke edilmiş.', 'info');
-                        blokeZamanlar.push({ gun, saat });
-                        await saveGenelKurallar({ blokeZamanlar });
-                        showToast('Zaman dilimi başarıyla bloke edildi.');
-                        renderBlokeZamanListesi(blokeZamanlar);
-                    });
-
-                    await loadZamanCizelgesiAyarlari();
-                    await generateTimeSlots();
-                    createVisualScheduler();
-                    await loadGenelKurallar();
-
+                    // Tüm listeleri yeniden render et
                     await Promise.all([
+                        loadZamanCizelgesiAyarlari(),
+                        generateTimeSlots().then(createVisualScheduler),
+                        loadGenelKurallar(),
                         renderSettingsList('ayarlar_personel_nevileri', 'nevi-list'),
                         renderSettingsList('ayarlar_gorevler', 'gorev-list', personelNevileri),
                         renderSettingsList('ayarlar_dersler', 'ders-list'),
@@ -7732,13 +7577,13 @@ async function initializeSettings() {
                         loadAndRenderDersKurallari()
                     ]);
 
-                    settingsContainer.dataset.initialized = 'true';
                 } catch (error) {
-                    console.error("Ayarlar başlatılırken kritik bir hata oluştu:", error);
-                    showToast('Ayarlar yüklenemedi. Lütfen sayfayı yenileyin.', 'error');
+                    console.error("Ayarlar verileri yüklenirken kritik bir hata oluştu:", error);
+                    showToast('Ayarlar verileri yüklenemedi. Lütfen sayfayı yenileyin.', 'error');
+                } finally {
+                    hideSpinner();
                 }
             }
-
 
 
 
