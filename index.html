@@ -4141,7 +4141,7 @@
                         return;
                     }
 
-                    // HATA DÜZELTMESİ: .sort() içine (a.adi || '') eklenerek "adi" alanı boş olan okullarda hata vermesi engellendi.
+
                     const aktifOkullar = okullar.filter(okul => okul.durum !== 'pasif').sort((a, b) => (a.adi || '').localeCompare(b.adi || ''));
                     const pasifOkullar = okullar.filter(okul => okul.durum === 'pasif').sort((a, b) => (a.adi || '').localeCompare(b.adi || ''));
 
@@ -5506,7 +5506,7 @@
             }
 
 
-            // BU FONKSİYONU TAMAMEN DEĞİŞTİRİN
+
             async function loadSharedData() {
                 try {
                     const [siniflarSnap, personelSnap, neviSnap, derslerSnap] = await Promise.all([
@@ -5526,9 +5526,9 @@
                         .map(doc => ({ id: doc.id, name: doc.data().ad_soyad }));
 
                     const dersFiltreSelect = document.getElementById('kural-filter-ders-select');
-                    // --- HATA BURADAYDI, DÜZELTİLDİ ---
+
                     const sinifFiltreSelect = document.getElementById('ders-kural-filtre-sinif');
-                    // ---------------------------------
+
                     const ogretmenFiltreSelect = document.getElementById('kural-filter-ogretmen-select');
 
                     dersFiltreSelect.innerHTML = '<option value="">Tüm Dersler</option>';
@@ -5543,8 +5543,8 @@
                         }
                     });
 
-                    // Olay dinleyicileri buradan kaldırıldı, çünkü initializeSettings içinde eklenmesi daha doğru.
-                    console.log("Paylaşılan veriler (Sınıflar, Öğretmenler, Dersler) başarıyla yüklendi.");
+
+
 
                 } catch (error) {
                     console.error("Paylaşılan veriler yüklenirken kritik hata:", error);
@@ -5553,7 +5553,7 @@
             }
 
             function resetApplicationState(isFullReset = false) {
-                console.log(`Uygulama durumu sıfırlanıyor... (Tam Sıfırlama: ${isFullReset})`);
+
 
                 if (isFullReset) {
                     currentUserOkulId = null;
@@ -5613,7 +5613,7 @@
             }
 
             async function loadDataForCurrentSchool() {
-                console.log(`Veriler yeni okul için yükleniyor: ${currentUserOkulId}`);
+
 
 
                 await loadSharedData();
@@ -5642,7 +5642,7 @@
                     window.schoolSlimSelect.destroy();
                 }
 
-                // Veri çekme işlemi kaldırıldı, çünkü veri artık parametre olarak geliyor.
+
                 if (okullar && okullar.length > 1) {
                     const dataForSlimSelect = okullar.map(okul => {
                         const okulAdiLower = okul.adi.toLowerCase();
@@ -6228,7 +6228,7 @@
             logoutBtn.addEventListener('click', async () => {
                 try {
                     await signOut(auth);
-                    // Çıkış başarılı olduğunda state'i SIFIRLA
+
                     resetApplicationState();
                     showToast('Başarıyla çıkış yapıldı.', 'info');
                 } catch (error) {
@@ -7056,14 +7056,14 @@
                 });
             }
 
-            // BU FONKSİYONU TAMAMEN DEĞİŞTİRİN
+
             async function loadGenelKurallar() {
                 try {
-                    // --- YENİ EKLENEN KOD BAŞLANGICI ---
-                    // Zaman çizelgesi ayarlarını yükleyip saat menülerini dolduruyoruz.
+
+
                     await loadZamanCizelgesiAyarlari();
                     await generateTimeSlots();
-                    // --- YENİ EKLENEN KOD BİTİŞİ ---
+
 
                     const docRef = doc(db, "programlama_kurallari", currentUserOkulId);
                     const docSnap = await getDoc(docRef);
@@ -7090,12 +7090,12 @@
                     console.error("Genel kurallar yüklenemedi:", e);
                 }
             }
-            // BU FONKSİYONU TAMAMEN DEĞİŞTİRİN
+
             function renderBlokeZamanListesi(blokeZamanlar) {
                 const listEl = document.getElementById('genel-bloke-listesi');
                 if (!listEl) return;
 
-                // Eğer veri yoksa bilgilendirme mesajı göster
+
                 if (!blokeZamanlar || blokeZamanlar.length === 0) {
                     listEl.innerHTML = '<li style="justify-content: center; color: #777;">Henüz bloke edilmiş bir zaman dilimi yok.</li>';
                     return;
@@ -7116,12 +7116,12 @@
                     listEl.appendChild(li);
                 });
 
-                // Listeye tıklama olaylarını tek bir yerden yönet (Event Delegation)
+
                 listEl.onclick = async (e) => {
                     const target = e.target;
                     const index = parseInt(target.dataset.index);
 
-                    // SİLME İŞLEMİ
+
                     if (target.classList.contains('btn-delete-bloke')) {
                         showConfirmationModal(`<strong>${blokeZamanlar[index].gun} - ${blokeZamanlar[index].saat}. Ders</strong> blokesini kaldırmak istediğinizden emin misiniz?`, async () => {
                             blokeZamanlar.splice(index, 1);
@@ -7131,19 +7131,19 @@
                         });
                     }
 
-                    // DÜZENLEME İŞLEMİ (Formu gösterme)
+
                     if (target.classList.contains('btn-edit-bloke')) {
                         const li = document.getElementById(`bloke-item-${index}`);
                         const zaman = blokeZamanlar[index];
 
-                        // Saat seçeneklerini oluştur
+
                         let saatOptionsHTML = '';
                         dersSaatleri.forEach(slot => {
                             const selected = slot.dersNo == zaman.saat ? 'selected' : '';
                             saatOptionsHTML += `<option value="${slot.dersNo}" ${selected}>${slot.dersNo}. Ders</option>`;
                         });
 
-                        // Gün seçeneklerini oluştur
+
                         const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
                         let gunOptionsHTML = '';
                         gunler.forEach(gun => {
@@ -7151,7 +7151,7 @@
                             gunOptionsHTML += `<option value="${gun}" ${selected}>${gun}</option>`;
                         });
 
-                        // Satırın içeriğini düzenleme formuyla değiştir
+
                         li.innerHTML = `
                 <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
                     <select id="edit-gun-${index}" style="flex:2;">${gunOptionsHTML}</select>
@@ -7164,7 +7164,7 @@
             `;
                     }
 
-                    // DÜZENLEMEYİ KAYDETME İŞLEMİ
+
                     if (target.classList.contains('btn-save-bloke')) {
                         const newGun = document.getElementById(`edit-gun-${index}`).value;
                         const newSaat = document.getElementById(`edit-saat-${index}`).value;
@@ -7175,7 +7175,7 @@
                         showToast('Değişiklikler kaydedildi.');
                     }
 
-                    // DÜZENLEMEDEN VAZGEÇME İŞLEMİ
+
                     if (target.classList.contains('btn-cancel-bloke')) {
                         renderBlokeZamanListesi(blokeZamanlar); // Listeyi orijinal haline geri getir
                     }
@@ -7202,12 +7202,12 @@
 
                     document.getElementById('ders-kural-filters').style.display = 'grid';
 
-                    // Filtre değerleri doğru ID'ler ile alınıyor
+
                     const dersFilterId = document.getElementById('kural-filter-ders-select').value;
                     const sinifFilterName = document.getElementById('ders-kural-filtre-sinif').value; // Yazım hatası düzeltildi
                     const ogretmenFilterId = document.getElementById('kural-filter-ogretmen-select').value;
 
-                    // Filtreleme mantığı
+
                     const filtrelenmisKurallar = tumKurallar.filter(kural => {
                         const dersMatch = !dersFilterId || kural.dersId === dersFilterId;
                         const sinifMatch = !sinifFilterName || kural.seviye === sinifFilterName;
@@ -7334,25 +7334,25 @@
                 }
             }
 
-            // BU FONKSİYONU TAMAMEN DEĞİŞTİRİN
+
             function renderZorDersKurali(zorDersler, maxSayi, dersMap) {
                 const formContainer = document.getElementById('zor-ders-form-container');
                 const gostergeContainer = document.getElementById('zor-ders-kural-gosterge');
                 const zorDerslerSelect = document.getElementById('kural-zor-dersler-sec');
                 const maxDersInput = document.getElementById('kural-gunluk-max-zor-ders');
 
-                // Eğer bir kural kaydedilmişse:
+
                 if (zorDersler && zorDersler.length > 0 && maxSayi) {
                     formContainer.style.display = 'none'; // Formu gizle
                     gostergeContainer.style.display = 'block'; // Listeyi göster
 
-                    // Arka planda formu doldur ki "Düzenle"ye basınca dolu gelsin
+
                     Array.from(zorDerslerSelect.options).forEach(opt => {
                         opt.selected = zorDersler.includes(opt.value);
                     });
                     maxDersInput.value = maxSayi;
 
-                    // Kuralı liste olarak oluştur
+
                     let derslerHTML = '';
                     zorDersler.forEach(dersId => {
                         derslerHTML += `<li>${dersMap.get(dersId) || 'Bilinmeyen Ders'}</li>`;
@@ -7374,7 +7374,7 @@
             </ul>
         `;
                 }
-                // Eğer kural kaydedilmemişse:
+
                 else {
                     formContainer.style.display = 'block'; // Formu göster
                     gostergeContainer.style.display = 'none'; // Listeyi gizle
@@ -7382,7 +7382,7 @@
                     maxDersInput.value = ''; // Formu temizle
                 }
             }
-            // BU FONKSİYONU DA TAMAMEN DEĞİŞTİRİN
+
             async function saveOgretmenKurallari() {
                 const ogretmenId = document.getElementById('kural-ogretmen-sec').value;
                 if (!ogretmenId) {
@@ -7412,16 +7412,16 @@
                     await setDoc(doc(db, "ogretmen_kurallari", ogretmenId), kuralData);
                     showToast('Öğretmen kuralları başarıyla kaydedildi.', 'success');
 
-                    // Kaydettikten sonra öğretmen listesini güncelleyerek (✓) işaretinin görünmesini sağlıyoruz
+
                     await populateOgretmenKuralSelect();
-                    // Seçili öğretmenin değerini koruyoruz
+
                     document.getElementById('kural-ogretmen-sec').value = ogretmenId;
 
                 } catch (e) {
                     console.error("Öğretmen kuralları kaydedilemedi:", e);
                     showToast('Kurallar kaydedilirken bir hata oluştu.', 'error');
                 } finally {
-                    // Butonu tekrar eski haline getiriyoruz
+
                     setTimeout(() => {
                         saveButton.textContent = originalButtonText;
                         saveButton.disabled = false;
@@ -7429,7 +7429,7 @@
                 }
             }
             async function setupAndRenderTab(tabId) {
-                console.log(`--- setupAndRenderTab fonksiyonu BAŞLADI (Sekme: ${tabId}) ---`);
+
 
                 showSpinner();
                 try {
@@ -7463,7 +7463,7 @@
                             await renderSettingsList('ayarlar_derslikler', 'derslik-listesi');
                             break;
                         case 'ders-brans-kurallari':
-                            console.log("Ders (Branş) Kuralları sekmesi seçildi. İlgili fonksiyonlar çağrılıyor...");
+
 
                             await populateDersKuralFormSelects(); // YENİ EKLENEN SATIR
                             await loadAndRenderDersKurallari();
@@ -7484,12 +7484,12 @@
                     showToast(`${tabId} verileri yüklenemedi.`, 'error');
                 } finally {
                     hideSpinner();
-                    console.log(`--- setupAndRenderTab fonksiyonu BİTTİ (Sekme: ${tabId}) ---`);
+
 
                 }
             }
 
-            // BU FONKSİYONU TAMAMEN DEĞİŞTİRİN
+
             async function populateOgretmenKuralSelect() {
                 const selectElement = document.getElementById('kural-ogretmen-sec');
                 if (!selectElement) return;
@@ -7497,17 +7497,17 @@
                 selectElement.innerHTML = '<option value="">Öğretmen Seçin...</option>';
 
                 try {
-                    // 1. Adım: Hem tüm öğretmenleri hem de mevcut kuralları aynı anda çekiyoruz.
+
                     const [personelSnap, neviSnap, ogretmenKurallariSnap] = await Promise.all([
                         getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId), orderBy('ad_soyad'))),
                         getSettings('ayarlar_personel_nevileri'),
                         getDocs(query(collection(db, 'ogretmen_kurallari'), where("okulId", "==", currentUserOkulId)))
                     ]);
 
-                    // 2. Adım: Hangi öğretmenlerin kuralı olduğunu hızlıca kontrol etmek için bir set oluşturuyoruz.
+
                     const kuralliOgretmenler = new Set(ogretmenKurallariSnap.docs.map(doc => doc.id));
 
-                    // 3. Adım: Sadece "Eğitim Personeli" olanları filtreliyoruz.
+
                     const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.trim().includes('Eğitim Personeli'));
                     const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
 
@@ -7515,7 +7515,7 @@
                         .filter(p => p.data().personel_nevisi === egitimPersoneliNeviId)
                         .map(doc => ({ id: doc.id, name: doc.data().ad_soyad }));
 
-                    // 4. Adım: Listeyi oluştururken kuralı olanların yanına işaret ekliyoruz.
+
                     ogretmenListesi.forEach(ogretmen => {
                         const displayName = kuralliOgretmenler.has(ogretmen.id)
                             ? `${ogretmen.name} (✓ Kuralları Var)`
@@ -7532,7 +7532,7 @@
 
 
             async function populateDersKuralFormSelects() {
-                console.log("--- populateDersKuralFormSelects fonksiyonu BAŞLADI ---");
+
 
 
                 try {
@@ -7541,7 +7541,7 @@
                         getSettings('ayarlar_siniflar'),
                         getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId), orderBy('ad_soyad')))
                     ]);
-                    console.log("Veriler çekildi:", { dersler: derslerSnap.size, siniflar: siniflarSnap.size, personel: personelSnap.size });
+
 
 
                     const kuralDersSec = document.getElementById('kural-ders-sec');
@@ -7559,7 +7559,7 @@
                         kuralDersSec.add(new Option(ders.name, doc.id));
                         kuralYasakliDerslerSec.add(new Option(ders.name, doc.id));
                     });
-                    console.log(`'kural-ders-sec' menüsüne ${kuralDersSec.options.length - 1} adet ders eklendi.`);
+
 
 
                     siniflarSnap.forEach(doc => {
@@ -7574,23 +7574,23 @@
                     console.error("Ders kuralı form select'leri doldurulamadı:", error);
                     showToast('Form alanları yüklenirken hata oluştu.', 'error');
                 }
-                console.log("--- populateDersKuralFormSelects fonksiyonu BİTTİ ---");
+
 
             }
 
 
 
-            // YENİ EKLENECEK FONKSİYON
+
             function editDersKurali(kuralData, kuralId) {
-                // Formu ve ilgili alanları seç
+
                 const formContainer = document.getElementById('ders-kurali-detaylari');
                 const dersSelect = document.getElementById('kural-ders-sec');
                 const seviyeSelect = document.getElementById('kural-seviye-sec');
 
-                // Kural ID'sini gizli alana yaz
+
                 document.getElementById('editing-ders-kurali-id').value = kuralId;
 
-                // Formu doldur
+
                 dersSelect.value = kuralData.dersId;
                 seviyeSelect.value = kuralData.seviye;
                 document.getElementById('kural-ogretmen-ata-sec').value = kuralData.atananOgretmenId || '';
@@ -7642,12 +7642,12 @@
 
                 try {
                     if (editingId) {
-                        // Düzenleme modu
+
                         const docRef = doc(db, "ders_kurallari", editingId);
                         await setDoc(docRef, { ...kuralData, seviye: secilenSeviyeler[0] }, { merge: true }); // Düzenlemede sadece tek seviye güncellenir
                         showToast('Kural başarıyla güncellendi.');
                     } else {
-                        // Yeni kural ekleme modu (seçilen her sınıf için ayrı kayıt)
+
                         const promises = secilenSeviyeler.map(seviye => {
                             const docRef = collection(db, "ders_kurallari");
                             return addDoc(docRef, { ...kuralData, seviye: seviye });
@@ -7656,7 +7656,7 @@
                         showToast(`${secilenSeviyeler.length} sınıf için kural başarıyla eklendi.`);
                     }
 
-                    // Formu ve arayüzü sıfırla/yenile
+
                     document.getElementById('ders-kurali-detaylari').querySelector('form').reset();
                     document.getElementById('kural-ders-sec').value = '';
                     document.getElementById('ders-kurali-detaylari').style.display = 'none';
@@ -7672,11 +7672,11 @@
             }
 
             async function initializeSettings() {
-                console.log("--- initializeSettings fonksiyonu BAŞLADI ---");
+
 
                 const settingsContainer = document.getElementById('settings');
                 if (settingsContainer.dataset.initialized === 'true') {
-                    console.log("Ayarlar zaten başlatılmış, çıkılıyor.");
+
 
                     document.getElementById('settings-panel-title').textContent = 'Uygulama Ayarları';
                     document.getElementById('settings-back-btn').classList.add('hidden');
@@ -7836,12 +7836,12 @@
                 document.getElementById('zaman-cizelgesi-kaydet-btn').addEventListener('click', saveZamanCizelgesiAyarlari);
                 document.getElementById('ogretmen-kural-kaydet-btn').addEventListener('click', saveOgretmenKurallari);
                 document.getElementById('ders-kural-ekle-btn').addEventListener('click', saveDersKurali);
-                console.log("LOG A: Ders kuralları formu için olay dinleyicileri EKLENİYOR...");
+
 
                 document.getElementById('kural-ders-sec').addEventListener('change', (e) => {
 
-                    console.log("--- 'kural-ders-sec' DEĞİŞTİ! ---");
-                    console.log("Seçilen Değer:", e.target.value);
+
+
 
                     const formDetaylari = document.getElementById('ders-kurali-detaylari');
                     const dersSecimMenusu = document.getElementById('kural-ders-sec');
@@ -7869,7 +7869,7 @@
 
                 document.getElementById('toggle-detayli-kurallar').addEventListener('click', (e) => {
                     e.preventDefault(); // Linkin normal davranışını engelle
-                    console.log("--- 'toggle-detayli-kurallar' TIKLANDI! ---");
+
 
                     const detayContainer = document.getElementById('detayli-kurallar-container');
 
@@ -7878,12 +7878,12 @@
                     detayContainer.style.display = isHidden ? 'block' : 'none';
                     e.target.textContent = isHidden ? '▼ Detaylı Kuralları Gizle' : '▶ Detaylı Kuralları Göster';
 
-                    console.log("Detaylı kurallar görünürlüğü değiştirildi:", isHidden ? 'GÖSTERİLİYOR' : 'GİZLENİYOR');
+
 
                 });
 
                 settingsContainer.dataset.initialized = 'true';
-                console.log("--- initializeSettings fonksiyonu BİTTİ ---");
+
 
             }
 
@@ -7953,7 +7953,7 @@
                     await setDoc(doc(db, "genel_ayarlar", currentUserOkulId), ayarlar);
                     showToast('Zaman çizelgesi ayarları başarıyla kaydedildi.');
 
-                    // Kaydettikten sonra ayarları yeniden yükle, bu işlem listeyi de otomatik olarak güncelleyecektir.
+
                     await loadZamanCizelgesiAyarlari();
                 } catch (e) {
                     console.error("Zaman çizelgesi kaydedilirken hata:", e);
@@ -7966,7 +7966,7 @@
                 const container = document.getElementById('zaman-cizelgesi-goruntule');
                 if (!container) return;
 
-                // dersSaatleri global dizisi dolu mu kontrol et
+
                 if (typeof dersSaatleri === 'undefined' || dersSaatleri.length === 0) {
                     container.innerHTML = '<p style="text-align:center; color:#777;">Görüntülenecek zaman çizelgesi için lütfen ayarları yapıp kaydedin.</p>';
                     return;
@@ -7981,7 +7981,7 @@
                     <span style="font-family: monospace; font-size: 1.1em; color: var(--theme-primary);">${slot.baslangic} - ${slot.bitis}</span>
                  </li>`;
 
-                    // Öğle arasını doğru yere ekle
+
                     if (slot.dersNo === ogleArasiDersNo) {
                         html += `<li style="background-color: #eef1f3; justify-content: center; font-weight: bold; border-left: 5px solid var(--theme-accent);">ÖĞLE ARASI (${zamanCizelgesiAyarlari.ogleArasiSuresi} dk)</li>`;
                     }
@@ -8020,7 +8020,7 @@
                 document.getElementById('setting-ogleArasiDersNo').value = zamanCizelgesiAyarlari.ogleArasiDersNo || varsayilanAyarlar.ogleArasiDersNo;
                 document.getElementById('setting-ogleArasiSuresi').value = zamanCizelgesiAyarlari.ogleArasiSuresi || varsayilanAyarlar.ogleArasiSuresi;
 
-                // Ayarlar yüklendikten sonra saat dilimlerini hesapla ve listeyi çiz
+
                 await generateTimeSlots();
                 renderZamanCizelgesiListesi();
             }
@@ -8544,7 +8544,7 @@
                     `<strong>${formatDateDDMMYYYY(tarih)}</strong> tarihli program versiyonu <strong>TÜM SINIFLARDAN</strong> kalıcı olarak silinecektir. Bu işlem geri alınamaz. Emin misiniz?`,
                     async () => {
                         showSpinner();
-                        console.log(`Silme işlemi başlatıldı: ${tarih}`);
+
                         try {
 
                             const siniflarSnap = await getSettings('ayarlar_siniflar');
@@ -8553,7 +8553,7 @@
                             if (anlikSinifListesi.length === 0) {
                                 throw new Error("Veritabanında kayıtlı sınıf bulunamadığı için silme işlemi yapılamadı.");
                             }
-                            console.log("Silme işlemi için bulunan sınıflar:", anlikSinifListesi.join(', '));
+
 
 
                             const deletePromises = anlikSinifListesi.map(sinifAdi => {
@@ -8564,7 +8564,7 @@
 
                             await Promise.all(deletePromises);
 
-                            console.log("Tüm silme işlemleri başarıyla tamamlandı.");
+
                             showToast('Program versiyonu tüm sınıflardan başarıyla silindi.', 'success');
 
 
@@ -8674,7 +8674,7 @@
             async function runAutomaticScheduler() {
                 showSpinner();
                 showToast('Otomatik programlama başlatıldı...', 'info');
-                console.log("--- Otomatik Doldurma Başlatıldı ---");
+
                 try {
                     const [derslerSnap, siniflarSnap, personelSnap, dersKurallariSnap, ogretmenKurallariSnap, genelKurallarSnap] = await Promise.all([
                         getSettings('ayarlar_dersler'),
@@ -8697,7 +8697,7 @@
                         }
                     });
 
-                    console.log(`Toplam yerleştirilecek ders sayısı (dersHavuzu): ${dersHavuzu.length}`);
+
                     if (dersHavuzu.length === 0) {
                         hideSpinner();
                         return showToast('Yerleştirilecek ders bulunamadı. Lütfen Ders(Branş) Kurallarını kontrol edin.', 'error');
@@ -8710,7 +8710,7 @@
                     const genelKurallar = genelKurallarSnap.exists() ? genelKurallarSnap.data() : {};
 
                     const cozumBulundu = await solveScheduler(programTaslagi, dersHavuzu, { dersMap, teacherMap, ogretmenKurallari, genelKurallar });
-                    console.log("Çözümleyici (solver) sonucu:", cozumBulundu);
+
 
                     window.tumProgramlar = programTaslagi;
 
@@ -8720,7 +8720,7 @@
                             yerlesenDersSayisi += Object.keys(gunProgrami).length;
                         });
                     });
-                    console.log(`Çözümleyici tarafından yerleştirilen ders sayısı: ${yerlesenDersSayisi}`);
+
 
 
                     renderSchedule();
@@ -10255,9 +10255,9 @@
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register('service-worker.js').then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+
                     }, err => {
-                        console.log('ServiceWorker registration failed: ', err);
+
                     });
                 });
             }
