@@ -7685,16 +7685,17 @@
                     return;
                 };
 
-                document.getElementById('settings-grid').addEventListener('click', (e) => {
-                    const card = e.target.closest('.settings-card');
+document.getElementById('settings-grid').addEventListener('click', async (e) => {                    const card = e.target.closest('.settings-card');
                     if (!card) return;
                     const tabId = card.dataset.tab;
                     const cardTitle = card.querySelector('.title').textContent;
                     if (tabId === 'ogretmen-kural') {
-                        document.getElementById('ogretmen-kural-modal').classList.add('open');
-                        populateOgretmenKuralSelect();
-                        return;
-                    }
+    await loadZamanCizelgesiAyarlari(); 
+    createVisualScheduler(); 
+    document.getElementById('ogretmen-kural-modal').classList.add('open'); 
+    populateOgretmenKuralSelect(); 
+    return;
+}
                     setupAndRenderTab(tabId);
                     const targetPane = document.getElementById(`${tabId}-tab`);
                     if (targetPane) {
@@ -7740,6 +7741,7 @@
                         return;
                     }
 
+                    // YUKARIDAKİ KOD BLOĞUNU BUNUNLA DEĞİŞTİRİN
                     if (target.matches('.btn') && target.closest('.add-setting-form')) {
                         const form = target.closest('.add-setting-form');
                         const tabContent = target.closest('.settings-tab-content');
@@ -7759,10 +7761,43 @@
                             else if (input.id.includes('gorev-input')) data.name = input.value.trim();
                         });
                         if (!allValid) return showToast('Lütfen tüm alanları doldurun.', 'error');
+
+                        // === DÜZELTİLMİŞ BÖLÜM BAŞLANGICI ===
                         const tabId = tabContent.id.replace('-tab', '');
-                        let collectionName = `ayarlar_${tabId.replace(/-/g, '_')}`;
-                        if (tabId === 'seminer-donemi') collectionName = 'ayarlar_seminer_donemleri';
-                        if (tabId === 'derslik-yonetimi') collectionName = 'ayarlar_derslikler';
+                        let collectionName = '';
+                        switch (tabId) {
+                            case 'nevi':
+                                collectionName = 'ayarlar_personel_nevileri';
+                                break;
+                            case 'gorev':
+                                collectionName = 'ayarlar_gorevler';
+                                break;
+                            case 'izin-tipi':
+                                collectionName = 'ayarlar_izin_tipleri';
+                                break;
+                            case 'nobet-yeri':
+                                collectionName = 'ayarlar_nobet_yerleri';
+                                break;
+                            case 'ders':
+                                collectionName = 'ayarlar_dersler';
+                                break;
+                            case 'sinif':
+                                collectionName = 'ayarlar_siniflar';
+                                break;
+                            case 'derslik-yonetimi':
+                                collectionName = 'ayarlar_derslikler';
+                                break;
+                            case 'seminer-donemi':
+                                collectionName = 'ayarlar_seminer_donemleri';
+                                break;
+                            default:
+                                // Hata durumunda işlemi durdur
+                                console.error('Bilinmeyen ayar sekmesi ID:', tabId);
+                                showToast('İşlem sırasında beklenmedik bir hata oluştu.', 'error');
+                                return;
+                        }
+                        // === DÜZELTİLMİŞ BÖLÜM SONU ===
+
                         await addSetting(collectionName, data);
                         showToast('Kayıt eklendi.');
                         form.querySelectorAll('input').forEach(i => i.value = '');
