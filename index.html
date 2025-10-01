@@ -7689,8 +7689,9 @@
                     document.getElementById('ders-kurali-detaylari').querySelector('form').reset();
                     document.getElementById('kural-ders-sec').value = '';
                     document.getElementById('ders-kurali-detaylari').style.display = 'none';
-                    await loadAndRenderDersKurallari();
-
+setTimeout(() => {
+    loadAndRenderDersKurallari();
+}, 500); // Güncellemenin yansıması için yarım saniye bekle
                 } catch (error) {
                     console.error("Ders kuralı kaydedilirken hata:", error);
                     showToast('Kural kaydedilirken bir hata oluştu.', 'error');
