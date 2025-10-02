@@ -2327,6 +2327,57 @@
         .sidebar-header .ss-main {
             width: 100%;
         }
+
+        /* ... mevcut stil kodlarının sonuna eklenmiştir ... */
+        #schedule-print-title {
+            display: none;
+            /* Normalde görünmez */
+        }
+
+        @media print {
+            /* ... mevcut @media print kuralları ... */
+
+            /* Ders Programı yazdırma ayarları */
+            #ders-programi .kontrol-paneli,
+            #ders-programi .program-ust-kontrol {
+                display: none !important;
+            }
+
+            #ders-programi .program-layout {
+                grid-template-columns: 1fr !important;
+            }
+
+            #schedule-print-title {
+                display: block;
+                text-align: center;
+                font-size: 16pt;
+                font-weight: bold;
+                margin-bottom: 20px;
+                color: black;
+            }
+
+            #ders-programi .schedule-table {
+                font-size: 8pt !important;
+                width: 100% !important;
+                break-inside: auto;
+            }
+
+            #ders-programi .schedule-table th,
+            #ders-programi .schedule-table td {
+                height: auto !important;
+                padding: 4px !important;
+                border: 1px solid #333 !important;
+            }
+
+            #ders-programi .ders-karti {
+                font-size: 7pt !important;
+                padding: 2px !important;
+                border: 1px solid #999 !important;
+                box-shadow: none !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
 </head>
 
@@ -2589,44 +2640,48 @@
                     </div>
 
                     <div class="program-alani">
-                        <div class="panel">
-                            <div class="panel-header" style="flex-wrap: wrap; gap: 15px;">
-                                <h3>Gelişmiş Ders Programı Planlayıcı</h3>
-                            </div>
-                            <div class="panel-body">
-                                <div class="program-ust-kontrol">
-                                    <div class="form-group">
-                                        <label>Görünüm</label>
-                                        <div class="view-toggle">
-                                            <button id="sinif-gorunum-btn" class="btn active">Sınıf Görünümü</button>
-                                            <button id="ogretmen-gorunum-btn" class="btn">Öğretmen Görünümü</button>
-                                        </div>
-                                    </div>
-                                    <div class="form-group" style="flex-grow: 1;">
-                                        <label id="grup-gorunum-label">Görüntülenecek Grup (Sınıf)</label>
-                                        <select id="grup-secim-dropdown" class="form-control"
-                                            style="padding: 10px; font-size: 15px;"></select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Programın Geçerlilik Başlangıç Tarihi</label>
-                                        <input type="date" id="etkinTarihInput">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>İşlemler</label>
-                                        <div class="program-actions">
-                                            <button id="programi-kaydet-btn" class="btn"
-                                                style="background-color: var(--theme-accent);">Kaydet</button>
-                                            <button id="programi-yayinla-btn" class="btn"
-                                                style="background-color: var(--success-color);">Yayınla</button>
-                                            <button id="btn-otomatik-doldur" class="btn btn-add">Otomatik
-                                                Doldur</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="schedule-display-area" style="margin-top: 20px;"></div>
-                            </div>
-                        </div>
+    <div class="panel">
+        <div class="panel-header" style="flex-wrap: wrap; gap: 15px;">
+            <h3>Gelişmiş Ders Programı Planlayıcı</h3>
+        </div>
+        <div class="panel-body">
+            <div class="program-ust-kontrol">
+                <div class="form-group">
+                    <label>Görünüm</label>
+                    <div class="view-toggle">
+                        <button id="sinif-gorunum-btn" class="btn active">Sınıf Görünümü</button>
+                        <button id="ogretmen-gorunum-btn" class="btn">Öğretmen Görünümü</button>
                     </div>
+                </div>
+                <div class="form-group" style="flex-grow: 1;">
+                    <label id="grup-gorunum-label">Görüntülenecek Grup (Sınıf)</label>
+                    <select id="grup-secim-dropdown" class="form-control"
+                        style="padding: 10px; font-size: 15px;"></select>
+                </div>
+                <div class="form-group">
+                    <label>Programın Geçerlilik Başlangıç Tarihi</label>
+                    <input type="date" id="etkinTarihInput">
+                </div>
+                <div class="form-group">
+                    <label>İşlemler</label>
+                    <div class="program-actions">
+                        <button id="programi-kaydet-btn" class="btn"
+                            style="background-color: var(--theme-accent);">Kaydet</button>
+                        <button id="programi-yayinla-btn" class="btn"
+                            style="background-color: var(--success-color);">Yayınla</button>
+                        <button id="btn-otomatik-doldur" class="btn btn-add">Otomatik
+                            Doldur</button>
+                        <button id="programi-yazdir-btn" class="btn"
+                            style="background-color: var(--info-color);">Yazdır</button>
+                    </div>
+                </div>
+            </div>
+            <div id="schedule-display-area" style="margin-top: 20px;">
+                <h2 id="schedule-print-title"></h2>
+            </div>
+        </div>
+    </div>
+</div>
 
                 </div>
             </div>
@@ -7689,9 +7744,9 @@
                     document.getElementById('ders-kurali-detaylari').querySelector('form').reset();
                     document.getElementById('kural-ders-sec').value = '';
                     document.getElementById('ders-kurali-detaylari').style.display = 'none';
-setTimeout(() => {
-    loadAndRenderDersKurallari();
-}, 500); // Güncellemenin yansıması için yarım saniye bekle
+                    setTimeout(() => {
+                        loadAndRenderDersKurallari();
+                    }, 500); // Güncellemenin yansıması için yarım saniye bekle
                 } catch (error) {
                     console.error("Ders kuralı kaydedilirken hata:", error);
                     showToast('Kural kaydedilirken bir hata oluştu.', 'error');
@@ -8402,6 +8457,15 @@ setTimeout(() => {
                     await generateTimeSlots();
 
                     if (!document.getElementById('sinif-gorunum-btn')._initialized) {
+
+                        document.getElementById('programi-yazdir-btn').addEventListener('click', () => {
+                            const selectedGroup = document.getElementById('grup-secim-dropdown').options[document.getElementById('grup-secim-dropdown').selectedIndex].text;
+                            document.getElementById('schedule-print-title').textContent = `${selectedGroup} Haftalık Ders Programı`;
+                            window.print();
+                        });
+
+
+
                         document.getElementById('sinif-gorunum-btn').addEventListener('click', () => switchView('sinif'));
                         document.getElementById('ogretmen-gorunum-btn').addEventListener('click', () => switchView('ogretmen'));
                         document.getElementById('grup-secim-dropdown').addEventListener('change', (e) => {
@@ -8524,7 +8588,8 @@ setTimeout(() => {
                 const displayArea = document.getElementById('schedule-display-area');
                 const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
                 const ogleArasiDersNo = parseInt(zamanCizelgesiAyarlari.ogleArasiDersNo) || 4;
-                let tableHTML = '<table class="schedule-table"><thead><tr><th>Saatler</th>';
+                let tableHTML = '<h2 id="schedule-print-title"></h2>';
+tableHTML += '<table class="schedule-table"><thead><tr><th>Saatler</th>';
                 gunler.forEach(gun => tableHTML += `<th>${gun}</th>`);
                 tableHTML += '</tr></thead><tbody>';
                 const mevcutProgram = window.tumProgramlar[window.aktifGrup] || {};
