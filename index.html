@@ -2651,6 +2651,10 @@
                                         <div class="view-toggle">
                                             <button id="sinif-gorunum-btn" class="btn active">Sınıf Görünümü</button>
                                             <button id="ogretmen-gorunum-btn" class="btn">Öğretmen Görünümü</button>
+                                            <button id="matris-ogretmen-gorunum-btn" class="btn">Matris
+                                                (Öğretmen/Sınıf)</button>
+                                            <button id="matris-sinif-gorunum-btn" class="btn">Matris
+                                                (Sınıf/Ders)</button>
                                         </div>
                                     </div>
                                     <div class="form-group" style="flex-grow: 1;">
@@ -2673,6 +2677,10 @@
                                                 Doldur</button>
                                             <button id="programi-yazdir-btn" class="btn"
                                                 style="background-color: var(--info-color);">Yazdır</button>
+                                            <button id="programi-duzenle-btn" class="btn"
+                                                style="background-color: var(--info-color);">Düzenle</button>
+                                            <button id="programi-kopyala-btn" class="btn"
+                                                style="background-color: #6c757d;">Kopyala</button>
                                         </div>
                                     </div>
                                 </div>
@@ -3265,15 +3273,7 @@
                         <p>Derslerin haftalık saatlerini, yerleşim tercihlerini ve diğer derslerle ilişkilerini buradan
                             yönetin.</p>
 
-                        <div class="form-grid"
-                            style="grid-template-columns: 1fr; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
-                            <div class="form-group">
-                                <label for="kural-filter-sinif-select">Listeyi Sınıfa Göre Filtrele</label>
-                                <select id="kural-filter-sinif-select">
-                                    <option value="">Tüm Sınıfları Göster</option>
-                                </select>
-                            </div>
-                        </div>
+
 
                         <div class="form-grid"
                             style="grid-template-columns: 1fr; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
@@ -4058,7 +4058,20 @@
 
         <script type="module">
 
-
+            const COLOR_PALETTE = [
+                'hsl(25, 90%, 73%)',  // Açık Turuncu
+                'hsl(45, 90%, 73%)',  // Açık Altın Sarısı
+                'hsl(80, 80%, 70%)',  // Açık Limon Yeşili
+                'hsl(160, 80%, 70%)', // Açık Turkuaz
+                'hsl(195, 80%, 70%)', // Açık Gök Mavisi
+                'hsl(220, 90%, 75%)', // Açık Çivit Mavisi
+                'hsl(275, 80%, 75%)', // Açık Mor
+                'hsl(340, 90%, 78%)', // Açık Pembe
+                'hsl(5, 85%, 75%)',   // Açık Somon
+                'hsl(130, 75%, 70%)', // Açık Yeşim
+                'hsl(300, 80%, 75%)', // Açık Macenta
+                'hsl(200, 90%, 80%)'  // Çok Açık Mavi
+            ];
 
 
 
@@ -5640,44 +5653,37 @@
                             return isTeacher && isActive;
                         })
                         .map(doc => ({ id: doc.id, name: doc.data().ad_soyad }));
-                    const dersFiltreSelect = document.getElementById('kural-filter-ders-select');
-                    const sinifFiltreSelect = document.getElementById('kural-filter-sinif-select');
-                    const ogretmenFiltreSelect = document.getElementById('kural-filter-ogretmen-select');
 
+
+
+                    const dersFiltreSelect = document.getElementById('kural-filter-ders-select');
+                    const ogretmenFiltreSelect = document.getElementById('kural-filter-ogretmen-select');
                     const sinifTableFiltreSelect = document.getElementById('kural-table-filter-sinif-select');
 
+                    if (dersFiltreSelect) {
+                        dersFiltreSelect.innerHTML = '<option value="">Tüm Dersler</option>';
+                        derslerSnap.forEach(doc => dersFiltreSelect.add(new Option(doc.data().name, doc.id)));
+                    }
 
-                    dersFiltreSelect.innerHTML = '<option value="">Tüm Dersler</option>';
-                    sinifFiltreSelect.innerHTML = '<option value="">Tüm Sınıflar</option>';
-                    ogretmenFiltreSelect.innerHTML = '<option value="">Tüm Öğretmenler</option>';
-                    sinifTableFiltreSelect.innerHTML = '<option value="">Tüm Sınıflar</option>';
+                    if (sinifTableFiltreSelect) {
+                        sinifTableFiltreSelect.innerHTML = '<option value="">Tüm Sınıflar</option>';
+                        siniflarSnap.forEach(doc => sinifTableFiltreSelect.add(new Option(doc.data().name, doc.data().name)));
+                    }
 
-
-                    derslerSnap.forEach(doc => {
-                        dersFiltreSelect.add(new Option(doc.data().name, doc.id));
-                    });
-
-                    siniflarSnap.forEach(doc => {
-
-                        sinifFiltreSelect.add(new Option(doc.data().name, doc.data().name));
-                        sinifTableFiltreSelect.add(new Option(doc.data().name, doc.data().name));
-                    });
-
-                    personelSnap.forEach(doc => {
-                        if (doc.data().personel_nevisi === egitimPersoneliNeviId) {
-                            ogretmenFiltreSelect.add(new Option(doc.data().ad_soyad, doc.id));
-                        }
-                    });
-
-
-
+                    if (ogretmenFiltreSelect) {
+                        ogretmenFiltreSelect.innerHTML = '<option value="">Tüm Öğretmenler</option>';
+                        personelSnap.forEach(doc => {
+                            if (doc.data().personel_nevisi === egitimPersoneliNeviId) {
+                                ogretmenFiltreSelect.add(new Option(doc.data().ad_soyad, doc.id));
+                            }
+                        });
+                    }
 
                 } catch (error) {
                     console.error("Paylaşılan veriler yüklenirken kritik hata:", error);
                     showToast('Uygulama için temel veriler yüklenemedi. Ayarlarınızı kontrol edin.', 'error');
                 }
             }
-
             function resetApplicationState(isFullReset = false) {
 
 
@@ -5797,11 +5803,16 @@
                         data: dataForSlimSelect,
                         events: {
                             afterChange: async (newVal) => {
+
+
+                                if (!newVal || newVal.length === 0) {
+                                    return;
+                                }
                                 const yeniOkulId = newVal[0].value;
                                 if (yeniOkulId === currentUserOkulId) return;
 
                                 showSpinner();
-                                resetApplicationState(false); // BU SATIRI EKLEYİN
+                                resetApplicationState(false);
                                 currentUserOkulId = yeniOkulId;
                                 await loadDataForCurrentSchool();
                                 hideSpinner();
@@ -6366,14 +6377,20 @@
                     showToast('Çıkış yapılırken bir hata oluştu.', 'error');
                 }
             });
-
             function stringToColor(str) {
                 let hash = 0;
+                if (!str || str.length === 0) return '#f0f0f0'; // Boş metin için açık gri
+
+
                 for (let i = 0; i < str.length; i++) {
                     hash = str.charCodeAt(i) + ((hash << 5) - hash);
                 }
-                const h = hash % 360;
-                return `hsl(${h}, ${60 + (hash % 20)}%, ${75 + (hash % 10)}%)`;
+
+
+                const index = Math.abs(hash % COLOR_PALETTE.length);
+
+
+                return COLOR_PALETTE[index];
             }
 
             function getContrastColor(bgColor) {
@@ -7338,9 +7355,10 @@
 
                     document.getElementById('ders-kural-filters').style.display = 'grid';
 
-
                     const dersFilterId = document.getElementById('kural-filter-ders-select').value;
-                    const sinifFilterName = document.getElementById('kural-filter-sinif-select').value; // Yazım hatası düzeltildi
+
+
+                    const sinifFilterName = document.getElementById('kural-table-filter-sinif-select').value;
                     const ogretmenFilterId = document.getElementById('kural-filter-ogretmen-select').value;
 
 
@@ -7564,11 +7582,18 @@
                     }, 1000);
                 }
             }
-            async function setupAndRenderTab(tabId) {
 
+
+            async function setupAndRenderTab(tabId) {
+                const targetPane = document.getElementById(`${tabId}-tab`);
+                if (!targetPane) return;
+
+
+                initializeTabEventListeners(tabId);
 
                 showSpinner();
                 try {
+
                     switch (tabId) {
                         case 'nevi':
                             await renderSettingsList('ayarlar_personel_nevileri', 'nevi-list');
@@ -7599,9 +7624,7 @@
                             await renderSettingsList('ayarlar_derslikler', 'derslik-listesi');
                             break;
                         case 'ders-brans-kurallari':
-
-
-                            await populateDersKuralFormSelects(); // YENİ EKLENEN SATIR
+                            await populateDersKuralFormSelects();
                             await loadAndRenderDersKurallari();
                             break;
                         case 'ogrenci-kurallari':
@@ -7620,12 +7643,8 @@
                     showToast(`${tabId} verileri yüklenemedi.`, 'error');
                 } finally {
                     hideSpinner();
-
-
                 }
             }
-
-
 
             async function populateOgretmenKuralSelect() {
                 const selectElement = document.getElementById('kural-ogretmen-sec');
@@ -7818,32 +7837,45 @@
             }
 
             async function initializeSettings() {
-
-
                 const settingsContainer = document.getElementById('settings');
+
                 if (settingsContainer.dataset.initialized === 'true') {
-
-
                     document.getElementById('settings-panel-title').textContent = 'Uygulama Ayarları';
                     document.getElementById('settings-back-btn').classList.add('hidden');
                     settingsContainer.querySelectorAll('.settings-tab-content').forEach(pane => pane.classList.remove('active'));
                     document.getElementById('settings-grid').style.display = 'grid';
                     return;
-                };
+                }
+
 
                 document.getElementById('settings-grid').addEventListener('click', async (e) => {
                     const card = e.target.closest('.settings-card');
                     if (!card) return;
                     const tabId = card.dataset.tab;
                     const cardTitle = card.querySelector('.title').textContent;
+
                     if (tabId === 'ogretmen-kural') {
                         await loadZamanCizelgesiAyarlari();
                         createVisualScheduler();
                         document.getElementById('ogretmen-kural-modal').classList.add('open');
                         populateOgretmenKuralSelect();
+
+                        const ogretmenSecimSelect = document.getElementById('kural-ogretmen-sec');
+                        if (!ogretmenSecimSelect.dataset.listener) {
+                            ogretmenSecimSelect.addEventListener('change', (e) => {
+                                loadOgretmenKurallari(e.target.value);
+                            });
+                            ogretmenSecimSelect.dataset.listener = 'true';
+                        }
+
+                        const kaydetBtn = document.getElementById('ogretmen-kural-kaydet-btn');
+                        if (!kaydetBtn.dataset.listener) {
+                            kaydetBtn.addEventListener('click', saveOgretmenKurallari);
+                            kaydetBtn.dataset.listener = 'true';
+                        }
                         return;
                     }
-                    setupAndRenderTab(tabId);
+
                     const targetPane = document.getElementById(`${tabId}-tab`);
                     if (targetPane) {
                         document.getElementById('settings-panel-title').textContent = cardTitle;
@@ -7851,8 +7883,11 @@
                         document.getElementById('settings-grid').style.display = 'none';
                         settingsContainer.querySelectorAll('.settings-tab-content').forEach(pane => pane.classList.remove('active'));
                         targetPane.classList.add('active');
+
+                        await setupAndRenderTab(tabId);
                     }
                 });
+
 
                 document.getElementById('settings-back-btn').addEventListener('click', () => {
                     document.getElementById('settings-panel-title').textContent = 'Uygulama Ayarları';
@@ -7861,8 +7896,10 @@
                     document.getElementById('settings-grid').style.display = 'grid';
                 });
 
+
+
                 settingsContainer.addEventListener('click', async (e) => {
-                    const target = e.target.closest('button, a'); // Artık 'a' etiketlerini de yakalıyoruz
+                    const target = e.target.closest('button, a');
                     if (!target) return;
 
                     if (target.matches('.btn-edit-zorkural')) {
@@ -7870,6 +7907,7 @@
                         document.getElementById('zor-ders-form-container').style.display = 'block';
                         return;
                     }
+
                     if (target.matches('.btn-delete-zorkural')) {
                         showConfirmationModal('Tanımlanmış "Zorlayıcı Ders Kuralı" silinecektir. Emin misiniz?',
                             async () => {
@@ -7888,8 +7926,7 @@
                         return;
                     }
 
-
-                    if (target.matches('.btn') && target.closest('.add-setting-form')) {
+                    if (target.matches('.btn') && target.closest('.add-setting-form') && target.id !== 'genel-bloke-ekle-btn' && target.id !== 'zor-ders-kural-kaydet-btn') {
                         const form = target.closest('.add-setting-form');
                         const tabContent = target.closest('.settings-tab-content');
                         if (!form || !tabContent) return;
@@ -7899,67 +7936,37 @@
 
                         inputs.forEach(input => {
                             if (!input.value) allValid = false;
-
                             const id = input.id;
-                            if (id.includes('nevi-select')) {
-                                data.neviId = input.value;
-                            } else if (id.includes('add-ders-kisaltma-input')) { // Kısaltmayı önce kontrol et
-                                data.kisaltma = input.value.trim().toUpperCase();
-                            } else if (id.includes('add-izin-tipi-kod-input')) { // Kodu önce kontrol et
-                                data.kod = input.value.trim().toUpperCase();
-                            } else if (id.includes('-input') || id.includes('-ad-')) { // Genel isim alanını en son kontrol et
-                                data.name = input.value.trim();
-                            } else if (id.includes('baslangic')) {
-                                data.baslangic = input.value;
-                            } else if (id.includes('bitis')) {
-                                data.bitis = input.value;
-                            } else if (id.includes('derslik-tipi')) {
-                                data.type = input.value;
-                            }
+                            if (id.includes('nevi-select')) data.neviId = input.value;
+                            else if (id.includes('baslangic')) data.baslangic = input.value; // Önce kontrol ediliyor
+                            else if (id.includes('bitis')) data.bitis = input.value; // Önce kontrol ediliyor
+                            else if (id.includes('add-ders-kisaltma-input')) data.kisaltma = input.value.trim().toUpperCase();
+                            else if (id.includes('add-izin-tipi-kod-input')) data.kod = input.value.trim().toUpperCase();
+                            else if (id.includes('-input') || id.includes('-ad-')) data.name = input.value.trim(); // Genel kontrol sona alındı
+                            else if (id.includes('derslik-tipi')) data.type = input.value;
                         });
                         if (!allValid) return showToast('Lütfen tüm alanları doldurun.', 'error');
-
 
                         const tabId = tabContent.id.replace('-tab', '');
                         let collectionName = '';
                         switch (tabId) {
-                            case 'nevi':
-                                collectionName = 'ayarlar_personel_nevileri';
-                                break;
-                            case 'gorev':
-                                collectionName = 'ayarlar_gorevler';
-                                break;
-                            case 'izin-tipi':
-                                collectionName = 'ayarlar_izin_tipleri';
-                                break;
-                            case 'nobet-yeri':
-                                collectionName = 'ayarlar_nobet_yerleri';
-                                break;
-                            case 'ders':
-                                collectionName = 'ayarlar_dersler';
-                                break;
-                            case 'sinif':
-                                collectionName = 'ayarlar_siniflar';
-                                break;
-                            case 'derslik-yonetimi':
-                                collectionName = 'ayarlar_derslikler';
-                                break;
-                            case 'seminer-donemi':
-                                collectionName = 'ayarlar_seminer_donemleri';
-                                break;
-                            default:
-
-                                console.error('Bilinmeyen ayar sekmesi ID:', tabId);
-                                showToast('İşlem sırasında beklenmedik bir hata oluştu.', 'error');
-                                return;
+                            case 'nevi': collectionName = 'ayarlar_personel_nevileri'; break;
+                            case 'gorev': collectionName = 'ayarlar_gorevler'; break;
+                            case 'izin-tipi': collectionName = 'ayarlar_izin_tipleri'; break;
+                            case 'nobet-yeri': collectionName = 'ayarlar_nobet_yerleri'; break;
+                            case 'ders': collectionName = 'ayarlar_dersler'; break;
+                            case 'sinif': collectionName = 'ayarlar_siniflar'; break;
+                            case 'derslik-yonetimi': collectionName = 'ayarlar_derslikler'; break;
+                            case 'seminer-donemi': collectionName = 'ayarlar_seminer_donemleri'; break;
+                            default: return showToast('İşlem sırasında beklenmedik bir hata oluştu.', 'error');
                         }
-
 
                         await addSetting(collectionName, data);
                         showToast('Kayıt eklendi.');
                         form.querySelectorAll('input').forEach(i => i.value = '');
                         await setupAndRenderTab(tabId);
                     }
+
                     if (target.matches('.btn-delete-setting')) {
                         const collectionName = target.dataset.collection;
                         const id = target.dataset.id;
@@ -7971,112 +7978,87 @@
                             await setupAndRenderTab(tabId);
                         });
                     }
+
                     if (target.matches('.btn-edit-setting')) {
                         openSettingEditModal(target.dataset.id, target.dataset.collection, target.dataset.name, target.dataset.kisaltma);
                     }
                 });
 
-                document.getElementById('genel-bloke-ekle-btn').addEventListener('click', async () => {
-                    const gun = document.getElementById('genel-bloke-gun').value;
-                    const saat = document.getElementById('genel-bloke-saat').value;
-                    if (!gun || !saat) { return showToast('Lütfen gün ve saat seçin.', 'error'); }
-                    try {
-                        const docRef = doc(db, "programlama_kurallari", currentUserOkulId);
-                        const docSnap = await getDoc(docRef);
-                        const kurallar = docSnap.exists() ? docSnap.data() : {};
-                        const blokeZamanlar = [...(kurallar.blokeZamanlar || [])];
-                        if (blokeZamanlar.some(z => z.gun === gun && z.saat === saat)) {
-                            return showToast('Bu zaman dilimi zaten bloke edilmiş.', 'info');
-                        }
-                        blokeZamanlar.push({ gun, saat });
-                        await saveGenelKurallar({ blokeZamanlar });
-                        showToast('Zaman dilimi bloke edildi.', 'success');
-                        renderBlokeZamanListesi(blokeZamanlar);
-                    } catch (error) {
-                        console.error("Bloke etme işlemi sırasında hata oluştu:", error);
-                        showToast('İşlem sırasında bir hata oluştu.', 'error');
-                    }
-                });
-
-                document.getElementById('zor-ders-kural-kaydet-btn').addEventListener('click', async () => {
-                    const secilenDersler = Array.from(document.getElementById('kural-zor-dersler-sec').selectedOptions).map(opt => opt.value);
-                    const maxSayi = parseInt(document.getElementById('kural-gunluk-max-zor-ders').value);
-                    if (secilenDersler.length === 0 || isNaN(maxSayi) || maxSayi <= 0) return showToast('Lütfen zor dersleri ve geçerli bir maksimum sayı seçin.', 'error');
-                    await saveGenelKurallar({ zorDersler: secilenDersler, maxZorDersSayisi: maxSayi });
-                    showToast('Zorlayıcı ders kuralı kaydedildi.', 'success');
-                    await loadGenelKurallar();
-                });
-
-                document.getElementById('kural-ogretmen-sec').addEventListener('change', (e) => {
-                    const ogretmenId = e.target.value;
-                    const form = document.getElementById('ogretmen-kural-formu');
-                    const bilgi = document.getElementById('ogretmen-kural-bilgi');
-                    if (ogretmenId) {
-                        loadOgretmenKurallari(ogretmenId);
-                        form.style.display = 'block';
-                        bilgi.style.display = 'none';
-                    } else {
-                        form.style.display = 'none';
-                        bilgi.style.display = 'block';
-                    }
-                });
-
-                document.getElementById('kural-filter-ders-select').addEventListener('change', loadAndRenderDersKurallari);
-                document.getElementById('kural-filter-sinif-select').addEventListener('change', loadAndRenderDersKurallari);
-                document.getElementById('kural-filter-ogretmen-select').addEventListener('change', loadAndRenderDersKurallari);
-
-                document.getElementById('zaman-cizelgesi-kaydet-btn').addEventListener('click', saveZamanCizelgesiAyarlari);
-                document.getElementById('ogretmen-kural-kaydet-btn').addEventListener('click', saveOgretmenKurallari);
-                document.getElementById('ders-kural-ekle-btn').addEventListener('click', saveDersKurali);
-
-
-                document.getElementById('kural-ders-sec').addEventListener('change', (e) => {
-
-
-
-
-                    const formDetaylari = document.getElementById('ders-kurali-detaylari');
-                    const dersSecimMenusu = document.getElementById('kural-ders-sec');
-                    const form = formDetaylari ? formDetaylari.querySelector('form') : null;
-
-                    if (e.target.value) {
-
-                        if (form) form.reset(); // Formu güvenli bir şekilde sıfırla
-
-                        const editingIdInput = document.getElementById('editing-ders-kurali-id');
-                        const seviyeSelect = document.getElementById('kural-seviye-sec');
-                        const dersSelect = document.getElementById('kural-ders-sec');
-                        const ekleBtn = document.getElementById('ders-kural-ekle-btn');
-
-                        if (editingIdInput) editingIdInput.value = '';
-                        if (seviyeSelect) seviyeSelect.disabled = false;
-                        if (dersSelect) dersSelect.disabled = false;
-                        if (ekleBtn) ekleBtn.textContent = "Kural Ekle/Güncelle";
-
-                        formDetaylari.style.display = 'block';
-                    } else {
-                        formDetaylari.style.display = 'none';
-                    }
-                });
-
-                document.getElementById('toggle-detayli-kurallar').addEventListener('click', (e) => {
-                    e.preventDefault(); // Linkin normal davranışını engelle
-
-
-                    const detayContainer = document.getElementById('detayli-kurallar-container');
-
-                    const isHidden = detayContainer.style.display === 'none' || detayContainer.style.display === '';
-
-                    detayContainer.style.display = isHidden ? 'block' : 'none';
-                    e.target.textContent = isHidden ? '▼ Detaylı Kuralları Gizle' : '▶ Detaylı Kuralları Göster';
-
-
-
-                });
-
                 settingsContainer.dataset.initialized = 'true';
+            }
 
+            function initializeTabEventListeners(tabId) {
+                const tabPane = document.getElementById(`${tabId}-tab`);
+                if (!tabPane || tabPane.dataset.listenersInitialized === 'true') {
+                    return; // Eğer sekme yoksa veya fonksiyonlar zaten eklenmişse bir şey yapma
+                }
 
+                switch (tabId) {
+                    case 'ders-brans-kurallari':
+
+                        document.getElementById('kural-ders-sec').addEventListener('change', (e) => {
+                            const formDetaylari = document.getElementById('ders-kurali-detaylari');
+                            const form = formDetaylari ? formDetaylari.querySelector('form') : null;
+                            if (e.target.value) {
+                                if (form) form.reset();
+                                document.getElementById('editing-ders-kurali-id').value = '';
+                                document.getElementById('kural-seviye-sec').disabled = false;
+                                document.getElementById('kural-ders-sec').disabled = false;
+                                document.getElementById('ders-kural-ekle-btn').textContent = "Kural Ekle/Güncelle";
+                                formDetaylari.style.display = 'block';
+                            } else {
+                                formDetaylari.style.display = 'none';
+                            }
+                        });
+                        document.getElementById('ders-kural-ekle-btn').addEventListener('click', saveDersKurali);
+                        document.getElementById('kural-filter-ders-select').addEventListener('change', loadAndRenderDersKurallari);
+                        document.getElementById('kural-table-filter-sinif-select').addEventListener('change', loadAndRenderDersKurallari);
+                        document.getElementById('kural-filter-ogretmen-select').addEventListener('change', loadAndRenderDersKurallari);
+                        break;
+
+                    case 'ogrenci-kurallari':
+
+                        document.getElementById('zor-ders-kural-kaydet-btn').addEventListener('click', async () => {
+                            const secilenDersler = Array.from(document.getElementById('kural-zor-dersler-sec').selectedOptions).map(opt => opt.value);
+                            const maxSayi = parseInt(document.getElementById('kural-gunluk-max-zor-ders').value);
+                            if (secilenDersler.length === 0 || isNaN(maxSayi) || maxSayi <= 0) return showToast('Lütfen zor dersleri ve geçerli bir maksimum sayı seçin.', 'error');
+                            await saveGenelKurallar({ zorDersler: secilenDersler, maxZorDersSayisi: maxSayi });
+                            showToast('Zorlayıcı ders kuralı kaydedildi.', 'success');
+                            await loadGenelKurallar();
+                        });
+                        break;
+
+                    case 'genel-kurallar':
+
+                        document.getElementById('genel-bloke-ekle-btn').addEventListener('click', async () => {
+                            const gun = document.getElementById('genel-bloke-gun').value;
+                            const saat = document.getElementById('genel-bloke-saat').value;
+                            if (!gun || !saat) { return showToast('Lütfen gün ve saat seçin.', 'error'); }
+                            try {
+                                const docRef = doc(db, "programlama_kurallari", currentUserOkulId);
+                                const docSnap = await getDoc(docRef);
+                                const kurallar = docSnap.exists() ? docSnap.data() : {};
+                                const blokeZamanlar = [...(kurallar.blokeZamanlar || [])];
+                                if (blokeZamanlar.some(z => z.gun === gun && z.saat === saat)) {
+                                    return showToast('Bu zaman dilimi zaten bloke edilmiş.', 'info');
+                                }
+                                blokeZamanlar.push({ gun, saat });
+                                await saveGenelKurallar({ blokeZamanlar });
+                                showToast('Zaman dilimi bloke edildi.', 'success');
+                                renderBlokeZamanListesi(blokeZamanlar);
+                            } catch (error) {
+                                console.error("Bloke etme işlemi sırasında hata oluştu:", error);
+                                showToast('İşlem sırasında bir hata oluştu.', 'error');
+                            }
+                        });
+                        break;
+
+                    case 'zaman-cizelgesi':
+                        document.getElementById('zaman-cizelgesi-kaydet-btn').addEventListener('click', saveZamanCizelgesiAyarlari);
+                        break;
+                }
+
+                tabPane.dataset.listenersInitialized = 'true'; // İşaretliyoruz ki fonksiyonlar tekrar tekrar eklenmesin.
             }
 
             async function renderSeminerDonemleri() {
@@ -8134,13 +8116,19 @@
 
 
             async function saveZamanCizelgesiAyarlari() {
-
                 const ozelTeneffusler = [];
+
+
                 document.querySelectorAll('#ozel-teneffus-listesi li').forEach(li => {
-                    ozelTeneffusler.push({
-                        afterLesson: li.dataset.after,
-                        duration: li.dataset.duration
-                    });
+
+
+
+                    if (li.dataset.after && li.dataset.duration) {
+                        ozelTeneffusler.push({
+                            afterLesson: li.dataset.after,
+                            duration: li.dataset.duration
+                        });
+                    }
                 });
 
                 const ayarlar = {
@@ -8150,15 +8138,15 @@
                     teneffusSuresi: document.getElementById('setting-teneffusSuresi').value,
                     ogleArasiDersNo: document.getElementById('setting-ogleArasiDersNo').value,
                     ogleArasiSuresi: document.getElementById('setting-ogleArasiSuresi').value,
-                    ozelTeneffusler: ozelTeneffusler, // YENİ: Oluşturulan diziyi ayarlar objesine ekle
+                    ozelTeneffusler: ozelTeneffusler,
                     okulId: currentUserOkulId
                 };
 
                 try {
-                    await setDoc(doc(db, "genel_ayarlar", currentUserOkulId), ayarlar);
+                    await setDoc(doc(db, "genel_ayarlar", currentUserOkulId), ayarlar, { merge: true }); // merge: true eklemek daha güvenlidir.
                     showToast('Zaman çizelgesi ayarları başarıyla kaydedildi.');
 
-                    await loadZamanCizelgesiAyarlari(); // Ayarları ve çizelgeyi yeniden yükle/çiz
+                    await loadZamanCizelgesiAyarlari();
                 } catch (e) {
                     console.error("Zaman çizelgesi kaydedilirken hata:", e);
                     showToast('Ayarlar kaydedilirken bir hata oluştu.', 'error');
@@ -8636,7 +8624,9 @@
 
 
             let dersKurallariListesi = [];
+            let guncelYukluVersiyonTarihi = null;
             async function initializeSchedule() {
+                await loadDersKisaltmaMap();
                 const displayArea = document.getElementById('schedule-display-area');
                 displayArea.innerHTML = '<p>Ders programı verileri yükleniyor...</p>';
 
@@ -8679,6 +8669,11 @@
 
                         document.getElementById('sinif-gorunum-btn').addEventListener('click', () => switchView('sinif'));
                         document.getElementById('ogretmen-gorunum-btn').addEventListener('click', () => switchView('ogretmen'));
+                        document.getElementById('matris-ogretmen-gorunum-btn').addEventListener('click', () => switchView('matris-ogretmen'));
+                        document.getElementById('matris-sinif-gorunum-btn').addEventListener('click', () => switchView('matris-sinif'));
+                        document.querySelector('#matrix-modal .close-modal').addEventListener('click', () => {
+                            document.getElementById('matrix-modal').classList.remove('open');
+                        });
                         document.getElementById('grup-secim-dropdown').addEventListener('change', (e) => {
                             const selectedValue = e.target.value;
                             if (currentView === 'sinif') {
@@ -8693,6 +8688,66 @@
                         document.getElementById('programi-kaydet-btn').addEventListener('click', () => saveAllSchedules(false));
                         document.getElementById('programi-yayinla-btn').addEventListener('click', publishSchedule);
                         document.getElementById('btn-otomatik-doldur').addEventListener('click', runAutomaticScheduler);
+
+                        document.getElementById('programi-duzenle-btn').addEventListener('click', () => {
+                            if (currentView !== 'sinif') {
+                                return showToast('Düzenleme işlemi sadece Sınıf Görünümünde yapılabilir.', 'error');
+                            }
+                            if (guncelYukluVersiyonTarihi) {
+                                document.getElementById('etkinTarihInput').value = guncelYukluVersiyonTarihi;
+                                showToast(`Program tarihi ${formatDateDDMMYYYY(guncelYukluVersiyonTarihi)} olarak ayarlandı. Değişiklikleri kalıcı yapmak için 'Kaydet' butonuna tıklayın.`, 'info');
+                            } else {
+                                showToast('Önce versiyon listesinden düzenlenecek bir program yükleyin.', 'error');
+                            }
+                        });
+
+
+                        document.getElementById('programi-kopyala-btn').addEventListener('click', () => {
+                            if (currentView !== 'sinif') {
+                                return showToast('Kopyalama işlemi sadece Sınıf Görünümünde yapılabilir.', 'error');
+                            }
+                            if (!window.aktifGrup || !window.tumProgramlar[window.aktifGrup]) {
+                                return showToast('Kopyalanacak bir program verisi bulunmuyor.', 'error');
+                            }
+
+                            const modal = document.getElementById('kopyala-program-modal');
+                            const tarihInput = document.getElementById('kopya-tarih-input');
+                            tarihInput.valueAsDate = new Date(); // Tarih alanını bugün olarak ayarla
+                            modal.classList.add('open');
+                        });
+
+
+                        document.querySelector('#kopyala-program-modal .close-modal').addEventListener('click', () => {
+                            document.getElementById('kopyala-program-modal').classList.remove('open');
+                        });
+
+
+                        document.getElementById('kaydet-kopya-btn').addEventListener('click', async () => {
+                            const yeniTarih = document.getElementById('kopya-tarih-input').value;
+                            if (!yeniTarih) {
+                                return showToast('Lütfen geçerli bir tarih seçin.', 'error');
+                            }
+
+                            showSpinner();
+                            try {
+
+                                await saveScheduleForClass(window.aktifGrup, yeniTarih);
+                                showToast(`Program, ${formatDateDDMMYYYY(yeniTarih)} tarihi için başarıyla kopyalandı.`, 'success');
+
+
+                                await renderVersionList(window.aktifGrup.replace(/\//g, '-'));
+                                document.getElementById('etkinTarihInput').value = yeniTarih;
+                                guncelYukluVersiyonTarihi = yeniTarih; // Güncel tarihi güncelle
+
+                                document.getElementById('kopyala-program-modal').classList.remove('open');
+                            } catch (error) {
+                                showToast(`Kopyalama sırasında hata: ${error.message}`, 'error');
+                            } finally {
+                                hideSpinner();
+                            }
+                        });
+
+
                         document.getElementById('sinif-gorunum-btn')._initialized = true;
                     }
 
@@ -8707,49 +8762,82 @@
             }
             async function switchView(viewType) {
                 currentView = viewType;
-                const sinifBtn = document.getElementById('sinif-gorunum-btn');
-                const ogretmenBtn = document.getElementById('ogretmen-gorunum-btn');
+                const buttons = {
+                    sinif: document.getElementById('sinif-gorunum-btn'),
+                    ogretmen: document.getElementById('ogretmen-gorunum-btn'),
+                    'matris-ogretmen': document.getElementById('matris-ogretmen-gorunum-btn'),
+                    'matris-sinif': document.getElementById('matris-sinif-gorunum-btn')
+                };
                 const label = document.getElementById('grup-gorunum-label');
                 const dropdown = document.getElementById('grup-secim-dropdown');
                 const displayArea = document.getElementById('schedule-display-area');
 
-                dropdown.innerHTML = '';
 
-                if (viewType === 'sinif') {
-                    sinifBtn.classList.add('active');
-                    ogretmenBtn.classList.remove('active');
-                    label.textContent = 'Görüntülenecek Grup (Sınıf)';
+                Object.values(buttons).forEach(btn => btn.classList.remove('active'));
 
-                    if (!window.classList || window.classList.length === 0) {
-                        displayArea.innerHTML = `<div style="text-align:center; padding: 40px; background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px;">
-                            <h3 style="color: #8a6d3b;">Sınıf Bulunamadı</h3>
-                            <p>Bu okul için henüz bir sınıf tanımlanmamış. Ders programı oluşturabilmek için lütfen önce <strong>Ayarlar > Sınıflar</strong> menüsünden en az bir sınıf ekleyin.</p>
-                        </div>`;
-                        return;
+                if (buttons[viewType]) {
+                    buttons[viewType].classList.add('active');
+                }
+
+
+                const matrixModal = document.getElementById('matrix-modal');
+                matrixModal.classList.remove('open');
+
+
+                showSpinner();
+                try {
+
+                    if (viewType.startsWith('matris') && (!window.tumProgramlar || Object.keys(window.tumProgramlar).length < window.classList.length)) {
+                        for (const sinif of window.classList) {
+                            if (!window.tumProgramlar[sinif]) {
+                                const sanitizedSinifAdi = `${currentUserOkulId}_${sinif.replace(/\//g, '-')}`;
+                                const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
+                                const q = query(versionsRef, orderBy(documentId(), "desc"), limit(1));
+                                const snapshot = await getDocs(q);
+                                window.tumProgramlar[sinif] = snapshot.empty ? {} : snapshot.docs[0].data();
+                            }
+                        }
                     }
 
-                    window.classList.forEach(sinif => dropdown.add(new Option(sinif, sinif)));
-                    await loadScheduleForClass(window.classList[0]);
 
-                } else {
-                    sinifBtn.classList.remove('active');
-                    ogretmenBtn.classList.add('active');
-                    label.textContent = 'Görüntülenecek Grup (Öğretmen)';
+                    if (viewType === 'sinif' || viewType === 'ogretmen') {
+                        label.style.display = 'block';
+                        dropdown.style.display = 'block';
+                        dropdown.innerHTML = '';
 
-                    if (!window.teacherList || window.teacherList.length === 0) {
-                        displayArea.innerHTML = `<div style="text-align:center; padding: 40px; background-color: #e6f7ff; border: 1px solid #b3e0ff; border-radius: 8px;">
-                            <h3 style="color: #31708f;">Öğretmen Bulunamadı</h3>
-                            <p>Bu okul için "Eğitim Personeli" nevisine sahip personel bulunamadı. Lütfen önce <strong>Personel Yönetimi</strong> menüsünden öğretmen ekleyin.</p>
-                        </div>`;
-                        return;
+                        if (viewType === 'sinif') {
+                            label.textContent = 'Görüntülenecek Grup (Sınıf)';
+                            window.classList.forEach(sinif => dropdown.add(new Option(sinif, sinif)));
+                            await loadScheduleForClass(window.classList[0]);
+                        } else { // 'ogretmen'
+                            label.textContent = 'Görüntülenecek Grup (Öğretmen)';
+                            window.teacherList.forEach(ogretmen => dropdown.add(new Option(ogretmen.name, ogretmen.id)));
+                            await loadScheduleForTeacher(window.teacherList[0].id, window.teacherList[0].name);
+                        }
+                    } else { // Matris görünümleri
+                        label.style.display = 'none';
+                        dropdown.style.display = 'none';
+                        displayArea.innerHTML = ''; // Ana alanı temizle
+
+                        const modalTitle = document.getElementById('matrix-modal-title');
+
+                        if (viewType === 'matris-ogretmen') {
+                            modalTitle.textContent = 'Matris: Öğretmen / Sınıf Görünümü';
+                            await renderTeacherClassMatrix('matrix-modal-body'); // Modal içine render et
+                        } else if (viewType === 'matris-sinif') {
+                            modalTitle.textContent = 'Matris: Sınıf / Zaman Çizelgesi Görünümü';
+                            await renderClassTimeSlotMatrix('matrix-modal-body'); // Modal içine render et
+                        }
+                        matrixModal.classList.add('open'); // Modal'ı göster
                     }
 
-                    window.teacherList.forEach(ogretmen => dropdown.add(new Option(ogretmen.name, ogretmen.id)));
-                    await loadScheduleForTeacher(window.teacherList[0].id, window.teacherList[0].name);
+                } catch (error) {
+                    console.error("Görünüm değiştirilirken hata oluştu:", error);
+                    displayArea.innerHTML = `<p style="color:red">Görünüm yüklenirken bir hata oluştu: ${error.message}</p>`;
+                } finally {
+                    hideSpinner();
                 }
             }
-
-
 
             async function loadScheduleForClass(sinifAdi) {
                 window.aktifGrup = sinifAdi;
@@ -8795,16 +8883,231 @@
                 document.getElementById('versiyon-listesi').innerHTML = '<li>Öğretmen görünümünde versiyon listesi bulunmamaktadır.</li>';
             }
 
+            function timeStringToMinutes(timeStr) {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            }
+
+            async function renderTeacherClassMatrix(containerId) {
+                const displayArea = document.getElementById(containerId);
+                if (!displayArea) return;
+
+                const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
+                const toplamSaat = dersSaatleri.length;
+
+
+                const headerBgColor = '#e6f7ff'; // Açık Mavi Tonu
+
+                const teacherSchedules = {};
+                window.teacherList.forEach(teacher => {
+                    teacherSchedules[teacher.name] = {};
+                });
+
+                for (const sinifAdi in window.tumProgramlar) {
+                    if (!window.classList.includes(sinifAdi)) continue;
+                    for (const gun in window.tumProgramlar[sinifAdi]) {
+                        for (const saat in window.tumProgramlar[sinifAdi][gun]) {
+                            const dersData = window.tumProgramlar[sinifAdi][gun][saat];
+                            if (dersData && dersData.ogretmen && teacherSchedules[dersData.ogretmen]) {
+                                const dersNo = dersSaatleri.find(slot => slot.baslangic === saat)?.dersNo;
+                                if (dersNo) {
+                                    teacherSchedules[dersData.ogretmen][`${gun}-${dersNo}`] = sinifAdi;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let tableHTML = `<div class="table-container" style="max-height: 80vh;">
+                       <table class="schedule-table" style="font-size: 11px; table-layout: fixed; border-spacing: 0;">
+                         <thead>
+                           <tr style="height: auto;">
+                             <th rowspan="2" style="vertical-align: middle; width: 150px; border-bottom: 1px solid #dee2e6; background-color: ${headerBgColor};">Öğretmen</th>`;
+
+                gunler.forEach(gun => {
+                    tableHTML += `<th colspan="${toplamSaat}" style="padding: 4px 0; line-height: 1.2; background-color: ${headerBgColor};">${gun}</th>`;
+                });
+                tableHTML += `</tr><tr style="height: auto;">`;
+
+                gunler.forEach(() => {
+                    for (let i = 1; i <= toplamSaat; i++) {
+                        tableHTML += `<th style="width: 35px; padding: 3px 2px; height: 22px; line-height: 1.2; background-color: ${headerBgColor};">${i}</th>`;
+                    }
+                });
+                tableHTML += `</tr></thead><tbody>`;
+
+                window.teacherList.sort((a, b) => a.name.localeCompare(b.name)).forEach(teacher => {
+                    tableHTML += `<tr>
+                        <th style="text-align: left; padding-left: 5px; white-space: nowrap; vertical-align: middle; height: 35px;">${teacher.name}</th>`;
+                    gunler.forEach((gun, gunIndex) => {
+
+                        const zebraBg = gunIndex % 2 === 0 ? '#f8f9fa' : '#ffffff';
+                        for (let i = 1; i <= toplamSaat; i++) {
+                            const cellKey = `${gun}-${i}`;
+                            const sinif = teacherSchedules[teacher.name][cellKey];
+
+                            if (sinif) {
+                                const bgColor = stringToColor(sinif);
+                                const textColor = getContrastColor(bgColor);
+                                tableHTML += `<td style="background-color: ${bgColor}; color: ${textColor}; font-weight: bold; text-align: center; padding: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; height: 35px;" title="${sinif}">
+                                    ${sinif}
+                                  </td>`;
+                            } else {
+                                tableHTML += `<td style="height: 35px; background-color: ${zebraBg};"></td>`;
+                            }
+                        }
+                    });
+                    tableHTML += `</tr>`;
+                });
+
+                tableHTML += `</tbody></table></div>`;
+                displayArea.innerHTML = tableHTML;
+            }
+
+            async function renderClassTimeSlotMatrix(containerId) {
+                const displayArea = document.getElementById(containerId);
+                if (!displayArea) return;
+
+                const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
+                const toplamSaat = dersSaatleri.length;
+
+                let tableHTML = `<div class="table-container" style="max-height: 80vh;">
+                       <table class="schedule-table" style="font-size: 11px; table-layout: fixed;">
+                         <thead>
+                           <tr style="height: auto;">
+                             <th rowspan="2" style="vertical-align: middle; width: 100px;">Sınıf</th>`;
+                gunler.forEach(gun => {
+                    tableHTML += `<th colspan="${toplamSaat}">${gun}</th>`;
+                });
+                tableHTML += `</tr><tr style="height: auto;">`;
+                gunler.forEach(() => {
+                    dersSaatleri.forEach(slot => {
+                        tableHTML += `<th style="width: 40px; padding: 2px; height: 25px;">${slot.dersNo}</th>`;
+                    });
+                });
+                tableHTML += `</tr></thead><tbody>`;
+
+                const sortedClasses = [...window.classList].sort();
+
+                sortedClasses.forEach(sinifAdi => {
+                    tableHTML += `<tr>
+                        <th style="text-align: left; padding-left: 5px; vertical-align: middle; height: 40px;">${sinifAdi}</th>`;
+                    const sinifProgrami = window.tumProgramlar[sinifAdi] || {};
+
+                    gunler.forEach(gun => {
+                        dersSaatleri.forEach(slot => {
+                            const dersData = sinifProgrami[gun]?.[slot.baslangic];
+
+                            if (dersData && dersData.dersAdi) {
+                                const kisaAd = window.dersKisaltmaMap.get(dersData.dersAdi) || '???';
+                                const bgColor = stringToColor(dersData.dersAdi);
+                                const textColor = getContrastColor(bgColor);
+                                const tooltip = `Ders: ${dersData.dersAdi}\nÖğretmen: ${dersData.ogretmen}`;
+
+
+                                tableHTML += `<td style="background-color: ${bgColor}; color: ${textColor}; font-weight: bold; text-align: center; padding: 4px; white-space: nowrap; vertical-align: middle; height: 40px;" title="${tooltip}">${kisaAd}</td>`;
+                            } else {
+
+                                tableHTML += `<td style="height: 40px;"></td>`;
+                            }
+                        });
+                    });
+                    tableHTML += `</tr>`;
+                });
+
+                tableHTML += `</tbody></table></div>`;
+                displayArea.innerHTML = tableHTML;
+            }
+
+
+
+            async function renderClassSubjectMatrix() {
+                const displayArea = document.getElementById('schedule-display-area');
+
+
+                const allSubjects = new Set();
+                const classHourCounts = {};
+
+                window.classList.forEach(sinif => {
+                    classHourCounts[sinif] = {};
+                });
+
+                for (const sinifAdi in window.tumProgramlar) {
+                    if (!window.classList.includes(sinifAdi)) continue;
+                    for (const gun in window.tumProgramlar[sinifAdi]) {
+                        for (const saat in window.tumProgramlar[sinifAdi][gun]) {
+                            const dersData = window.tumProgramlar[sinifAdi][gun][saat];
+                            if (dersData && dersData.dersAdi) {
+                                allSubjects.add(dersData.dersAdi);
+                                classHourCounts[sinifAdi][dersData.dersAdi] = (classHourCounts[sinifAdi][dersData.dersAdi] || 0) + 1;
+                            }
+                        }
+                    }
+                }
+
+                const sortedSubjects = Array.from(allSubjects).sort();
+
+
+                let tableHTML = `<div class="table-container">
+                       <table class="staff-table">
+                         <thead>
+                           <tr>
+                             <th>Sınıf</th>`;
+                sortedSubjects.forEach(subject => {
+                    tableHTML += `<th>${subject}</th>`;
+                });
+                tableHTML += `<th>Haftalık Toplam</th></tr></thead><tbody>`;
+
+                window.classList.sort().forEach(sinif => {
+                    let weeklyTotal = 0;
+                    tableHTML += `<tr><td><strong>${sinif}</strong></td>`;
+                    sortedSubjects.forEach(subject => {
+                        const count = classHourCounts[sinif][subject] || 0;
+                        weeklyTotal += count;
+                        tableHTML += `<td>${count > 0 ? count : ''}</td>`;
+                    });
+                    tableHTML += `<td><strong>${weeklyTotal}</strong></td>`;
+                    tableHTML += `</tr>`;
+                });
+
+                tableHTML += `</tbody></table></div>`;
+                displayArea.innerHTML = tableHTML;
+            }
+
+            async function loadDersKisaltmaMap() {
+
+
+                try {
+                    const derslerSnap = await getSettings('ayarlar_dersler');
+                    window.dersKisaltmaMap = new Map();
+                    derslerSnap.forEach(doc => {
+                        const ders = doc.data();
+
+                        window.dersKisaltmaMap.set(ders.name, ders.kisaltma || '???');
+                    });
+                } catch (error) {
+                    console.error("Ders kısaltma haritası oluşturulurken hata:", error);
+                    window.dersKisaltmaMap = new Map(); // Hata durumunda boş bir harita oluştur
+                }
+            }
+
             function renderSchedule() {
                 const displayArea = document.getElementById('schedule-display-area');
                 const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
-                const ogleArasiDersNo = parseInt(zamanCizelgesiAyarlari.ogleArasiDersNo) || 4;
+
+
+                const standartTeneffus = parseInt(zamanCizelgesiAyarlari.teneffusSuresi) || 10;
+                const ogleArasiDersNo = parseInt(zamanCizelgesiAyarlari.ogleArasiDersNo) || 0;
+
                 let tableHTML = '<h2 id="schedule-print-title"></h2>';
                 tableHTML += '<table class="schedule-table"><thead><tr><th>Saatler</th>';
                 gunler.forEach(gun => tableHTML += `<th>${gun}</th>`);
                 tableHTML += '</tr></thead><tbody>';
+
                 const mevcutProgram = window.tumProgramlar[window.aktifGrup] || {};
-                dersSaatleri.forEach((slot) => {
+
+                dersSaatleri.forEach((slot, index, array) => {
+
                     tableHTML += `<tr><th>${slot.dersNo}. Ders<br>${slot.baslangic}-${slot.bitis}</th>`;
                     gunler.forEach(gun => {
                         const dersData = mevcutProgram[gun]?.[slot.baslangic];
@@ -8826,11 +9129,26 @@
                         tableHTML += `</td>`;
                     });
                     tableHTML += '</tr>';
-                    if (slot.dersNo === ogleArasiDersNo) {
-                        tableHTML += '<tr><td colspan="6" style="background:#e9ecef;font-weight:bold; height: 35px; vertical-align: middle;">ÖĞLE ARASI</td></tr>';
+
+
+
+                    if (index < array.length - 1) {
+                        const sonrakiSlot = array[index + 1];
+                        const buDersinBitisi = timeStringToMinutes(slot.bitis);
+                        const sonrakiDersinBaslangici = timeStringToMinutes(sonrakiSlot.baslangic);
+                        const araSuresi = sonrakiDersinBaslangici - buDersinBitisi;
+
+
+                        if (araSuresi > standartTeneffus) {
+
+                            const araAdi = slot.dersNo === ogleArasiDersNo ? "ÖĞLE ARASI" : "ARA";
+                            tableHTML += `<tr><td colspan="6" style="background:#e9ecef;font-weight:bold; height: 35px; vertical-align: middle;">${araAdi} (${araSuresi} dk)</td></tr>`;
+                        }
                     }
                 });
+
                 displayArea.innerHTML = tableHTML + `</tbody></table>`;
+
                 if (currentView === 'sinif') {
                     document.querySelectorAll('.delete-lesson-btn').forEach(btn => {
                         btn.addEventListener('click', (e) => {
@@ -8843,6 +9161,9 @@
                     document.querySelectorAll('.delete-lesson-btn').forEach(btn => btn.style.display = 'none');
                 }
             }
+
+
+
             async function renderVersionList(sinifAdi) {
                 const sanitizedSinifAdi = `${currentUserOkulId}_${sinifAdi.replace(/\//g, '-')}`;
                 const versiyonListesiUL = document.getElementById('versiyon-listesi');
@@ -8878,6 +9199,10 @@
                                 window.tumProgramlar[window.aktifGrup] = docSnap.data();
                                 renderSchedule();
                                 document.getElementById('etkinTarihInput').value = tarih;
+
+
+                                guncelYukluVersiyonTarihi = tarih;
+
                                 document.getElementById('aktif-versiyon-bilgisi').textContent = `Şu an ${formatDateDDMMYYYY(tarih)} tarihli versiyonu düzenliyorsunuz.`;
                                 showToast(`${formatDateDDMMYYYY(tarih)} versiyonu yüklendi.`, 'info');
                             }
@@ -8946,7 +9271,6 @@
                 const ogleArasiDersNo = parseInt(zamanCizelgesiAyarlari.ogleArasiDersNo) || 0;
                 const ogleArasiSuresi = parseInt(zamanCizelgesiAyarlari.ogleArasiSuresi) || 45;
 
-
                 const ozelTeneffusler = zamanCizelgesiAyarlari.ozelTeneffusler || [];
 
                 let suankiZaman = new Date();
@@ -8954,11 +9278,6 @@
                 suankiZaman.setHours(parseInt(saat), parseInt(dakika), 0, 0);
 
                 for (let i = 1; i <= toplamDers; i++) {
-
-                    if (i > 1 && (i - 1) === ogleArasiDersNo) {
-                        suankiZaman.setMinutes(suankiZaman.getMinutes() + ogleArasiSuresi);
-                    }
-
 
                     let baslangic = new Date(suankiZaman);
                     suankiZaman.setMinutes(suankiZaman.getMinutes() + dersSuresi);
@@ -8973,14 +9292,25 @@
 
                     if (i < toplamDers) {
 
-                        const ozelTeneffus = ozelTeneffusler.find(t => parseInt(t.afterLesson) === i);
+                        let eklenecekMolaSuresi = 0;
 
-                        if (ozelTeneffus) {
 
-                            suankiZaman.setMinutes(suankiZaman.getMinutes() + parseInt(ozelTeneffus.duration));
-                        } else if (i !== ogleArasiDersNo) {
+                        if (i === ogleArasiDersNo) {
+                            eklenecekMolaSuresi = ogleArasiSuresi;
+                        } else {
 
-                            suankiZaman.setMinutes(suankiZaman.getMinutes() + teneffusSuresi);
+                            const ozelTeneffus = ozelTeneffusler.find(t => parseInt(t.afterLesson) === i);
+                            if (ozelTeneffus) {
+                                eklenecekMolaSuresi = parseInt(ozelTeneffus.duration);
+                            } else {
+
+                                eklenecekMolaSuresi = teneffusSuresi;
+                            }
+                        }
+
+
+                        if (eklenecekMolaSuresi > 0) {
+                            suankiZaman.setMinutes(suankiZaman.getMinutes() + eklenecekMolaSuresi);
                         }
                     }
                 }
@@ -10641,6 +10971,38 @@
                 </div>
             </div>
         </div>
+
+
+        <div id="kopyala-program-modal" class="modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h3>Programı Kopyala</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Mevcut ders programı, seçeceğiniz yeni tarih için bir kopya olarak oluşturulacaktır.</p>
+                    <div class="form-group">
+                        <label for="kopya-tarih-input">Yeni Geçerlilik Tarihi</label>
+                        <input type="date" id="kopya-tarih-input">
+                    </div>
+                    <div class="button-group">
+                        <button id="kaydet-kopya-btn" class="btn btn-save">Kopyayı Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="matrix-modal" class="modal">
+            <div class="modal-content" style="max-width: 95%; width: 95%;">
+                <div class="modal-header">
+                    <h3 id="matrix-modal-title">Matris Görünümü</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body" id="matrix-modal-body" style="padding: 15px;">
+                </div>
+            </div>
+        </div>
+
+
 
         <script>
             if ('serviceWorker' in navigator) {
