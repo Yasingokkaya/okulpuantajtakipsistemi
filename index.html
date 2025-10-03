@@ -4759,7 +4759,7 @@
                     showToast('Puantaj oluşturuluyor...');
                     const ayAdi = document.getElementById('select-month').options[month].text;
                     const okulAdi = await getCurrentSchoolName();
-                    const baslikMetni = `${okulAdi.toLocaleUpperCase('tr-TR')} ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`; aslikMetni = `ÖZEL İSABET ORTAOKULU ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
+                    const baslikMetni = `${okulAdi.toLocaleUpperCase('tr-TR')} ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
                     const ayinIlkGunu = new Date(Date.UTC(year, month, 1));
                     const ayinSonGunu = new Date(Date.UTC(year, month + 1, 0));
                     let aktifPersonelList = puantajPersonelList.filter(personel => {
@@ -8465,7 +8465,7 @@
                     'add'
                 );
             }
-            async function saveAllSchedules(isPublishing = false) {
+            async function saveAllSchedules(isPublishing = false, programAdi = '') {
                 const etkinTarih = document.getElementById('etkinTarihInput').value;
                 if (!etkinTarih) {
                     return showToast('İşlem yapmadan önce "Programın Geçerlilik Başlangıç Tarihi" seçilmelidir.', 'error');
