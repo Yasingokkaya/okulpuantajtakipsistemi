@@ -8715,7 +8715,11 @@
                 document.getElementById('aktif-versiyon-bilgisi').textContent = 'En güncel versiyon yükleniyor...';
                 try {
                     const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
-                    const q = query(versionsRef, orderBy(documentId(), "desc"), limit(1));
+                    const today = new Date();
+                    today.setHours(23, 59, 59, 999); // Gün sonunu dahil etmek için
+                    const todayString = today.toISOString().split('T')[0];
+
+                    const q = query(versionsRef, where(documentId(), "<=", todayString), orderBy(documentId(), "desc"), limit(1));
                     const snapshot = await getDocs(q);
                     window.tumProgramlar[sinifAdi] = snapshot.empty ? {} : snapshot.docs[0].data();
                 } catch (error) {
@@ -8727,7 +8731,7 @@
             async function loadScheduleForTeacher(teacherId, teacherName) {
                 window.aktifGrup = teacherName;
                 showSpinner();
-                for (const sinif of classList) {
+                for (const sinif of window.classList) {
                     if (!window.tumProgramlar[sinif]) await loadScheduleForClass(sinif);
                 }
                 let teacherSchedule = {};
@@ -9032,10 +9036,12 @@
                         versiyonListesiUL.appendChild(li);
                     });
                     versiyonListesiUL.addEventListener('click', async (e) => {
-                        e.preventDefault();
-                        const target = e.target;
-                        if (target.tagName === 'A') {
-                            const tarih = target.dataset.tarih;
+                        const link = e.target.closest('a');
+                        const deleteButton = e.target.closest('.btn-delete-version');
+
+                        if (link) {
+                            e.preventDefault();
+                            const tarih = link.dataset.tarih;
                             const docRef = doc(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar", tarih);
                             const docSnap = await getDoc(docRef);
                             if (docSnap.exists()) {
@@ -9043,14 +9049,14 @@
                                 renderSchedule();
                                 document.getElementById('etkinTarihInput').value = tarih;
 
-
                                 guncelYukluVersiyonTarihi = tarih;
 
                                 document.getElementById('aktif-versiyon-bilgisi').textContent = `Şu an ${formatDateDDMMYYYY(tarih)} tarihli versiyonu düzenliyorsunuz.`;
                                 showToast(`${formatDateDDMMYYYY(tarih)} versiyonu yüklendi.`, 'info');
                             }
-                        } else if (target.classList.contains('btn-delete-version')) {
-                            const tarih = target.dataset.tarih;
+                        } else if (deleteButton) {
+                            e.preventDefault();
+                            const tarih = deleteButton.dataset.tarih;
                             deleteScheduleVersion(tarih);
                         }
                     });
