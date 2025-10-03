@@ -9013,6 +9013,7 @@
                 const sanitizedSinifAdi = `${currentUserOkulId}_${sinifAdi.replace(/\//g, '-')}`;
                 const versiyonListesiUL = document.getElementById('versiyon-listesi');
                 if (!versiyonListesiUL) return;
+
                 versiyonListesiUL.innerHTML = '<li>Versiyonlar yükleniyor...</li>';
                 const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
                 const q = query(versionsRef, orderBy(documentId(), "desc"));
@@ -9035,36 +9036,48 @@
 `;
                         versiyonListesiUL.appendChild(li);
                     });
-                    versiyonListesiUL.addEventListener('click', async (e) => {
-                        const link = e.target.closest('a');
-                        const deleteButton = e.target.closest('.btn-delete-version');
 
-                        if (link) {
-                            e.preventDefault();
-                            const tarih = link.dataset.tarih;
-                            const docRef = doc(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar", tarih);
-                            const docSnap = await getDoc(docRef);
-                            if (docSnap.exists()) {
-                                window.tumProgramlar[window.aktifGrup] = docSnap.data();
-                                renderSchedule();
-                                document.getElementById('etkinTarihInput').value = tarih;
+                    // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+                    if (!versiyonListesiUL.dataset.listenerAttached) {
+                        versiyonListesiUL.addEventListener('click', async (e) => {
+                            // Tıklanan sınıf adını dinamik olarak alalım
+                            const currentClass = document.getElementById('grup-secim-dropdown').value;
+                            if (!currentClass) return;
+                            const currentSanitizedClass = `${currentUserOkulId}_${currentClass.replace(/\//g, '-')}`;
+                            
+                            const link = e.target.closest('a');
+                            const deleteButton = e.target.closest('.btn-delete-version');
 
-                                guncelYukluVersiyonTarihi = tarih;
-
-                                document.getElementById('aktif-versiyon-bilgisi').textContent = `Şu an ${formatDateDDMMYYYY(tarih)} tarihli versiyonu düzenliyorsunuz.`;
-                                showToast(`${formatDateDDMMYYYY(tarih)} versiyonu yüklendi.`, 'info');
+                            if (link) {
+                                e.preventDefault();
+                                const tarih = link.dataset.tarih;
+                                const docRef = doc(db, "ders_programlari", currentSanitizedClass, "versiyonlar", tarih);
+                                const docSnap = await getDoc(docRef);
+                                if (docSnap.exists()) {
+                                    window.tumProgramlar[window.aktifGrup] = docSnap.data();
+                                    renderSchedule();
+                                    document.getElementById('etkinTarihInput').value = tarih;
+                                    guncelYukluVersiyonTarihi = tarih;
+                                    document.getElementById('aktif-versiyon-bilgisi').textContent = `Şu an ${formatDateDDMMYYYY(tarih)} tarihli versiyonu düzenliyorsunuz.`;
+                                    showToast(`${formatDateDDMMYYYY(tarih)} versiyonu yüklendi.`, 'info');
+                                }
+                            } else if (deleteButton) {
+                                e.preventDefault();
+                                const tarih = deleteButton.dataset.tarih;
+                                deleteScheduleVersion(tarih);
                             }
-                        } else if (deleteButton) {
-                            e.preventDefault();
-                            const tarih = deleteButton.dataset.tarih;
-                            deleteScheduleVersion(tarih);
-                        }
-                    });
+                        });
+                        versiyonListesiUL.dataset.listenerAttached = 'true';
+                    }
+                    // --- DEĞİŞİKLİK BURADA BİTİYOR ---
+
                 } catch (error) {
                     console.error("Versiyon listesi yüklenirken hata:", error);
                     versiyonListesiUL.innerHTML = '<li>Versiyonlar yüklenemedi.</li>';
                 }
             }
+
+            
             async function deleteScheduleVersion(tarih) {
                 showConfirmationModal(
                     `<strong>${formatDateDDMMYYYY(tarih)}</strong> tarihli program versiyonu <strong>TÜM SINIFLARDAN</strong> kalıcı olarak silinecektir. Bu işlem geri alınamaz. Emin misiniz?`,
