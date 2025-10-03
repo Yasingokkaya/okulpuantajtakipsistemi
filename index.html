@@ -6477,6 +6477,14 @@
                 document.getElementById('global-spinner').style.display = 'flex';
             }
 
+            // Bir dizinin elemanlarını rastgele karıştıran fonksiyon
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
             function showProgressModal() {
                 document.getElementById('scheduler-progress-bar').value = 0;
                 document.getElementById('progress-percentage').textContent = '0';
@@ -9540,27 +9548,74 @@
                     }
 
                     let programTaslagi = {};
-                    let tumDerslerYerlesti = true;
+                    let tumDerslerYerlesti = false;
+                    const maxRetries = 3;
+                    let retryCount = 0;
+                    const classTimeout = 10000; // Her sınıf için maksimum deneme süresi (10 saniye)
 
-                    for (let i = 0; i < toplamSinifSayisi; i++) {
-                        const sinifAdi = siraliSiniflar[i];
-                        const sinifDersleri = derslerBySinif[sinifAdi];
-                        programTaslagi[sinifAdi] = {};
+                    while (retryCount < maxRetries && !tumDerslerYerlesti) {
+                        retryCount++;
+                        tumDerslerYerlesti = true;
+                        programTaslagi = {};
+                        const isRetry = retryCount > 1;
 
-                        const percentage = Math.round(((i) / toplamSinifSayisi) * 100);
-                        updateProgress(percentage, `${sinifAdi} sınıfının dersleri yerleştiriliyor...`);
-                        document.getElementById('progress-suggestion-text').style.display = 'none';
-
-                        const result = await solveScheduler(programTaslagi, sinifDersleri, dataMaps);
-
-                        if (!result.success) {
-                            tumDerslerYerlesti = false;
-                            const suggestion = generateSuggestion(result.diagnostics, dataMaps);
+                        if (isRetry) {
                             const suggestionBox = document.getElementById('progress-suggestion-text');
-                            suggestionBox.innerHTML = suggestion;
+                            suggestionBox.innerHTML = `⚠️ Yerleştirme takıldı, farklı bir strateji deneniyor... (Deneme ${retryCount}/${maxRetries})`;
                             suggestionBox.style.display = 'block';
-                            console.warn(`${sinifAdi} için yerleştirme başarısız. Rapor:`, result.diagnostics);
-                            await new Promise(resolve => setTimeout(resolve, 4000)); // Öneriyi okumak için 4 saniye bekle
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+
+                        for (let i = 0; i < toplamSinifSayisi; i++) {
+                            const sinifAdi = siraliSiniflar[i];
+                            const sinifDersleri = [...derslerBySinif[sinifAdi]];
+
+                            if (isRetry) {
+                                shuffleArray(sinifDersleri);
+                            }
+
+                            programTaslagi[sinifAdi] = {};
+
+                            const percentage = Math.round(((i) / toplamSinifSayisi) * 100);
+                            updateProgress(percentage, `${sinifAdi} sınıfının dersleri yerleştiriliyor...`);
+                            document.getElementById('progress-suggestion-text').style.display = 'none';
+
+                            try {
+                                // --- YENİ: ZAMAN AŞIMI MEKANİZMASI ---
+                                const timeoutPromise = new Promise((_, reject) =>
+                                    setTimeout(() => reject(new Error('Timeout')), classTimeout)
+                                );
+
+                                const result = await Promise.race([
+                                    solveScheduler(programTaslagi, sinifDersleri, dataMaps, isRetry),
+                                    timeoutPromise
+                                ]);
+                                // --- ZAMAN AŞIMI BİTİŞ ---
+
+                                if (!result.success) {
+                                    tumDerslerYerlesti = false;
+                                    const suggestion = generateSuggestion(result.diagnostics, dataMaps);
+                                    const suggestionBox = document.getElementById('progress-suggestion-text');
+                                    suggestionBox.innerHTML = suggestion;
+                                    suggestionBox.style.display = 'block';
+                                    console.warn(`${sinifAdi} için yerleştirme başarısız (Deneme ${retryCount}). Rapor:`, result.diagnostics);
+                                    await new Promise(resolve => setTimeout(resolve, 4000));
+                                    break;
+                                }
+                            } catch (error) {
+                                // Zaman aşımı hatasını yakala
+                                if (error.message === 'Timeout') {
+                                    tumDerslerYerlesti = false;
+                                    const suggestionBox = document.getElementById('progress-suggestion-text');
+                                    suggestionBox.innerHTML = `⚠️ <strong>${sinifAdi}</strong> sınıfı için çözüm bulunması çok uzun sürdü (zaman aşımı).`;
+                                    suggestionBox.style.display = 'block';
+                                    console.warn(`${sinifAdi} için yerleştirme zaman aşımına uğradı (Deneme ${retryCount}).`);
+                                    await new Promise(resolve => setTimeout(resolve, 4000));
+                                    break; // Bu denemeyi başarısız say ve döngüden çık.
+                                } else {
+                                    throw error; // Diğer hataları yukarı fırlat
+                                }
+                            }
                         }
                     }
 
@@ -9571,7 +9626,7 @@
 
                     setTimeout(() => {
                         hideProgressModal();
-                        showToast(tumDerslerYerlesti ? 'Tüm dersler başarıyla yerleştirildi!' : 'Otomatik yerleştirme tamamlandı. Bazı dersler yerleştirilemedi.', tumDerslerYerlesti ? 'success' : 'info');
+                        showToast(tumDerslerYerlesti ? 'Tüm dersler başarıyla yerleştirildi!' : `Otomatik yerleştirme ${maxRetries} deneme sonunda tamamlandı. Bazı dersler yerleştirilemedi.`, tumDerslerYerlesti ? 'success' : 'info');
                     }, 1000);
 
                 } catch (error) {
@@ -9581,7 +9636,9 @@
                 }
             }
 
-            // Bu yeni fonksiyonu diğer yardımcı fonksiyonların yanına ekleyin.
+
+
+
             function generateSuggestion(diagnostics, dataMaps) {
                 if (!diagnostics) return "Bilinmeyen bir sorun nedeniyle yerleştirme yapılamadı.";
 
@@ -9627,9 +9684,9 @@
             }
 
 
-            async function solveScheduler(schedule, derslerToPlace, dataMaps) {
+            async function solveScheduler(schedule, derslerToPlace, dataMaps, shouldRandomize = false) {
                 if (derslerToPlace.length === 0) {
-                    return { success: true }; // Başarıyla tamamlandı.
+                    return { success: true };
                 }
 
                 await new Promise(resolve => setTimeout(resolve, 0));
@@ -9637,11 +9694,20 @@
                 const ders = derslerToPlace[0];
                 const kalanDersler = derslerToPlace.slice(1);
                 const sinifAdi = ders.seviye;
+
+                // --- YENİ: STRATEJİ DEĞİŞİKLİĞİ ---
+                // Eğer bu bir tekrar denemesi ise, denenecek günlerin ve saatlerin sırasını karıştır.
                 const gunler = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
-                const failureReasons = []; // Bu dersin neden yerleşemediğine dair kanıtları topla
+                const saatSlots = [...dersSaatleri]; // Kopyasını al
+                if (shouldRandomize) {
+                    shuffleArray(gunler);
+                    shuffleArray(saatSlots);
+                }
+
+                const failureReasons = [];
 
                 for (const gun of gunler) {
-                    for (const saatSlot of dersSaatleri) {
+                    for (const saatSlot of saatSlots) {
                         const saat = saatSlot.baslangic;
                         const saatNo = saatSlot.dersNo;
 
@@ -9657,23 +9723,20 @@
                                 kuralId: ders.id
                             };
 
-                            const result = await solveScheduler(schedule, kalanDersler, dataMaps);
+                            const result = await solveScheduler(schedule, kalanDersler, dataMaps, shouldRandomize);
                             if (result.success) {
                                 return { success: true };
                             }
 
-                            delete schedule[sinifAdi][gun][saat]; // Geri alma (Backtracking)
+                            delete schedule[sinifAdi][gun][saat];
                         } else {
-                            // Kanıtı listeye ekle
                             failureReasons.push({ ...validationResult, day: gun, hour: saatNo });
                         }
                     }
                 }
 
-                // Tüm denemelere rağmen ders yerleşemediyse, toplanan kanıtlarla birlikte başarısızlık raporu döndür.
                 return { success: false, diagnostics: { lesson: ders, reasons: failureReasons } };
             }
-
             function isPlacementValid(schedule, ders, sinifAdi, gun, saat, saatNo, dataMaps) {
                 const { teacherMap, ogretmenKurallari, genelKurallar } = dataMaps;
                 const ogretmenId = ders.atananOgretmenId;
