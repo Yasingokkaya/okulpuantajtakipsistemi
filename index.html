@@ -4647,6 +4647,34 @@
             let isPuantajLocked = false;
             let currentPuantajDocRef = null;
 
+function openEditModal(personelId, date) {
+                // Puantaj verisinden mevcut günü bul
+                const dayData = puantajData[personelId]?.dailyData?.[date] || { code: '', hours: 0, notes: '' };
+
+                // Modal içerisindeki form elemanlarını seç
+                const modalStatusSelect = document.getElementById('modal-status');
+                const modalHoursInput = document.getElementById('modal-hours');
+                const modalNotesInput = document.getElementById('modal-notes');
+                const modalSaveBtn = document.getElementById('modal-save');
+                const modalTitle = document.getElementById('p-modal-title');
+
+                // Form elemanlarını mevcut verilerle doldur
+                modalStatusSelect.value = dayData.code;
+                modalHoursInput.value = dayData.hours;
+                modalNotesInput.value = dayData.notes || '';
+
+                // Hangi personel ve tarihin düzenlendiğini kaydet butonu üzerinde sakla
+                modalSaveBtn.dataset.personelId = personelId;
+                modalSaveBtn.dataset.date = date;
+
+                // Modal başlığını dinamik olarak ayarla
+                const personelAdi = puantajData[personelId]?.ad || 'Personel';
+                const tarihTR = new Date(date + 'T00:00:00').toLocaleDateString('tr-TR');
+                modalTitle.textContent = `${personelAdi} - ${tarihTR} Günü Düzenle`;
+
+                // Modalı görünür yap
+                document.getElementById('edit-modal-overlay').style.display = 'block';
+            }
 
             async function saveModalChanges() {
                 const modalSaveBtn = document.getElementById('modal-save');
@@ -4680,9 +4708,7 @@
                 await loadPuantajDataForCurrentMonth();
             }
 
-
-
-            async function fetchAndProcessSchedules() {
+async function fetchAndProcessSchedules() {
                 const personelSchedules = {};
                 if (!window.teacherList || !window.classList) {
                     console.error("Öğretmen veya Sınıf listesi yüklenemedi. Program verileri alınamıyor.");
@@ -4690,52 +4716,61 @@
                 }
 
                 const teacherNameToIdMap = new Map(window.teacherList.map(t => [t.name, t.id]));
+                const schedulesByVersionDate = {}; // Saatleri biriktirmek için ana yapı
+
+                // Tüm sınıfların tüm versiyonlarını tek bir listede topla
                 const classVersionPromises = window.classList.map(async (className) => {
                     const sanitizedSinifAdi = `${currentUserOkulId}_${className.replace(/\//g, '-')}`;
                     const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
                     const snapshot = await getDocs(versionsRef);
-                    return {
-                        className,
-                        versions: snapshot.docs
-                    };
+                    return snapshot.docs;
                 });
 
-                const allClassVersions = await Promise.all(classVersionPromises);
+                const allVersionDocs = (await Promise.all(classVersionPromises)).flat();
 
-                for (const classData of allClassVersions) {
-                    for (const versionDoc of classData.versions) {
-                        const etkinTarih = versionDoc.id;
-                        const scheduleData = versionDoc.data();
-                        const gunlukSaatlerBuVersiyonIcin = {};
+                // Tüm dersleri tarihlerine göre gruplayarak işle
+                for (const versionDoc of allVersionDocs) {
+                    const etkinTarih = versionDoc.id;
+                    const scheduleData = versionDoc.data();
 
-                        for (const gun in scheduleData) {
-                            if (["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"].includes(gun)) {
-                                for (const saat in scheduleData[gun]) {
-                                    const dersData = scheduleData[gun][saat];
-                                    const ogretmenId = teacherNameToIdMap.get(dersData.ogretmen);
+                    // Bu tarih için ana yapıyı oluştur
+                    if (!schedulesByVersionDate[etkinTarih]) {
+                        schedulesByVersionDate[etkinTarih] = {};
+                    }
 
-                                    if (ogretmenId) {
-                                        if (!gunlukSaatlerBuVersiyonIcin[ogretmenId]) {
-                                            gunlukSaatlerBuVersiyonIcin[ogretmenId] = { Pazartesi: 0, Salı: 0, Çarşamba: 0, Perşembe: 0, Cuma: 0 };
-                                        }
-                                        gunlukSaatlerBuVersiyonIcin[ogretmenId][gun] = (gunlukSaatlerBuVersiyonIcin[ogretmenId][gun] || 0) + 1;
+                    for (const gun in scheduleData) {
+                        if (["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"].includes(gun)) {
+                            for (const saat in scheduleData[gun]) {
+                                const dersData = scheduleData[gun][saat];
+                                const ogretmenId = teacherNameToIdMap.get(dersData.ogretmen);
+
+                                if (ogretmenId) {
+                                    // Öğretmen için saat sayacını başlat
+                                    if (!schedulesByVersionDate[etkinTarih][ogretmenId]) {
+                                        schedulesByVersionDate[etkinTarih][ogretmenId] = { Pazartesi: 0, Salı: 0, Çarşamba: 0, Perşembe: 0, Cuma: 0, Cumartesi: 0, Pazar: 0 };
                                     }
+                                    // Sayacı artır (ÖNEMLİ DÜZELTME)
+                                    schedulesByVersionDate[etkinTarih][ogretmenId][gun]++;
                                 }
                             }
-                        }
-
-                        for (const ogretmenId in gunlukSaatlerBuVersiyonIcin) {
-                            if (!personelSchedules[ogretmenId]) {
-                                personelSchedules[ogretmenId] = [];
-                            }
-                            personelSchedules[ogretmenId].push({
-                                tarih: etkinTarih,
-                                gunlukSaatler: gunlukSaatlerBuVersiyonIcin[ogretmenId]
-                            });
                         }
                     }
                 }
 
+                // Biriktirilen veriyi istenen formata dönüştür
+                for (const tarih in schedulesByVersionDate) {
+                    for (const ogretmenId in schedulesByVersionDate[tarih]) {
+                        if (!personelSchedules[ogretmenId]) {
+                            personelSchedules[ogretmenId] = [];
+                        }
+                        personelSchedules[ogretmenId].push({
+                            tarih: tarih,
+                            gunlukSaatler: schedulesByVersionDate[tarih][ogretmenId]
+                        });
+                    }
+                }
+
+                // Her öğretmen için versiyonları tarihe göre sırala
                 for (const ogretmenId in personelSchedules) {
                     personelSchedules[ogretmenId].sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
                 }
@@ -4743,9 +4778,7 @@
                 return personelSchedules;
             }
 
-
-
-            async function generateInitialPuantaj() {
+async function generateInitialPuantaj() {
                 if (isPuantajLocked) {
                     showToast('Puantaj kilitli...', 'error');
                     return;
@@ -4783,7 +4816,7 @@
                         aktifPersonelList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
                     }
                     const [personelScheduleData, nobetVerisi, izinVerisi, seminarPeriods] = await Promise.all([
-                        fetchAndProcessSchedules(year, month),
+                        fetchAndProcessSchedules(),
                         fetchAndCalculateNobetData(year, month),
                         fetchIzinDataForPuantaj(year, month),
                         fetchSeminarPeriods()
@@ -4864,8 +4897,12 @@
                                                 const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
                                                 if (personel.unvan && (personel.unvan.includes('Okul Müdürü') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
                                                     hours = 4;
+                                                } else if (personel.sozlesme_turu === 'Belirsiz Süreli') {
+                                                    hours = 7.5;
+                                                } else if (personel.sozlesme_turu === 'Belirli Süreli' && personel.neviAdi.includes('Eğitim Personeli') && gununDersSaati === 0) {
+                                                    hours = 4;
                                                 } else {
-                                                    hours = (personel.sozlesme_turu === 'Belirsiz Süreli') ? 7.5 : gununDersSaati;
+                                                    hours = gununDersSaati;
                                                 }
                                             }
                                         }
@@ -5321,20 +5358,17 @@
                 return nobetEkDers;
             }
 
-            async function calculateMonthlyHours(personelId) {
+async function calculateMonthlyHours(personelId) {
                 const personelPuantajVerisi = puantajData[personelId];
                 if (!personelPuantajVerisi || !personelPuantajVerisi.dailyData) {
                     return { genelToplam: 0, ekDers: 0 };
                 }
 
                 const seminarPeriods = await fetchSeminarPeriods();
-
                 const sozlesmeTuru = personelPuantajVerisi.sozlesmeTuru || '';
                 const unvan = personelPuantajVerisi.unvan || '';
-
                 let genelToplam = 0;
                 let ekDers = 0;
-
                 const dailyData = personelPuantajVerisi.dailyData;
 
                 if (unvan.includes('Okul Müdürü') || unvan.includes('Rehber Öğretmen') || unvan.includes('Rehberlik')) {
@@ -5369,30 +5403,55 @@
                 if (sozlesmeTuru === 'Kısmi Süreli' || !neviAdi.includes('Eğitim Personeli')) {
                     ekDers = genelToplam;
                 } else {
-                    let normalGunSaatleri = 0;
                     let seminarEkDers = 0;
-                    const workWeeks = new Set();
-                    const getWeek = (d) => { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); };
+                    const weeklyData = {};
+                    genelToplam = 0;
+
+                    const getWeek = (d) => {
+                        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+                        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                    };
+
+                    const dailyData = personelPuantajVerisi.dailyData;
 
                     for (const dateString in dailyData) {
                         const dayData = dailyData[dateString];
                         const dateUTC = new Date(dateString + 'T00:00:00Z');
-
+                        const weekNumber = getWeek(dateUTC);
                         const isSeminarDay = seminarPeriods.some(p => dateUTC >= p.baslangic && dateUTC <= p.bitis);
 
-                        if (isSeminarDay && ['N', 'RTÇ', 'Y', 'K'].includes(dayData.code)) {
+                        if (isSeminarDay && sozlesmeTuru === 'Belirli Süreli' && ['N', 'RTÇ', 'Y', 'K'].includes(dayData.code)) {
                             seminarEkDers += 4;
-                            workWeeks.add(getWeek(dateUTC));
+                            genelToplam += (dayData.hours || 0);
                         } else if (['N', 'RTÇ', 'Y', 'K'].includes(dayData.code)) {
-                            normalGunSaatleri += (dayData.hours || 0);
-                            workWeeks.add(getWeek(dateUTC));
+                            if (!weeklyData[weekNumber]) {
+                                weeklyData[weekNumber] = { hours: 0, workdaysInMonth: 0 };
+                            }
+                            const hoursToAdd = dayData.hours || 0;
+                            weeklyData[weekNumber].hours += hoursToAdd;
+                            weeklyData[weekNumber].workdaysInMonth++;
+                            genelToplam += hoursToAdd;
                         }
                     }
 
-                    const maasKarsiligiHaftalik = parseInt(personelPuantajVerisi.maasKarsiligi) || 0;
-                    const toplamMaasKarsiligi = workWeeks.size * maasKarsiligiHaftalik;
-                    const normalGunlerdenEkDers = Math.max(0, normalGunSaatleri - toplamMaasKarsiligi);
+                    const haftalikMaasKarsiligi = parseInt(personelPuantajVerisi.maasKarsiligi) || 0;
+                    let normalGunlerdenEkDers = 0;
 
+                    for (const week in weeklyData) {
+                        const weekInfo = weeklyData[week];
+                        
+                        const proportionalDeduction = weekInfo.workdaysInMonth >= 5
+                            ? haftalikMaasKarsiligi
+                            : (haftalikMaasKarsiligi / 5) * weekInfo.workdaysInMonth;
+
+                        const ekDersForWeek = weekInfo.hours - proportionalDeduction;
+
+                        if (ekDersForWeek > 0) {
+                            normalGunlerdenEkDers += ekDersForWeek;
+                        }
+                    }
                     ekDers = normalGunlerdenEkDers + seminarEkDers;
                 }
 
