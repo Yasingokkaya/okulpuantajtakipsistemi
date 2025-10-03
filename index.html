@@ -2448,6 +2448,9 @@
             </nav>
 
             <div class="sidebar-footer">
+                <div id="user-email-display"
+                    style="padding: 0 20px 10px; font-size: 0.8em; color: #bdc3c7; text-align: center; word-break: break-all;">
+                </div>
                 <a id="logout-btn" style="cursor: pointer;">🚪 <span>Çıkış Yap</span></a>
             </div>
         </aside>
@@ -6291,6 +6294,11 @@
                                 }
                             }
 
+                            const userEmailDisplay = document.getElementById('user-email-display');
+            if (userEmailDisplay) {
+                userEmailDisplay.textContent = user.email;
+            }
+
                             await loadSharedData();
                             initializeApplicationUI();
                             await renderDashboardData();
@@ -6301,6 +6309,12 @@
                             await signOut(auth);
                         }
                     } else {
+                        const userEmailDisplay = document.getElementById('user-email-display');
+            if (userEmailDisplay) {
+                userEmailDisplay.textContent = '';
+            }
+
+
                         currentUserOkulId = null;
                         isCurrentUserSuperAdmin = false;
                         loginPanel.style.display = 'flex';
@@ -6364,6 +6378,17 @@
                     loginError.textContent = 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
                     loginError.style.display = 'block';
                 }
+            });
+
+            const loginInputs = [document.getElementById('login-email'), document.getElementById('login-password')];
+            loginInputs.forEach(input => {
+                input.addEventListener('keyup', function (event) {
+                    // Enter tuşuna basıldığını kontrol et (keyCode 13 de eski tarayıcılar için bir kontroldür)
+                    if (event.key === 'Enter' || event.keyCode === 13) {
+                        // Butonun tıklanma olayını tetikle
+                        document.getElementById('login-btn').click();
+                    }
+                });
             });
 
             logoutBtn.addEventListener('click', async () => {
@@ -7806,12 +7831,10 @@
 
                 try {
                     if (editingId) {
-
                         const docRef = doc(db, "ders_kurallari", editingId);
-                        await setDoc(docRef, { ...kuralData, seviye: secilenSeviyeler[0] }, { merge: true }); // Düzenlemede sadece tek seviye güncellenir
+                        await setDoc(docRef, { ...kuralData, seviye: secilenSeviyeler[0] }, { merge: true });
                         showToast('Kural başarıyla güncellendi.');
                     } else {
-
                         const promises = secilenSeviyeler.map(seviye => {
                             const docRef = collection(db, "ders_kurallari");
                             return addDoc(docRef, { ...kuralData, seviye: seviye });
@@ -7820,13 +7843,15 @@
                         showToast(`${secilenSeviyeler.length} sınıf için kural başarıyla eklendi.`);
                     }
 
-
+                    // --- DEĞİŞİKLİK BURADA ---
+                    // Formu ve seçimi sıfırlayıp menüyü kapatan satırlar kaldırıldı.
+                    // Sadece formun içini temizleyip, bir sonraki giriş için hazır hale getiriyoruz.
                     document.getElementById('ders-kurali-detaylari').querySelector('form').reset();
-                    document.getElementById('kural-ders-sec').value = '';
-                    document.getElementById('ders-kurali-detaylari').style.display = 'none';
+                    document.getElementById('kural-ders-sec').value = dersId; // Ana ders seçimini koru
+
                     setTimeout(() => {
                         loadAndRenderDersKurallari();
-                    }, 500); // Güncellemenin yansıması için yarım saniye bekle
+                    }, 500);
                 } catch (error) {
                     console.error("Ders kuralı kaydedilirken hata:", error);
                     showToast('Kural kaydedilirken bir hata oluştu.', 'error');
@@ -7996,7 +8021,7 @@
                 switch (tabId) {
                     case 'ders-brans-kurallari':
 
-                        
+
                         document.getElementById('ders-kural-ekle-btn').addEventListener('click', saveDersKurali);
                         document.getElementById('kural-filter-ders-select').addEventListener('change', loadAndRenderDersKurallari);
                         document.getElementById('kural-table-filter-sinif-select').addEventListener('change', loadAndRenderDersKurallari);
@@ -9513,102 +9538,91 @@
                 return true;
             }
             async function renderYerlestirmeHavuzu() {
-    const havuzContainer = document.getElementById('yerlestirme-havuzu-container');
-    if (!havuzContainer) return;
-    havuzContainer.innerHTML = '<p>Havuz hesaplanıyor...</p>';
+                const havuzContainer = document.getElementById('yerlestirme-havuzu-container');
+                if (!havuzContainer) return;
+                havuzContainer.innerHTML = '<p>Havuz hesaplanıyor...</p>';
 
-    try {
-        // Kural listesini artık parametre olarak alacağız, bu yüzden veritabanı sorgusunu siliyoruz.
-        // window.dersKurallariListesi'nin initializeSchedule içinde yüklendiğinden emin olmalıyız.
-        const dersKurallari = window.dersKurallariListesi || [];
+                try {
+                    const dersKurallari = window.dersKurallariListesi || [];
+                    const [derslerSnap, personelSnap, siniflarSnap] = await Promise.all([
+                        getSettings('ayarlar_dersler'),
+                        getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId))),
+                        getSettings('ayarlar_siniflar')
+                    ]);
 
-        const [derslerSnap, personelSnap, siniflarSnap] = await Promise.all([
-            getSettings('ayarlar_dersler'),
-            getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId))),
-            getSettings('ayarlar_siniflar')
-        ]);
+                    const dersMap = new Map(derslerSnap.docs.map(d => [d.id, d.data().name]));
+                    const teacherMap = new Map(personelSnap.docs.map(d => [d.id, d.data().ad_soyad]));
+                    const localClassList = siniflarSnap.docs.map(d => d.data().name);
 
-        const dersMap = new Map(derslerSnap.docs.map(d => [d.id, d.data().name]));
-        const teacherMap = new Map(personelSnap.docs.map(d => [d.id, d.data().ad_soyad]));
-        const localClassList = siniflarSnap.docs.map(d => d.data().name);
-
-        const yerlesmisDersSayaci = {};
-        for (const sinifAdi in window.tumProgramlar) {
-            if (!localClassList.includes(sinifAdi)) continue;
-            for (const gun in window.tumProgramlar[sinifAdi]) {
-                for (const saat in window.tumProgramlar[sinifAdi][gun]) {
-                    const dersData = window.tumProgramlar[sinifAdi][gun][saat];
-                    if (dersData && dersData.kuralId) {
-                        const key = dersData.kuralId;
-                        yerlesmisDersSayaci[key] = (yerlesmisDersSayaci[key] || 0) + 1;
+                    // --- DÜZELTME BURADA BAŞLIYOR ---
+                    // Sayacın doğru çalıştığından emin olmak için bu mantığı koruyoruz.
+                    // Anahtar olarak kuralın benzersiz ID'si (`kuralId`) kullanılıyor.
+                    const yerlesmisDersSayaci = {};
+                    for (const sinifAdi in window.tumProgramlar) {
+                        if (!localClassList.includes(sinifAdi)) continue;
+                        for (const gun in window.tumProgramlar[sinifAdi]) {
+                            for (const saat in window.tumProgramlar[sinifAdi][gun]) {
+                                const dersData = window.tumProgramlar[sinifAdi][gun][saat];
+                                if (dersData && dersData.kuralId) {
+                                    const key = dersData.kuralId;
+                                    yerlesmisDersSayaci[key] = (yerlesmisDersSayaci[key] || 0) + 1;
+                                }
+                            }
+                        }
                     }
+                    // --- DÜZELTME BURADA BİTİYOR ---
+
+                    const selectedClass = document.getElementById('grup-secim-dropdown').value;
+                    const isClassView = document.getElementById('sinif-gorunum-btn').classList.contains('active');
+                    let havuzDolu = false;
+                    havuzContainer.innerHTML = '';
+
+                    dersKurallari.forEach(kural => {
+                        const kuralinSinifi = kural.seviye;
+
+                        if (isClassView && kuralinSinifi !== selectedClass) {
+                            return;
+                        }
+
+                        const kuralId = kural.id; // Her kuralın benzersiz Firestore ID'si
+                        const gerekenSaat = parseInt(kural.haftalikSaat) || 0;
+
+                        // Sayacı, her kuralın kendi benzersiz ID'si ile kontrol ediyoruz.
+                        const yerlesmisSaat = yerlesmisDersSayaci[kuralId] || 0;
+                        const kalanSaat = gerekenSaat - yerlesmisSaat;
+
+                        if (kalanSaat > 0) {
+                            havuzDolu = true;
+                            const dersAdi = dersMap.get(kural.dersId) || 'Bilinmeyen Ders';
+                            const ogretmenAdi = teacherMap.get(kural.atananOgretmenId) || 'Otomatik';
+
+                            const havuzItem = document.createElement('div');
+                            havuzItem.className = 'havuz-item';
+                            havuzItem.draggable = true;
+                            havuzItem.innerHTML = `<div><strong>${dersAdi}</strong><small style="color:#555;">(${kuralinSinifi} / ${ogretmenAdi})</small></div><span class="kalan-saat">${kalanSaat}</span>`;
+
+                            havuzItem.dataset.kuralId = kuralId;
+                            havuzItem.dataset.dersAdi = dersAdi;
+                            havuzItem.dataset.ogretmenAdi = ogretmenAdi;
+                            havuzItem.dataset.sinifAdi = kuralinSinifi;
+                            havuzItem.addEventListener('dragstart', (e) => { e.target.classList.add('dragging'); e.dataTransfer.setData('application/json', JSON.stringify({ dersAdi: e.target.dataset.dersAdi, ogretmenAdi: e.target.dataset.ogretmenAdi, sinifAdi: e.target.dataset.sinifAdi, kuralId: e.target.dataset.kuralId })); });
+                            havuzItem.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
+                            havuzContainer.appendChild(havuzItem);
+                        }
+                    });
+
+                    if (!havuzDolu) {
+                        const message = (isClassView && selectedClass)
+                            ? `<p style="text-align:center; color:green; font-weight:bold;">'${selectedClass}' sınıfının tüm dersleri yerleştirilmiş!</p>`
+                            : `<p style="text-align:center;">Yerleştirilecek ders bulunmuyor.</p>`;
+                        havuzContainer.innerHTML = message;
+                    }
+
+                } catch (error) {
+                    console.error("Yerleştirme havuzu oluşturulurken hata:", error);
+                    havuzContainer.innerHTML = '<p style="color:red;">Havuz yüklenemedi.</p>';
                 }
             }
-        }
-
-        const selectedClass = document.getElementById('grup-secim-dropdown').value;
-        const isClassView = document.getElementById('sinif-gorunum-btn').classList.contains('active');
-        let havuzDolu = false;
-        havuzContainer.innerHTML = '';
-
-        dersKurallari.forEach(kural => { // Veritabanından gelen snap yerine global listeden okuyoruz.
-            const kuralinSinifi = kural.seviye;
-
-            if (isClassView && kuralinSinifi !== selectedClass) {
-                return;
-            }
-
-            const kuralId = kural.id;
-            const gerekenSaat = parseInt(kural.haftalikSaat) || 0;
-            const yerlesmisSaat = yerlesmisDersSayaci[kuralId] || 0;
-            const kalanSaat = gerekenSaat - yerlesmisSaat;
-
-            if (kalanSaat > 0) {
-                havuzDolu = true;
-                const dersAdi = dersMap.get(kural.dersId) || 'Bilinmeyen Ders';
-                const ogretmenAdi = teacherMap.get(kural.atananOgretmenId) || 'Otomatik';
-
-                const havuzItem = document.createElement('div');
-                havuzItem.className = 'havuz-item';
-                havuzItem.draggable = true;
-                havuzItem.innerHTML = `
-                    <div>
-                        <strong>${dersAdi}</strong>
-                        <small style="color:#555;">(${kuralinSinifi} / ${ogretmenAdi})</small>
-                    </div>
-                    <span class="kalan-saat">${kalanSaat}</span>`;
-
-                havuzItem.dataset.kuralId = kuralId;
-                havuzItem.dataset.dersAdi = dersAdi;
-                havuzItem.dataset.ogretmenAdi = ogretmenAdi;
-                havuzItem.dataset.sinifAdi = kuralinSinifi;
-
-                havuzItem.addEventListener('dragstart', (e) => {
-                    e.target.classList.add('dragging');
-                    e.dataTransfer.setData('application/json', JSON.stringify({
-                        dersAdi: e.target.dataset.dersAdi,
-                        ogretmenAdi: e.target.dataset.ogretmenAdi,
-                        sinifAdi: e.target.dataset.sinifAdi,
-                        kuralId: e.target.dataset.kuralId
-                    }));
-                });
-                havuzItem.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
-                havuzContainer.appendChild(havuzItem);
-            }
-        });
-
-        if (!havuzDolu) {
-            const message = (isClassView && selectedClass) ?
-                `<p style="text-align:center; color:green; font-weight:bold;">'${selectedClass}' sınıfının tüm dersleri yerleştirilmiş!</p>` :
-                '<p style="text-align:center;">Yerleştirilecek ders bulunmuyor.</p>';
-            havuzContainer.innerHTML = message;
-        }
-
-    } catch (error) {
-        console.error("Yerleştirme havuzu oluşturulurken hata:", error);
-        havuzContainer.innerHTML = '<p style="color:red;">Havuz yüklenemedi.</p>';
-    }
-}
 
             function attachDragDropListeners() {
                 const cells = document.querySelectorAll('#schedule-display-area .schedule-table td');
