@@ -8768,53 +8768,72 @@ async function calculateMonthlyHours(personelId) {
                 }
             }
 
-            async function loadScheduleForClass(sinifAdi) {
-                window.aktifGrup = sinifAdi;
-                const sanitizedSinifAdi = `${currentUserOkulId}_${sinifAdi.replace(/\//g, '-')}`;
-                document.getElementById('aktif-versiyon-bilgisi').textContent = 'En güncel versiyon yükleniyor...';
-                try {
-                    const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
-                    const today = new Date();
-                    today.setHours(23, 59, 59, 999); // Gün sonunu dahil etmek için
-                    const todayString = today.toISOString().split('T')[0];
+            async function fetchScheduleDataForClass(sinifAdi) {
+    const sanitizedSinifAdi = `${currentUserOkulId}_${sinifAdi.replace(/\//g, '-')}`;
+    const versionsRef = collection(db, "ders_programlari", sanitizedSinifAdi, "versiyonlar");
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const todayString = today.toISOString().split('T')[0];
+    const q = query(versionsRef, where(documentId(), "<=", todayString), orderBy(documentId(), "desc"), limit(1));
+    const snapshot = await getDocs(q);
+    return snapshot.empty ? {} : snapshot.docs[0].data();
+}
 
-                    const q = query(versionsRef, where(documentId(), "<=", todayString), orderBy(documentId(), "desc"), limit(1));
-                    const snapshot = await getDocs(q);
-                    window.tumProgramlar[sinifAdi] = snapshot.empty ? {} : snapshot.docs[0].data();
-                } catch (error) {
-                    console.error("Ders programı yüklenirken hata:", error);
-                }
-                renderSchedule();
-                renderVersionList(sinifAdi.replace(/\//g, '-'));
+async function loadScheduleForClass(sinifAdi) {
+    window.aktifGrup = sinifAdi;
+    document.getElementById('aktif-versiyon-bilgisi').textContent = 'En güncel versiyon yükleniyor...';
+    try {
+        const scheduleData = await fetchScheduleDataForClass(sinifAdi);
+        window.tumProgramlar[sinifAdi] = scheduleData;
+    } catch (error) {
+        console.error("Ders programı yüklenirken hata:", error);
+        window.tumProgramlar[sinifAdi] = {};
+    }
+    renderSchedule();
+    renderVersionList(sinifAdi.replace(/\//g, '-'));
+}
+
+
+async function loadScheduleForTeacher(teacherId, teacherName) {
+    window.aktifGrup = teacherName;
+    showSpinner();
+    try {
+        for (const sinif of window.classList) {
+            if (!window.tumProgramlar[sinif]) {
+                window.tumProgramlar[sinif] = await fetchScheduleDataForClass(sinif);
             }
-            async function loadScheduleForTeacher(teacherId, teacherName) {
-                window.aktifGrup = teacherName;
-                showSpinner();
-                for (const sinif of window.classList) {
-                    if (!window.tumProgramlar[sinif]) await loadScheduleForClass(sinif);
-                }
-                let teacherSchedule = {};
-                for (const sinifAdi in window.tumProgramlar) {
-                    const sinifProgrami = window.tumProgramlar[sinifAdi];
-                    for (const gun in sinifProgrami) {
-                        for (const saat in sinifProgrami[gun]) {
-                            const dersData = sinifProgrami[gun][saat];
-                            if (dersData && dersData.ogretmen === teacherName) {
-                                if (!teacherSchedule[gun]) teacherSchedule[gun] = {};
-                                teacherSchedule[gun][saat] = {
-                                    sinif: sinifAdi,
-                                    dersAdi: dersData.dersAdi
-                                };
-                            }
+        }
+        let teacherSchedule = {};
+        for (const sinifAdi of window.classList) {
+            const sinifProgrami = window.tumProgramlar[sinifAdi];
+            if (!sinifProgrami) continue; 
+            for (const gun in sinifProgrami) {
+                if (["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"].includes(gun)) {
+                    for (const saat in sinifProgrami[gun]) {
+                        const dersData = sinifProgrami[gun][saat];
+                        if (dersData && dersData.ogretmen === teacherName) {
+                            if (!teacherSchedule[gun]) teacherSchedule[gun] = {};
+                            teacherSchedule[gun][saat] = {
+                                sinif: sinifAdi,
+                                dersAdi: dersData.dersAdi
+                            };
                         }
                     }
                 }
-                window.tumProgramlar[teacherName] = teacherSchedule;
-                hideSpinner();
-                renderSchedule();
-                document.getElementById('aktif-versiyon-bilgisi').textContent = `${teacherName} adlı öğretmenin programı görüntüleniyor.`;
-                document.getElementById('versiyon-listesi').innerHTML = '<li>Öğretmen görünümünde versiyon listesi bulunmamaktadır.</li>';
             }
+        }
+        window.tumProgramlar[teacherName] = teacherSchedule;
+        renderSchedule();
+        document.getElementById('aktif-versiyon-bilgisi').textContent = `${teacherName} adlı öğretmenin programı görüntüleniyor.`;
+        document.getElementById('versiyon-listesi').innerHTML = '<li>Öğretmen görünümünde versiyon listesi bulunmamaktadır.</li>';
+
+    } catch (error) {
+        console.error("Öğretmen programı yüklenirken hata:", error);
+        showToast('Öğretmen programı yüklenemedi.', 'error');
+    } finally {
+        hideSpinner();
+    }
+}
 
             function timeStringToMinutes(timeStr) {
                 const [hours, minutes] = timeStr.split(':').map(Number);
@@ -11034,5 +11053,6 @@ async function calculateMonthlyHours(personelId) {
             }
         </script>
 </body>
+
 
 </html>
