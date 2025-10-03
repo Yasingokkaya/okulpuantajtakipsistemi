@@ -7741,22 +7741,30 @@ async function calculateMonthlyHours(personelId) {
 
             async function populateDersKuralFormSelects() {
                 try {
-                    const [derslerSnap, siniflarSnap, personelSnap, dersliklerSnap] = await Promise.all([
+                    const [derslerSnap, siniflarSnap, personelSnap, dersliklerSnap, neviSnap] = await Promise.all([
                         getSettings('ayarlar_dersler'),
                         getSettings('ayarlar_siniflar'),
                         getDocs(query(collection(db, 'personel'), where("okulId", "==", currentUserOkulId), orderBy('ad_soyad'))),
-                        getSettings('ayarlar_derslikler')
+                        getSettings('ayarlar_derslikler'),
+                        getSettings('ayarlar_personel_nevileri') // Personel nevilerini de çekiyoruz
                     ]);
+                    
+                    // "Eğitim Personeli" nevisinin ID'sini buluyoruz
+                    const egitimPersoneliNevi = neviSnap.docs.find(doc => doc.data().name.trim().includes('Eğitim Personeli'));
+                    const egitimPersoneliNeviId = egitimPersoneliNevi ? egitimPersoneliNevi.id : null;
+
                     const kuralDersSec = document.getElementById('kural-ders-sec');
                     const kuralSeviyeSec = document.getElementById('kural-seviye-sec');
                     const kuralOgretmenAtaSec = document.getElementById('kural-ogretmen-ata-sec');
                     const kuralYasakliDerslerSec = document.getElementById('kural-yasakli-dersler-sec');
                     const kuralDerslikTipiSec = document.getElementById('kural-derslik-tipi');
+
                     kuralDersSec.innerHTML = '<option value="">Ders Seçin...</option>';
                     kuralSeviyeSec.innerHTML = '';
                     kuralOgretmenAtaSec.innerHTML = '<option value="">Öğretmen Seçin (İsteğe Bağlı)...</option>';
                     kuralYasakliDerslerSec.innerHTML = '';
                     kuralDerslikTipiSec.innerHTML = '<option value="">Derslik Gerekmiyorsa Seçmeyin...</option>';
+
                     derslerSnap.forEach(doc => {
                         const ders = doc.data();
                         kuralDersSec.add(new Option(ders.name, doc.id));
@@ -7765,19 +7773,25 @@ async function calculateMonthlyHours(personelId) {
                     siniflarSnap.forEach(doc => {
                         kuralSeviyeSec.add(new Option(doc.data().name, doc.data().name));
                     });
+
                     const bugun = new Date();
                     bugun.setHours(0, 0, 0, 0);
+
                     personelSnap.forEach(doc => {
                         const p = doc.data();
                         const ayrilisTarihi = p.isten_ayrilis ? new Date(p.isten_ayrilis) : null;
-                        if (!ayrilisTarihi || ayrilisTarihi > bugun) {
+                        
+                        // FİLTRELEME: Sadece aktif ve personel nevisi "Eğitim Personeli" olanları ekle
+                        if ((!ayrilisTarihi || ayrilisTarihi > bugun) && p.personel_nevisi === egitimPersoneliNeviId) {
                             kuralOgretmenAtaSec.add(new Option(p.ad_soyad, doc.id));
                         }
                     });
+
                     dersliklerSnap.forEach(doc => {
                         const derslik = doc.data();
                         kuralDerslikTipiSec.add(new Option(derslik.name, derslik.id));
                     });
+
                 } catch (error) {
                     console.error("Ders kuralı form select'leri doldurulamadı:", error);
                     showToast('Form alanları yüklenirken hata oluştu.', 'error');
@@ -11056,3 +11070,4 @@ async function loadScheduleForTeacher(teacherId, teacherName) {
 
 
 </html>
+
