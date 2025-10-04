@@ -4895,14 +4895,14 @@ async function generateInitialPuantaj() {
                             const gununDersSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[gunlerTR[dateUTC.getDay()]] || 0;
                             
                             if (personel.unvan && (personel.unvan.toLowerCase().includes('müdür') || personel.unvan.includes('Rehber Öğretmen') || personel.unvan.includes('Rehberlik'))) {
-                                hours = 4;
-                            } else if (anlikSozlesmeTuru === 'Belirsiz Süreli') {
-                                hours = 7.5;
-                            } else if (anlikSozlesmeTuru === 'Belirli Süreli' && isEgitimPersoneli && gununDersSaati === 0) {
-                                hours = 4;
-                            } else {
-                                hours = gununDersSaati;
-                            }
+                    hours = 4;
+                } else if (anlikSozlesmeTuru === 'Belirsiz Süreli') {
+                    hours = 7.5;
+                } else if (anlikSozlesmeTuru === 'Belirli Süreli' && isEgitimPersoneli && gununDersSaati === 0) {
+                    hours = 0; // DÜZELTME: Dersi yoksa ek ders de 0 olmalı
+                } else {
+                    hours = gununDersSaati;
+                }
                         }
                     }
                 }
@@ -11191,4 +11191,5 @@ async function loadScheduleForTeacher(teacherId, teacherName) {
 
 
 </html>
+
 
