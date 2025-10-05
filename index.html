@@ -5266,13 +5266,14 @@
                 });
             }
 
-            async function downloadExcel() {
+
+async function downloadExcel() {
                 try {
                     showToast('Excel dosyası hazırlanıyor, lütfen bekleyin...', 'info');
 
                     // RENK PALETİ VE STİL TANIMLAMALARI
                     const statusColors = {
-                        'N': '#E8F5E9', 'HT': '#FFEBCC', 'RT': '#D1EAFE', 'İ': '#E6E6FA',
+                        'N': '#E8F5E9', 'HT': '#FFEBCC', 'RT': '#D1EAFE', 'İ': '#E6EAFE',
                         'R': '#FFEBEE', 'Üİ': '#EAECEE', 'S': '#FFF9C4', 'K': '#D7F9E9',
                         'Y': '#D7F9E9', 'E': '#EEEEEE', 'RTÇ': '#E1BEE7'
                     };
@@ -5286,44 +5287,13 @@
                     const cellStyle = (bgColor = '#FFFFFF') => `background-color:${bgColor}; text-align:center; vertical-align:middle; border:0.5pt solid #888888;`;
 
                     // Veri çekme ve filtreleme işlemleri
-                    const personelSnap = await getDocs(query(collection(db, "personel"), where("okulId", "==", currentUserOkulId), orderBy("ad_soyad")));
-                    const gorevSnap = await getSettings('ayarlar_gorevler');
-                    const neviSnap = await getSettings('ayarlar_personel_nevileri');
-                    const gorevMap = new Map(gorevSnap.docs.map(doc => [doc.id, doc.data().name]));
-                    const neviMap = new Map(neviSnap.docs.map(doc => [doc.id, doc.data().name]));
-
-                    const freshPersonelList = personelSnap.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id, ad: data.ad_soyad || 'İsimsiz', unvan: gorevMap.get(data.gorevi_bransi) || 'Belirtilmemiş',
-                            neviAdi: neviMap.get(data.personel_nevisi) || 'Bilinmiyor', maasKarsiligi: parseInt(data.maas_karsiligi) || 20,
-                            rehberlik_gorevi: data.rehberlik_gorevi || 'hayir', esDurumu: data.es_durumu, cocuk0_6: data.cocuk_0_6,
-                            cocuk6_18: data.cocuk_6_ustu, sozlesme_turu: data.sozlesme_turu || 'Belirsiz Süreli',
-                            ise_giris: data.ise_giris || '---', isten_ayrilis: data.isten_ayrilis || '---',
-                            kismi_zamanli_calisma: data.kismi_zamanli_calisma || {}
-                        };
-                    });
-
                     const year = document.getElementById('input-year').value;
                     const month = parseInt(document.getElementById('select-month').value);
                     const monthName = document.getElementById('select-month').options[month].text;
-                    const ayinIlkGunu = new Date(Date.UTC(year, month, 1));
-                    const ayinSonGunu = new Date(Date.UTC(year, month + 1, 0));
+                    const educationPeriods = await fetchEducationPeriods(); // Rehberlik hesaplaması için gerekli
 
-                    const aktifPersonelList = freshPersonelList.filter(personel => {
-                        if (!personel.ise_giris) return false;
-                        const girisDate = new Date(personel.ise_giris + 'T00:00:00Z');
-                        if (isNaN(girisDate.getTime())) return false;
-                        const iseBaslamisMi = girisDate <= ayinSonGunu;
-                        let istenAyrilmamisMi = true;
-                        if (personel.isten_ayrilis && personel.isten_ayrilis.trim() !== '' && personel.isten_ayrilis.trim() !== '---') {
-                            const ayrilisDate = new Date(personel.isten_ayrilis + 'T00:00:00Z');
-                            if (!isNaN(ayrilisDate.getTime())) {
-                                istenAyrilmamisMi = ayrilisDate >= ayinIlkGunu;
-                            }
-                        }
-                        return iseBaslamisMi && istenAyrilmamisMi;
-                    });
+                    // Doğru personel listesini, hizmet geçmişini dikkate alarak çekelim
+                    const aktifPersonelList = await getPersonelPeriodsForMonth(year, month);
 
                     let personelToExport = aktifPersonelList;
                     const selectedPersonelId = document.getElementById('personel-filter-select').value;
@@ -5363,7 +5333,7 @@
                         const personelGrubu = grupluPersonel[grupAdi];
                         if (!personelGrubu || personelGrubu.length === 0) continue;
 
-                        personelGrubu.sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
+                        personelGrubu.sort((a, b) => a.ad_soyad.localeCompare(b.ad_soyad, 'tr'));
 
                         const saatConfig = saatBasliklariConfig[grupAdi];
                         const colspan = 3 + daysInMonth + saatConfig.headers.length + gunBasliklari.length + 4;
@@ -5378,23 +5348,27 @@
                         excelHtml += `<th style="${headerStyle}">Eş Durumu</th><th style="${headerStyle}">Çocuk 0-6</th><th style="${headerStyle}">Çocuk 6-18</th></tr></thead><tbody>`;
 
                         for (const personel of personelGrubu) {
-                            const pData = puantajData[personel.id] || { dailyData: {} };
-                            const monthlyHours = await calculateMonthlyHours(personel.id);
+                            const pData = puantajData[personel.uniquePeriodId] || { dailyData: {} };
+                            const monthlyHours = await calculateMonthlyHours(personel.uniquePeriodId);
                             const nobetSaat = nobetVerisi[personel.id] || 0;
-                            const rehberlikSaat = calculateEffectiveRehberlikHours(personel.id, year, month, puantajData);
-                            const fazlaMesaiSaat = calculateFazlaMesai(personel.id);
-                            const statusCounts = calculateStatusCounts(personel.id);
-                            let sgkPrimGunu = new Date(year, month + 1, 0).getDate() - ((statusCounts.R || 0) + (statusCounts.Üİ || 0));
+                            const rehberlikSaat = calculateEffectiveRehberlikHours(personel.uniquePeriodId, year, month, puantajData, educationPeriods);
+                            const fazlaMesaiSaat = calculateFazlaMesai(personel.uniquePeriodId);
+                            const statusCounts = calculateStatusCounts(personel.uniquePeriodId);
+                            
+                            const periodStartDate = new Date(personel.effectiveStartDate + 'T00:00:00Z');
+                            const periodEndDate = new Date(personel.effectiveEndDate + 'T00:00:00Z');
+                            const gunFarki = (periodEndDate - periodStartDate) / (1000 * 60 * 60 * 24) + 1;
+                            let sgkPrimGunu = gunFarki - ((statusCounts.R || 0) + (statusCounts.Üİ || 0));
                             if (personel.sozlesme_turu === 'Kısmi Süreli') { sgkPrimGunu = Math.round(monthlyHours.genelToplam / 7.5); }
 
                             let ayrilisTarihiGoster = personel.isten_ayrilis && personel.isten_ayrilis !== '---' ? formatDateDDMMYYYY(personel.isten_ayrilis) : '---';
 
                             let esDurumuText = '---';
-                            if (personel.esDurumu === 'çalışmıyor') esDurumuText = 'Çalışmıyor';
-                            else if (personel.esDurumu === 'çalışıyor') esDurumuText = 'Çalışıyor';
-                            else if (personel.esDurumu === 'bekar') esDurumuText = 'Bekar';
+                            if (personel.es_durumu === 'çalışmıyor') esDurumuText = 'Çalışmıyor';
+                            else if (personel.es_durumu === 'çalışıyor') esDurumuText = 'Çalışıyor';
+                            else if (personel.es_durumu === 'bekar') esDurumuText = 'Bekar';
 
-                            let statusRowHtml = `<tr><td rowspan="2" style="${cellStyle()} text-align:left; padding-left:5px;">${personel.ad || ''}</td><td rowspan="2" style="${cellStyle()} text-align:left; padding-left:5px;">${personel.unvan || ''}</td><td rowspan="2" style="${cellStyle()}">${formatDateDDMMYYYY(personel.ise_giris)}<br>${ayrilisTarihiGoster}</td>`;
+                            let statusRowHtml = `<tr><td rowspan="2" style="${cellStyle()} text-align:left; padding-left:5px;">${personel.ad_soyad || ''}</td><td rowspan="2" style="${cellStyle()} text-align:left; padding-left:5px;">${personel.unvan || ''}</td><td rowspan="2" style="${cellStyle()}">${formatDateDDMMYYYY(personel.ise_giris)}<br>${ayrilisTarihiGoster}</td>`;
                             let hoursRowHtml = `<tr>`;
 
                             for (let day = 1; day <= daysInMonth; day++) {
@@ -5409,23 +5383,20 @@
                             }
 
                             if (grupAdi === 'Belirsiz Süreli') {
-                                statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.aylikToplam)}">${monthlyHours.genelToplam}</td><td rowspan="2" style="${cellStyle(summaryColors.fazlaMesai)}">${fazlaMesaiSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.mesaiNedeni)}">${overtimeReasons[personel.id] || ''}</td><td rowspan="2" style="${cellStyle(summaryColors.eksikGunKodu)}">${missingDayCodes[personel.id] || ''}</td>`;
+                                statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.aylikToplam)}">${monthlyHours.genelToplam}</td><td rowspan="2" style="${cellStyle(summaryColors.fazlaMesai)}">${fazlaMesaiSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.mesaiNedeni)}">${overtimeReasons[personel.uniquePeriodId] || ''}</td><td rowspan="2" style="${cellStyle(summaryColors.eksikGunKodu)}">${missingDayCodes[personel.uniquePeriodId] || ''}</td>`;
                             } else {
                                 statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.aylikToplam)}">${monthlyHours.genelToplam}</td><td rowspan="2" style="${cellStyle(summaryColors.ekDers)}">${monthlyHours.ekDers}</td><td rowspan="2" style="${cellStyle(summaryColors.nobet)}">${nobetSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.rehberlik)}">${rehberlikSaat}</td>`;
                             }
 
-                            // *** DEĞİŞİKLİK BURADA BAŞLIYOR ***
                             gunBasliklari.forEach(h => {
                                 let content = statusCounts[h] || 0;
-                                // Kısmi süreli personel için 'N' sütununa SGK Prim Günü yazdırılır
                                 if (h === 'N' && personel.sozlesme_turu === 'Kısmi Süreli') {
                                     content = sgkPrimGunu;
                                 }
                                 statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.gunToplam)}">${content}</td>`;
                             });
-                            // *** DEĞİŞİKLİK BİTİYOR ***
 
-                            statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.sgkPrim)}">${sgkPrimGunu}</td><td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${esDurumuText}</td><td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${personel.cocuk0_6 || ''}</td><td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${personel.cocuk6_18 || ''}</td><td rowspan="2" style="${cellStyle()}"></td></tr>`;
+                            statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.sgkPrim)}">${sgkPrimGunu}</td><td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${esDurumuText}</td><td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${personel.cocuk_0_6 || ''}</td><td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${personel.cocuk_6_ustu || ''}</td><td rowspan="2" style="${cellStyle()}"></td></tr>`;
                             hoursRowHtml += `</tr>`;
                             excelHtml += statusRowHtml + hoursRowHtml;
                         }
@@ -5435,10 +5406,11 @@
 
                     const statusDescriptions = {
                         'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)',
-                        'R': 'Raporlu', 'Üİ': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma (Kulüp)',
+                        'R': 'Raporlu', 'Üİ': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma',
                         'Y': 'Yarım Gün Çalışma (Kısmi)', 'E': 'Eksik Gün', 'RTÇ': 'Resmi Tatil Çalışması'
                     };
-                    excelHtml += '<br><br><h3>Lejant</h3><table style="border-collapse:collapse;">';
+                    
+                    excelHtml += '<br><br><table style="border-collapse:collapse;">'; // "Lejant" başlığı kaldırıldı
                     for (const code in statusDescriptions) {
                         if (statusColors[code]) {
                             excelHtml += `<tr><td style="${cellStyle(statusColors[code])}">${code}</td><td style="${cellStyle()} padding:4px 8px; text-align:left;">${statusDescriptions[code]}</td></tr>`;
@@ -5764,14 +5736,14 @@
                 let totalEkders = 0, totalNobet = 0, totalRehberlik = 0;
 
                 personelListesi.forEach(personel => {
-                    const monthlyHours = calculatedHoursMap.get(personel.id) || { ekDers: 0 };
+                    const monthlyHours = calculatedHoursMap.get(personel.uniquePeriodId) || { ekDers: 0 };
 
                     if (personel.neviAdi.includes('Eğitim Personeli') || personel.unvan.includes('Müdür')) {
                         totalEkders += monthlyHours.ekDers;
                     }
 
                     totalNobet += nobetVerisi[personel.id] || 0;
-                    totalRehberlik += calculateEffectiveRehberlikHours(personel.id, year, month, puantajData);
+                    totalRehberlik += calculateEffectiveRehberlikHours(personel.uniquePeriodId, year, month, puantajData);
                 });
 
                 document.getElementById('total-ekders').textContent = totalEkders + " Saat";
@@ -6313,34 +6285,17 @@
                         showToast('Bu ay için kaydedilmiş bir puantaj yok.', 'info');
                     }
                     updateLockStatusUI();
-                    const ayinIlkGunu = new Date(Date.UTC(year, month, 1));
-                    const ayinSonGunu = new Date(Date.UTC(year, month + 1, 0));
-                    const aktifPersonelList = puantajPersonelList.filter(personel => {
-                        const girisStr = personel.ise_giris;
-                        const ayrilisStr = personel.isten_ayrilis;
-                        if (!girisStr) return false;
-                        const girisDate = new Date(girisStr + 'T00:00:00Z');
-                        if (isNaN(girisDate.getTime())) return false;
-                        const iseBaslamisMi = girisDate <= ayinSonGunu;
-                        let istenAyrilmamisMi = true;
-                        if (ayrilisStr && ayrilisStr.trim() !== '' && ayrilisStr.trim() !== '---') {
-                            const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
-                            if (!isNaN(ayrilisDate.getTime())) {
-                                istenAyrilmamisMi = ayrilisDate >= ayinIlkGunu;
-                            }
-                        }
-                        return iseBaslamisMi && istenAyrilmamisMi;
-                    });
+                    const personelPeriods = await getPersonelPeriodsForMonth(year, parseInt(month));
                     const selectedPersonelId = document.getElementById('personel-filter-select').value;
-                    let displayList = aktifPersonelList;
+                    let displayList = personelPeriods;
                     if (selectedPersonelId && selectedPersonelId !== 'all') {
-                        displayList = aktifPersonelList.filter(p => p.id === selectedPersonelId);
+                        displayList = personelPeriods.filter(p => p.id === selectedPersonelId);
                     }
                     const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
                     const calculatedHoursMap = new Map();
                     const hourCalculationPromises = displayList.map(async (personel) => {
-                        const hours = await calculateMonthlyHours(personel.id);
-                        calculatedHoursMap.set(personel.id, hours);
+                        const hours = await calculateMonthlyHours(personel.uniquePeriodId);
+                        calculatedHoursMap.set(personel.uniquePeriodId, hours);
                     });
                     await Promise.all(hourCalculationPromises);
                     await renderPuantajTable(nobetVerisi, displayList, baslikMetni, calculatedHoursMap);
