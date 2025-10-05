@@ -1,6 +1,6 @@
 const CACHE_NAME = 'ops-cache-v1';
 const urlsToCache = [
-  '/',
+  // Hata veren '/' satırı kaldırıldı. Artık sorun çıkarmayacak.
   'index.html',
   'logo.png'
 ];
