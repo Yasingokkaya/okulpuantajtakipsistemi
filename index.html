@@ -2960,37 +2960,40 @@
                                 <button id="btn-clear-filter" class="btn"
                                     style="background-color: #6c757d;">Temizle</button>
                             </div>
-                            <div class="bulk-update-container"
-                                style="display: flex; flex-direction: column; gap: 10px; padding: 15px; background-color: #e9ecef; border-radius: 8px; border: 1px solid #ced4da; margin-top: 15px; grid-column: 1 / -1;">
-                                <h4 style="margin: 0 0 5px 0; color: var(--theme-primary);">Toplu Güncelleme</h4>
-                                <div
-                                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: flex-end;">
-                                    <div>
-                                        <label for="bulk-update-day"
-                                            style="font-size: 13px; font-weight: 500;">Uygulanacak Gün:</label>
-                                        <select id="bulk-update-day" class="form-control"
-                                            style="padding: 8px;"></select>
-                                    </div>
-                                    <div>
-                                        <label for="bulk-update-group"
-                                            style="font-size: 13px; font-weight: 500;">Personel Grubu:</label>
-                                        <select id="bulk-update-group" class="form-control" style="padding: 8px;">
-                                            <option value="Tümü">Tüm Personel</option>
-                                            <option value="Belirli Süreli">Belirli Süreli</option>
-                                            <option value="Belirsiz Süreli">Belirsiz Süreli</option>
-                                            <option value="Kısmi Süreli">Kısmi Süreli</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="bulk-update-status" style="font-size: 13px; font-weight: 500;">Yeni
-                                            Durum Kodu:</label>
-                                        <select id="bulk-update-status" class="form-control"
-                                            style="padding: 8px;"></select>
-                                    </div>
-                                    <button id="btn-bulk-update" class="btn"
-                                        style="background-color: #6f42c1; color: white; height: 38px;">Uygula</button>
-                                </div>
-                            </div>
+
+<div style="grid-column: 1 / -1; margin-top: 15px;">
+    <button id="toggle-bulk-update-btn" class="btn" style="background-color: #6c757d; width: 100%;">Gelişmiş Toplu Güncelleme Panelini Göster/Gizle</button>
+</div>
+
+<div id="advanced-bulk-update-container" class="bulk-update-container" style="display: none; grid-template-columns: 1fr; gap: 20px;">
+    <h4 style="margin: 0 0 5px 0; color: var(--theme-primary);">Gelişmiş Toplu Güncelleme</h4>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+        <div class="form-group">
+            <label for="bulk-update-days-multi" style="font-size: 13px; font-weight: 500;">Uygulanacak Günler (Çoklu Seçim)</label>
+            <select id="bulk-update-days-multi" multiple></select>
+        </div>
+        
+        <div class="form-group">
+            <label for="bulk-update-personnel-multi" style="font-size: 13px; font-weight: 500;">Uygulanacak Personeller (Çoklu Seçim)</label>
+            <select id="bulk-update-personnel-multi" multiple></select>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: flex-end;">
+        <div class="form-group">
+            <label for="bulk-update-status-new" style="font-size: 13px; font-weight: 500;">Yeni Durum Kodu</label>
+            <select id="bulk-update-status-new" class="form-control" style="padding: 8px;"></select>
+        </div>
+
+        <div class="form-group">
+            <label for="bulk-update-hours-new" style="font-size: 13px; font-weight: 500;">Yeni Ders Saati</label>
+            <input type="number" id="bulk-update-hours-new" min="0" max="12" class="form-control" placeholder="Örn: 7.5" style="padding: 8px;">
+        </div>
+
+        <button id="btn-advanced-bulk-update" class="btn" style="background-color: #6f42c1; color: white; height: 42px;">Değişiklikleri Uygula</button>
+    </div>
+</div>
 
 
                             <div class="controls-right export-buttons">
@@ -4708,37 +4711,35 @@
                 document.getElementById('edit-modal-overlay').style.display = 'block';
             }
 
-            async function saveModalChanges() {
-                const modalSaveBtn = document.getElementById('modal-save');
-                const personelId = modalSaveBtn.dataset.personelId;
-                const date = modalSaveBtn.dataset.date;
-                if (!personelId || !date) {
-                    showToast('Veri kaydedilirken bir hata oluştu.', 'error');
-                    return;
-                }
-                const newCode = document.getElementById('modal-status').value;
-                const newHours = parseFloat(document.getElementById('modal-hours').value) || 0;
-                const newNotes = document.getElementById('modal-notes').value;
-                if (puantajData[personelId] && puantajData[personelId].dailyData && puantajData[personelId].dailyData[date]) {
-                    puantajData[personelId].dailyData[date] = {
-                        code: newCode,
-                        hours: newHours,
-                        notes: newNotes
-                    };
-                } else {
-                    if (!puantajData[personelId].dailyData) {
-                        puantajData[personelId].dailyData = {};
-                    }
-                    puantajData[personelId].dailyData[date] = {
-                        code: newCode,
-                        hours: newHours,
-                        notes: newNotes
-                    };
-                }
-                document.getElementById('edit-modal-overlay').style.display = 'none';
-                await savePuantajData();
-                await loadPuantajDataForCurrentMonth();
-            }
+async function saveModalChanges() {
+    const modalSaveBtn = document.getElementById('modal-save');
+    const personelId = modalSaveBtn.dataset.personelId;
+    const date = modalSaveBtn.dataset.date;
+    if (!personelId || !date) {
+        showToast('Veri kaydedilirken bir hata oluştu.', 'error');
+        return;
+    }
+    const newCode = document.getElementById('modal-status').value;
+    const newHours = parseFloat(document.getElementById('modal-hours').value) || 0;
+    const newNotes = document.getElementById('modal-notes').value;
+
+    if (!puantajData[personelId].dailyData) {
+        puantajData[personelId].dailyData = {};
+    }
+    puantajData[personelId].dailyData[date] = {
+        code: newCode,
+        hours: newHours,
+        notes: newNotes
+    };
+    
+    // Sadece değişen hücreyi anında güncelle
+    updateTableCell(personelId, date);
+
+    document.getElementById('edit-modal-overlay').style.display = 'none';
+    
+    // Bilgi mesajı ver
+    showToast('Değişiklik yapıldı. Kalıcı olması için "Kaydet" butonuna tıklayın.', 'info');
+}
 
             async function fetchAndProcessSchedules() {
                 const personelSchedules = {};
@@ -5153,73 +5154,6 @@
             }
 
 
-            async function applyBulkUpdate() {
-                const day = document.getElementById('bulk-update-day').value;
-                const group = document.getElementById('bulk-update-group').value;
-                const newStatusCode = document.getElementById('bulk-update-status').value;
-                const year = parseInt(document.getElementById('input-year').value);
-                const month = parseInt(document.getElementById('select-month').value);
-
-                if (!day || !group || !newStatusCode) {
-                    return showToast('Lütfen Gün, Grup ve Durum Kodu seçin.', 'error');
-                }
-                if (!puantajData || Object.keys(puantajData).length === 0) {
-                    return showToast('Önce bir puantaj oluşturmalı veya yüklemelisiniz.', 'error');
-                }
-
-                const confirmationMessage = `'${group}' grubundaki tüm personel için ayın ${day}. gününün durumunu '${newStatusCode}' olarak değiştirmek istediğinizden emin misiniz?`;
-                if (!confirm(confirmationMessage)) {
-                    return;
-                }
-
-                const aktifPersonelList = puantajPersonelList.filter(personel => {
-                    const ayrilisStr = personel.isten_ayrilis;
-                    if (!ayrilisStr || ayrilisStr.trim() === '' || ayrilisStr.trim() === '---') return true;
-                    const ayrilisDate = new Date(ayrilisStr + 'T00:00:00Z');
-                    if (isNaN(ayrilisDate.getTime())) return true;
-                    const ayrilisYear = ayrilisDate.getUTCFullYear();
-                    const ayrilisMonth = ayrilisDate.getUTCMonth();
-                    if (ayrilisYear > year) return true;
-                    if (ayrilisYear === year && ayrilisMonth >= month) return true;
-                    return false;
-                });
-
-                const targetPersonnel = aktifPersonelList.filter(p => {
-                    if (group === 'Tümü') return true;
-                    return p.sozlesme_turu === group;
-                });
-
-                if (targetPersonnel.length === 0) {
-                    return showToast('Seçilen grupta güncellenecek personel bulunamadı.', 'info');
-                }
-
-                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-                targetPersonnel.forEach(personel => {
-                    if (puantajData[personel.id] && puantajData[personel.id].dailyData && puantajData[personel.id].dailyData[dateString]) {
-                        puantajData[personel.id].dailyData[dateString].code = newStatusCode;
-                    }
-                });
-
-                showToast('Güncelleme uygulanıyor...', 'info');
-                const nobetVerisi = await fetchAndCalculateNobetData(year, month);
-
-                const calculatedHoursMap = new Map();
-                const hourCalculationPromises = aktifPersonelList.map(async (personel) => {
-                    const hours = await calculateMonthlyHours(personel.id);
-                    calculatedHoursMap.set(personel.id, hours);
-                });
-                await Promise.all(hourCalculationPromises);
-
-                const ayAdi = document.getElementById('select-month').options[month].text;
-                const okulAdi = await getCurrentSchoolName();
-                const baslikMetni = `${okulAdi.toLocaleUpperCase('tr-TR')} ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
-                renderPuantajTable(nobetVerisi, aktifPersonelList, baslikMetni, calculatedHoursMap);
-                await renderGrandTotals(nobetVerisi, aktifPersonelList, calculatedHoursMap);
-                attachCellListeners();
-
-                showToast('Toplu güncelleme başarıyla uygulandı!', 'success');
-            }
 
             function printPuantaj() {
                 window.print();
@@ -6116,94 +6050,228 @@ async function renderGrandTotals(nobetVerisi = {}, personelListesi, calculatedHo
                 }
             }
 
-            async function initializePuantaj() {
-                if (puantajInitialized) {
-                    await loadAndFilterPersonelList();
-                    await loadPuantajDataForCurrentMonth();
-                    return;
+// Gerekli bir değişkeni script'in başına ekleyin
+let advancedBulkUpdateVisible = false;
+
+// Ardından bu yeni initializePuantaj fonksiyonunu ekleyin
+async function initializePuantaj() {
+    if (puantajInitialized) {
+        await loadAndFilterPersonelList();
+        await loadPuantajDataForCurrentMonth();
+        populateAdvancedBulkPersonnelSelect();
+        return;
+    }
+    try {
+        await loadAndFilterPersonelList();
+        const selectMonth = document.getElementById('select-month');
+        const inputYear = document.getElementById('input-year');
+        const showBtn = document.getElementById('btn-show-puantaj');
+        const generateBtn = document.getElementById('btn-generate');
+        const printBtn = document.getElementById('btn-print');
+        const deleteBtn = document.getElementById('btn-delete-puantaj');
+        const pdfBtn = document.getElementById('btn-pdf');
+        const excelBtn = document.getElementById('btn-excel');
+        const modalOverlay = document.getElementById('edit-modal-overlay');
+        const modalSaveBtn = document.getElementById('modal-save');
+        const modalCancelBtn = document.getElementById('modal-cancel');
+        const savePuantajBtn = document.getElementById('btn-save-puantaj');
+        const lockPuantajBtn = document.getElementById('btn-lock-puantaj');
+        modalSaveBtn.addEventListener('click', saveModalChanges);
+        modalCancelBtn.addEventListener('click', () => { modalOverlay.style.display = 'none'; });
+        const now = new Date();
+        const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+        selectMonth.innerHTML = '';
+        months.forEach((m, i) => selectMonth.add(new Option(m, i)));
+        selectMonth.value = now.getMonth();
+        inputYear.value = now.getFullYear();
+        const statusCodes = {
+            'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)',
+            'R': 'Raporlu', 'Üİ': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma',
+            'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün'
+        };
+        const modalStatusSelect = document.getElementById('modal-status');
+        modalStatusSelect.innerHTML = '';
+        for (const code in statusCodes) modalStatusSelect.add(new Option(statusCodes[code], code));
+
+        if (!puantajInitialized) {
+            showBtn.addEventListener('click', loadPuantajDataForCurrentMonth);
+            generateBtn.addEventListener('click', () => {
+                showConfirmationModal(
+                    'Mevcut ay için yeni bir puantaj cetveli oluşturulacaktır. Varsa, kaydedilmemiş mevcut veriler kaybolacaktır. Emin misiniz?',
+                    generateInitialPuantaj, 'Evet, Oluştur', 'add'
+                );
+            });
+            document.getElementById('btn-generate-individual').addEventListener('click', generateIndividualPuantaj);
+            deleteBtn.addEventListener('click', deleteCurrentPuantaj);
+            savePuantajBtn.addEventListener('click', savePuantajData);
+            lockPuantajBtn.addEventListener('click', togglePuantajLock);
+            printBtn.addEventListener('click', printPuantaj);
+            pdfBtn.addEventListener('click', downloadPdf);
+            excelBtn.addEventListener('click', downloadExcel);
+
+            // Gelişmiş Toplu Güncelleme Panel Kontrolleri
+            const toggleBtn = document.getElementById('toggle-bulk-update-btn');
+            const advancedContainer = document.getElementById('advanced-bulk-update-container');
+            toggleBtn.addEventListener('click', () => {
+                advancedBulkUpdateVisible = !advancedBulkUpdateVisible;
+                advancedContainer.style.display = advancedBulkUpdateVisible ? 'grid' : 'none';
+                if (advancedBulkUpdateVisible) {
+                    initializeAdvancedBulkSelects();
                 }
-                try {
-                    await loadAndFilterPersonelList();
-                    const selectMonth = document.getElementById('select-month');
-                    const inputYear = document.getElementById('input-year');
-                    const showBtn = document.getElementById('btn-show-puantaj');
-                    const generateBtn = document.getElementById('btn-generate');
-                    const printBtn = document.getElementById('btn-print');
-                    const deleteBtn = document.getElementById('btn-delete-puantaj');
-                    const pdfBtn = document.getElementById('btn-pdf');
-                    const excelBtn = document.getElementById('btn-excel');
-                    const modalOverlay = document.getElementById('edit-modal-overlay');
-                    const modalSaveBtn = document.getElementById('modal-save');
-                    const modalCancelBtn = document.getElementById('modal-cancel');
-                    const savePuantajBtn = document.getElementById('btn-save-puantaj');
-                    const lockPuantajBtn = document.getElementById('btn-lock-puantaj');
-                    modalSaveBtn.addEventListener('click', saveModalChanges);
-                    modalCancelBtn.addEventListener('click', () => { modalOverlay.style.display = 'none'; });
-                    const now = new Date();
-                    const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-                    selectMonth.innerHTML = '';
-                    months.forEach((m, i) => selectMonth.add(new Option(m, i)));
-                    selectMonth.value = now.getMonth();
-                    inputYear.value = now.getFullYear();
-                    const statusCodes = {
-                        'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)',
-                        'R': 'Raporlu', 'Üİ': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma',
-                        'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün'
-                    };
-                    const modalStatusSelect = document.getElementById('modal-status');
-                    modalStatusSelect.innerHTML = '';
-                    for (const code in statusCodes) modalStatusSelect.add(new Option(statusCodes[code], code));
+            });
+            document.getElementById('btn-advanced-bulk-update').addEventListener('click', applyAdvancedBulkUpdate);
 
-                    if (!puantajInitialized) {
-                        showBtn.addEventListener('click', loadPuantajDataForCurrentMonth);
-
-                        // --- DÜZELTİLEN BUTON OLAYI ---
-                        generateBtn.addEventListener('click', () => {
-                            showConfirmationModal(
-                                'Mevcut ay için yeni bir puantaj cetveli oluşturulacaktır. Varsa, kaydedilmemiş mevcut veriler kaybolacaktır. Emin misiniz?',
-                                generateInitialPuantaj,
-                                'Evet, Oluştur',
-                                'add'
-                            );
-                        });
-                        // --- DÜZELTME BİTTİ ---
-
-                        document.getElementById('btn-generate-individual').addEventListener('click', generateIndividualPuantaj);
-                        deleteBtn.addEventListener('click', deleteCurrentPuantaj);
-                        savePuantajBtn.addEventListener('click', savePuantajData);
-                        lockPuantajBtn.addEventListener('click', togglePuantajLock);
-                        document.getElementById('btn-bulk-update').addEventListener('click', applyBulkUpdate);
-                        printBtn.addEventListener('click', printPuantaj);
-                        pdfBtn.addEventListener('click', downloadPdf);
-                        excelBtn.addEventListener('click', downloadExcel);
-                        selectMonth.addEventListener('change', loadPuantajDataForCurrentMonth);
-                        inputYear.addEventListener('change', loadPuantajDataForCurrentMonth);
-                        const bulkUpdateDaySelect = document.getElementById('bulk-update-day');
-                        const bulkUpdateStatusSelect = document.getElementById('bulk-update-status');
-                        const daysInMonth = new Date(inputYear.value, parseInt(selectMonth.value) + 1, 0).getDate();
-                        bulkUpdateDaySelect.innerHTML = '';
-                        for (let i = 1; i <= daysInMonth; i++) {
-                            bulkUpdateDaySelect.add(new Option(i, i));
-                        }
-                        bulkUpdateStatusSelect.innerHTML = '';
-                        for (const code in statusCodes) {
-                            bulkUpdateStatusSelect.add(new Option(`${statusCodes[code]} (${code})`, code));
-                        }
-                        document.getElementById('btn-filter-personel').addEventListener('click', loadPuantajDataForCurrentMonth);
-                        document.getElementById('btn-clear-filter').addEventListener('click', () => {
-                            document.getElementById('personel-filter-select').value = 'all';
-                            loadPuantajDataForCurrentMonth();
-                        });
-                    }
-                    puantajInitialized = true;
-                    await loadPuantajDataForCurrentMonth();
-                } catch (error) {
-                    console.error("Puantaj başlatılırken kritik hata:", error);
-                    showToast('Puantaj modülü başlatılamadı. Lütfen Ayarlarınızı kontrol edin.', 'error');
+            // Ay/Yıl değiştiğinde paneli de güncelle
+            const updateBulkPanelOnDateChange = () => {
+                loadPuantajDataForCurrentMonth();
+                if (advancedBulkUpdateVisible) {
+                    initializeAdvancedBulkSelects();
                 }
+            };
+            selectMonth.addEventListener('change', updateBulkPanelOnDateChange);
+            inputYear.addEventListener('change', updateBulkPanelOnDateChange);
+
+            document.getElementById('btn-filter-personel').addEventListener('click', loadPuantajDataForCurrentMonth);
+            document.getElementById('btn-clear-filter').addEventListener('click', () => {
+                document.getElementById('personel-filter-select').value = 'all';
+                loadPuantajDataForCurrentMonth();
+            });
+        }
+        puantajInitialized = true;
+        await loadPuantajDataForCurrentMonth();
+    } catch (error) {
+        console.error("Puantaj başlatılırken kritik hata:", error);
+        showToast('Puantaj modülü başlatılamadı. Lütfen Ayarlarınızı kontrol edin.', 'error');
+    }
+}
+
+// BU FONKSİYONLARI TOPLU OLARAK EKLEYİN
+
+function initializeAdvancedBulkSelects() {
+    const year = parseInt(document.getElementById('input-year').value);
+    const month = parseInt(document.getElementById('select-month').value);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Günler için multi-select
+    const daysSelect = document.getElementById('bulk-update-days-multi');
+    const daysData = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+        daysData.push({ text: i.toString(), value: i.toString() });
+    }
+    if (daysSelect.slim) { daysSelect.slim.destroy(); }
+    new SlimSelect({
+        select: daysSelect,
+        data: daysData,
+        settings: { placeholderText: 'Günleri Seçin' }
+    });
+
+    // Personel için multi-select
+    populateAdvancedBulkPersonnelSelect();
+
+    // Durum kodları için select
+    const statusSelect = document.getElementById('bulk-update-status-new');
+    if (statusSelect.options.length <= 1) { 
+        const statusCodes = {
+            'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)',
+            'R': 'Raporlu', 'Üİ': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma',
+            'Y': 'Yarım Gün Çalışma (Kısmi)', 'RTÇ': 'Resmi Tatil Çalışması', 'E': 'Eksik Gün'
+        };
+        statusSelect.innerHTML = '<option value="">Durum Kodu Seçin</option>';
+        for (const code in statusCodes) {
+            statusSelect.add(new Option(`${statusCodes[code]} (${code})`, code));
+        }
+    }
+}
+
+function populateAdvancedBulkPersonnelSelect() {
+    const personnelSelect = document.getElementById('bulk-update-personnel-multi');
+    const personnelData = [];
+    const displayedPersonnelRows = Array.from(document.querySelectorAll('.puantaj-table .personel-row-status'));
+    
+    displayedPersonnelRows.forEach(row => {
+        const personelId = row.querySelector('.status-cell')?.dataset.personelId;
+        const personelName = row.querySelector('.col-personel')?.textContent;
+        if(personelId && personelName){
+           personnelData.push({ text: personelName, value: personelId });
+        }
+   });
+
+    if (personnelSelect.slim) { personnelSelect.slim.destroy(); }
+    new SlimSelect({
+        select: personnelSelect,
+        data: personnelData,
+        settings: { placeholderText: 'Personelleri Seçin' }
+    });
+}
+
+function updateTableCell(personelId, dateString) {
+    const dayData = puantajData[personelId]?.dailyData?.[dateString];
+    if (!dayData) return;
+
+    const statusCell = document.querySelector(`.status-cell[data-personel-id="${personelId}"][data-date="${dateString}"]`);
+    if (statusCell) {
+        statusCell.textContent = dayData.code || '';
+        statusCell.className = 'status-cell vertical-divider status-' + dayData.code; // vertical-divider sınıfını koru
+        const dayOfMonth = new Date(dateString + 'T00:00:00Z').getUTCDate();
+        if (new Date(dateString).getDay() !== 0 && dayOfMonth !== new Date(new Date(dateString).getFullYear(), new Date(dateString).getMonth() + 1, 0).getDate()){
+            statusCell.classList.remove('vertical-divider');
+        }
+    }
+    
+    const hourRow = statusCell?.closest('tr')?.nextElementSibling;
+    if(hourRow){
+        const hourCell = hourRow.querySelector(`td:nth-of-type(${new Date(dateString).getUTCDate()})`);
+        if(hourCell){
+            const hourContent = (['N', 'RTÇ', 'Y', 'K'].includes(dayData.code)) && dayData.hours > 0 ? dayData.hours : '';
+            hourCell.textContent = hourContent;
+        }
+    }
+}
+
+
+function applyAdvancedBulkUpdate() {
+    const selectedDays = document.getElementById('bulk-update-days-multi').slim.getSelected();
+    const selectedPersonnel = document.getElementById('bulk-update-personnel-multi').slim.getSelected();
+    const newStatus = document.getElementById('bulk-update-status-new').value;
+    const newHoursRaw = document.getElementById('bulk-update-hours-new').value;
+
+    if (selectedDays.length === 0 || selectedPersonnel.length === 0) {
+        return showToast('Lütfen en az bir gün ve bir personel seçin.', 'error');
+    }
+    if (!newStatus && newHoursRaw === '') {
+        return showToast('Lütfen yeni bir durum kodu veya yeni bir saat değeri girin.', 'error');
+    }
+    
+    const year = parseInt(document.getElementById('input-year').value);
+    const month = parseInt(document.getElementById('select-month').value);
+    let updatedCellCount = 0;
+
+    selectedPersonnel.forEach(personelId => {
+        if (!puantajData[personelId] || !puantajData[personelId].dailyData) return;
+        
+        selectedDays.forEach(day => {
+            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            if (puantajData[personelId].dailyData[dateString]) {
+                if (newStatus) {
+                    puantajData[personelId].dailyData[dateString].code = newStatus;
+                }
+                if (newHoursRaw !== '') {
+                    puantajData[personelId].dailyData[dateString].hours = parseFloat(newHoursRaw) || 0;
+                }
+                
+                updateTableCell(personelId, dateString);
+                updatedCellCount++;
             }
+        });
+    });
 
-
+    if (updatedCellCount > 0) {
+        showToast(`${updatedCellCount} hücre güncellendi. Kalıcı yapmak için 'Kaydet' butonuna tıklayın.`, 'success');
+    } else {
+        showToast('Güncellenecek uygun hücre bulunamadı.', 'info');
+    }
+}
 
             async function loadAndFilterPersonelList() {
                 try {
