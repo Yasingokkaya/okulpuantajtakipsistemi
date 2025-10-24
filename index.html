@@ -4878,23 +4878,31 @@ async function saveModalChanges() {
                             const isEgitimPersoneli = personel.neviAdi && personel.neviAdi.includes('Eğitim Personeli');
 
                             if (anlikSozlesmeTuru && anlikSozlesmeTuru.includes('Kısmi')) {
-                                let calismaSaati = 0;
-
-                                if (isEgitimPersoneli) {
-                                    const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
-                                    calismaSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
-                                } else {
-                                    calismaSaati = parseInt(personel.kismi_zamanli_calisma?.[dayOfWeekTR] || 0);
-                                }
-
-                                if (calismaSaati > 0) {
-                                    code = 'Y';
-                                    hours = calismaSaati;
-                                } else {
-                                    code = 'E';
+                                // ---- YENİ EKLENEN KONTROL ----
+                                if (isResmiTatil(dateUTC)) {
+                                    code = 'E'; // Resmi tatilse Kısmi Süreli için 'E' ata
                                     hours = 0;
+                                } else {
+                                // ---- ESKİ MANTIK (Resmi tatil değilse) ----
+                                    let calismaSaati = 0;
+                                    if (isEgitimPersoneli) {
+                                        const gecerliProgramVersiyonu = personelScheduleData[personel.id]?.find(v => v.tarih <= dateString);
+                                        calismaSaati = gecerliProgramVersiyonu?.gunlukSaatler?.[dayOfWeekTR] || 0;
+                                    } else {
+                                        calismaSaati = parseInt(personel.kismi_zamanli_calisma?.[dayOfWeekTR] || 0);
+                                    }
+
+                                    if (calismaSaati > 0) {
+                                        code = 'Y'; // Normalde çalıştığı günse 'Y' ata
+                                        hours = calismaSaati;
+                                    } else {
+                                        code = 'E'; // Normalde çalışmadığı günse 'E' ata
+                                        hours = 0;
+                                    }
                                 }
+                                // ---- KOD DEĞİŞİKLİĞİ SONU ----
                             } else {
+                                // ... (Diğer sözleşme türleri için kod devam ediyor)
                                 if (isResmiTatil(dateUTC)) {
                                     code = 'RT';
                                 } else {
