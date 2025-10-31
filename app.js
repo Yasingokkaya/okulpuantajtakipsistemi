@@ -792,7 +792,7 @@
                             const leaveCodeForDay = izinVerisi[personel.id]?.[dateString];
                             if (leaveCodeForDay) {
                                 // İzinliyse, temel saatini sıfırla
-                                if (leaveCodeForDay === 'R' && ['N', 'Y', 'HT'].includes(code)) {
+                                if (leaveCodeForDay === 'R' && ['N', 'Y', 'HT', 'RT'].includes(code)) {
                                     code = leaveCodeForDay;
                                     baseHours = 0; 
                                 }
@@ -1591,10 +1591,21 @@
                 });
                 
                 const modal = document.getElementById('ekders-detay-modal');
-                modal.querySelector('.close-modal').addEventListener('click', () => modal.classList.remove('open'));
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.classList.remove('open');
-                });
+
+if (modal) { // <-- Hata ayıklayıcı kontrol eklendi
+    const closeModalBtn = modal.querySelector('.close-modal');
+    
+    if (closeModalBtn) { // <-- Kapatma butonu için de bir kontrol eklendi
+        closeModalBtn.addEventListener('click', () => modal.classList.remove('open'));
+    }
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+    });
+} else {
+    // Bu, konsolda bir hata yerine bilgilendirici bir mesaj gösterir
+    console.warn("attachCellListeners uyarısı: 'ekders-detay-modal' elementi DOM'da bulunamadı. Ek ders detayları modalı çalışmayabilir.");
+}
             }
 
             async function openEkDersDetayModal(personelId, personelAdi, year, month, nobetSaat, rehberlikSaat) {
@@ -1615,7 +1626,7 @@
                     let html = '';
 
                     // 1. Normal (Maaş Karşılığı Üstü) Ek Ders
-                    const normalEkDers = hourDetails.ekDers - hourDetails.yoneticilikEkDers - hourDetails.seminerEkDers;
+                    const normalEkDers = hourDetails.ekDers - hourDetails.yoneticilikEkDers - hourDetails.seminerEkDers - hourDetails.gorevlendirmeDersSaati;
                     if (normalEkDers > 0) {
                         html += `<tr><td>Normal Ek Ders (Maaş Karşılığı Üstü)</td><td>${normalEkDers}</td></tr>`;
                         totalEkDers += normalEkDers;
@@ -1649,7 +1660,7 @@
                     // 6. Rehberlik (Tablodan alınır)
                     const rehberlik = parseFloat(rehberlikSaat) || 0;
                     if (rehberlik > 0) {
-                        html += `<tr><td>Rehberlik (Pansiyon vb.)</td><td>${rehberlik}</td></tr>`;
+                        html += `<tr><td>Rehberlik (Sınıf Öğretmeni)</td><td>${rehberlik}</td></tr>`;
                         totalEkDers += rehberlik;
                     }
 
@@ -2369,49 +2380,73 @@ async function fetchGorevlendirmeDataForPuantaj(year, month) {
                     select.addEventListener('blur', () => handleCustomSelectDisplay(select));
                 });
             }
-            async function loadPuantajDataForCurrentMonth() {
+           async function loadPuantajDataForCurrentMonth() {
                 const year = document.getElementById('input-year').value;
                 const month = document.getElementById('select-month').value;
                 const docId = `${currentUserOkulId}_${year}-${String(parseInt(month) + 1).padStart(2, '0')}`;
                 currentPuantajDocRef = doc(db, "kayitli_puantajlar", docId);
                 const container = document.getElementById('puantaj-table-container');
-                container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4>Puantaj verileri yükleniyor ve hesaplamalar yapılıyor...</h4></div>`;
+                container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;"><h4>Puantaj verileri yükleniyor...</h4></div>`;
+
                 try {
                     const ayAdi = document.getElementById('select-month').options[month].text;
                     const okulAdi = await getCurrentSchoolName();
-                    const baslikMetni = `${okulAdi.toLocaleUpperCase('tr-TR')} ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`; const docSnap = await getDoc(currentPuantajDocRef);
+                    const baslikMetni = `${okulAdi.toLocaleUpperCase('tr-TR')} ${year} YILI ${ayAdi.toLocaleUpperCase('tr-TR')} AYI PERSONEL PUANTAJ CETVELİ`;
+                    const docSnap = await getDoc(currentPuantajDocRef);
+
                     if (docSnap.exists()) {
+                        // VERİ VARSA: Yükle, hesapla ve çiz
                         const data = docSnap.data();
                         puantajData = data.puantajData || {};
                         overtimeReasons = data.overtimeReasons || {};
                         missingDayCodes = data.missingDayCodes || {};
                         isPuantajLocked = data.isLocked || false;
                         showToast('Kaydedilmiş puantaj verisi yüklendi.', 'success');
+
+                        updateLockStatusUI();
+
+                        const personelPeriods = await getPersonelPeriodsForMonth(year, parseInt(month));
+                        const selectedPersonelId = document.getElementById('personel-filter-select').value;
+                        let displayList = personelPeriods;
+                        if (selectedPersonelId && selectedPersonelId !== 'all') {
+                            displayList = personelPeriods.filter(p => p.id === selectedPersonelId);
+                        }
+                        const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
+
+                        const calculatedHoursMap = new Map();
+                        const hourCalculationPromises = displayList.map(async (personel) => {
+                            const hours = await calculateMonthlyHours(personel.uniquePeriodId);
+                            calculatedHoursMap.set(personel.uniquePeriodId, hours);
+                        });
+                        await Promise.all(hourCalculationPromises);
+
+                        await renderPuantajTable(nobetVerisi, displayList, baslikMetni, calculatedHoursMap);
+                        await renderGrandTotals(nobetVerisi, displayList, calculatedHoursMap);
+                        renderLegend();
+                        attachCellListeners();
+
                     } else {
+                        // VERİ YOKSA: Temizle ve mesaj göster
                         puantajData = {};
                         overtimeReasons = {};
                         missingDayCodes = {};
                         isPuantajLocked = false;
                         showToast('Bu ay için kaydedilmiş bir puantaj yok.', 'info');
+
+                        updateLockStatusUI();
+
+                        // "Loading" mesajı yerine "Veri yok" mesajını göster
+                        container.innerHTML = `<div style="padding: 40px; text-align: center; background-color: #f8f9fa; border-radius: 8px;">
+                            <h4 style="color: var(--theme-primary);">Bu ay için kaydedilmiş puantaj verisi bulunmuyor.</h4>
+                            <p style="font-size: 1.1em; margin-top: 10px;">'Yeni Puantaj Oluştur' butonuna tıklayarak yeni bir cetvel oluşturabilirsiniz.</p>
+                        </div>`;
+                        
+                        // Toplamları ve legend'i de temizle
+                        await renderGrandTotals({}, []); 
+                        const legendContainer = document.getElementById('puantaj-legend');
+                        if(legendContainer) legendContainer.innerHTML = '';
                     }
-                    updateLockStatusUI();
-                    const personelPeriods = await getPersonelPeriodsForMonth(year, parseInt(month));
-                    const selectedPersonelId = document.getElementById('personel-filter-select').value;
-                    let displayList = personelPeriods;
-                    if (selectedPersonelId && selectedPersonelId !== 'all') {
-                        displayList = personelPeriods.filter(p => p.id === selectedPersonelId);
-                    }
-                    const nobetVerisi = await fetchAndCalculateNobetData(year, parseInt(month));
-                    const calculatedHoursMap = new Map();
-                    const hourCalculationPromises = displayList.map(async (personel) => {
-                        const hours = await calculateMonthlyHours(personel.uniquePeriodId);
-                        calculatedHoursMap.set(personel.uniquePeriodId, hours);
-                    });
-                    await Promise.all(hourCalculationPromises);
-                    await renderPuantajTable(nobetVerisi, displayList, baslikMetni, calculatedHoursMap);
-                    await renderGrandTotals(nobetVerisi, displayList, calculatedHoursMap);
-                    renderLegend();
-                    attachCellListeners();
+
                 } catch (error) {
                     console.error("Puantaj verisi yüklenirken hata: ", error);
                     showToast("Puantaj verisi yüklenemedi.", "error");
