@@ -1377,27 +1377,10 @@ table.staff-table th {
     border-bottom: 2px solid #333;
 }
 
-@media print {
-    .vertical-divider {
-        border-right: 2px solid #000 !important;
-    }
-
-    .horizontal-divider>td {
-        border-bottom: 2px solid #000 !important;
-    }
-}
 
 
-@media print {
 
-    .puantaj-table .personel-row-status>td {
-        border-bottom: 1.5px solid #000 !important;
-    }
 
-    .puantaj-table .week-divider {
-        border-right: 1.5px solid #000 !important;
-    }
-}
 
 .puantaj-table tbody tr:hover>td {
     background-color: #f1f9ff !important;
@@ -1651,183 +1634,7 @@ table.staff-table th {
     color: white;
 }
 
-@media print {
 
-    @page {
-        margin: 1cm;
-
-    }
-
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    body,
-    html {
-        background-color: #fff !important;
-        font-size: 10pt;
-        overflow: visible !important;
-    }
-
-    .main-content {
-        padding: 0 !important;
-        overflow: visible !important;
-        margin-left: 0 !important;
-    }
-
-    .sidebar,
-    .mobile-header,
-    .panel-header,
-    .controls.puantaj,
-    .no-print,
-    .modal-overlay,
-    #add-staff-modal,
-    #logout-btn,
-    #btn-nobet-yazdir,
-    #gorevlendirme .gorevlendirme-form-area {
-        display: none !important;
-    }
-
-
-    #puantaj,
-    #puantaj .panel,
-    #puantaj-table-container {
-        box-shadow: none !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: visible !important;
-    }
-
-    .puantaj-table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-    }
-
-    .puantaj-table th,
-    .puantaj-table td {
-        border: 1px solid #999 !important;
-        padding: 4px 2px !important;
-        text-align: center !important;
-        vertical-align: middle !important;
-    }
-
-
-    .puantaj-table thead th {
-        font-size: 8pt !important;
-        font-weight: bold !important;
-        white-space: normal !important;
-        vertical-align: bottom !important;
-        padding-bottom: 6px !important;
-    }
-
-    .puantaj-table .col-personel,
-    .puantaj-table .col-unvan {
-        font-size: 9pt !important;
-        text-align: left !important;
-        padding-left: 5px !important;
-        white-space: normal !important;
-        vertical-align: middle !important;
-    }
-
-    .puantaj-table .col-personel {
-        min-width: 90px !important;
-    }
-
-    .puantaj-table .col-unvan {
-        min-width: 80px !important;
-    }
-
-    .puantaj-table .hour-cell {
-        font-size: 9pt !important;
-        font-weight: bold !important;
-        color: #000 !important;
-    }
-
-    .puantaj-table .status-cell {
-        font-size: 10pt !important;
-        font-weight: bold !important;
-    }
-
-
-    .gorevlendirme-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9pt;
-    }
-
-    .gorevlendirme-table th,
-    .gorevlendirme-table td {
-        border: 1px solid #666;
-        padding: 8px;
-        text-align: left;
-    }
-
-    .gorevlendirme-table th {
-        background-color: #f0f0f0;
-        font-weight: bold;
-    }
-
-    #puantaj-baslik {
-        display: block !important;
-        text-align: center !important;
-        font-size: 14pt !important;
-        font-weight: bold;
-        margin-top: 20px;
-        margin-bottom: 25px !important;
-        color: black !important;
-    }
-}
-
-
-@media print {
-
-    body,
-    html {
-        background-color: #fff;
-        overflow: visible;
-        height: auto;
-    }
-
-    .sidebar,
-    .panel-header,
-    .form-container,
-    #btn-nobet-yazdir {
-        display: none !important;
-    }
-
-    .main-content {
-        padding: 0;
-        overflow: visible;
-    }
-
-    .module {
-        display: none !important;
-    }
-
-    .module.active {
-        display: block !important;
-    }
-
-    .panel {
-        box-shadow: none;
-        border: none;
-    }
-
-    #nobet-rapor-alani {
-        display: block !important;
-    }
-
-    .table-container {
-        overflow: visible;
-        border: none;
-    }
-
-    .no-print {
-        display: none !important;
-    }
-}
 
 .ders-karti {
     position: relative;
@@ -1979,15 +1786,6 @@ table.staff-table th {
     font-size: 13px;
     font-weight: bold;
     color: var(--theme-primary);
-
-    .text-align-left {
-        text-align: left !important;
-    }
-
-    .text-align-center {
-        text-align: center !important;
-    }
-
     width: 70px;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -1998,6 +1796,20 @@ table.staff-table th {
     background-size: 1em;
 }
 
+.text-align-left {
+    text-align: left !important;
+}
+
+.text-align-center {
+    text-align: center !important;
+}
+.text-align-left {
+    text-align: left !important;
+}
+
+.text-align-center {
+    text-align: center !important;
+}
 
 td[style*="background-color"] .overtime-reason-input,
 td[style*="background-color"] .missing-day-code-select {
@@ -2303,7 +2115,174 @@ td[style*="background-color"] .input-wrapper {
     display: none;
 }
 
+
+.clickable-ekders {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-decoration-color: #0056b3;
+    color: #0056b3;
+}
+
+.clickable-ekders:hover {
+    background-color: #e6f7ff !important;
+}
+
 @media print {
+    @page {
+        margin: 1cm;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body,
+    html {
+        background-color: #fff !important;
+        font-size: 10pt;
+        overflow: visible !important;
+        height: auto;
+    }
+
+    .main-content {
+        padding: 0 !important;
+        overflow: visible !important;
+        margin-left: 0 !important;
+    }
+
+    .sidebar,
+    .mobile-header,
+    .panel-header,
+    .controls.puantaj,
+    .modal-overlay,
+    #add-staff-modal,
+    #logout-btn,
+    #btn-nobet-yazdir,
+    .form-container,
+    .no-print {
+        display: none !important;
+    }
+
+    #puantaj,
+    #puantaj .panel,
+    #puantaj-table-container {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+
+    .puantaj-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    .puantaj-table th,
+    .puantaj-table td {
+        border: 1px solid #999 !important;
+        padding: 4px 2px !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+
+    .puantaj-table thead th {
+        font-size: 8pt !important;
+        font-weight: bold !important;
+        white-space: normal !important;
+        vertical-align: bottom !important;
+        padding-bottom: 6px !important;
+    }
+
+    .puantaj-table .col-personel,
+    .puantaj-table .col-unvan {
+        font-size: 9pt !important;
+        text-align: left !important;
+        padding-left: 5px !important;
+        white-space: normal !important;
+        vertical-align: middle !important;
+    }
+
+    .puantaj-table .col-personel {
+        min-width: 90px !important;
+    }
+
+    .puantaj-table .col-unvan {
+        min-width: 80px !important;
+    }
+
+    .puantaj-table .hour-cell {
+        font-size: 9pt !important;
+        font-weight: bold !important;
+        color: #000 !important;
+    }
+
+    .puantaj-table .status-cell {
+        font-size: 10pt !important;
+        font-weight: bold !important;
+    }
+
+    .gorevlendirme-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+    }
+
+    .gorevlendirme-table th,
+    .gorevlendirme-table td {
+        border: 1px solid #666;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .gorevlendirme-table th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+    }
+
+    #puantaj-baslik {
+        display: block !important;
+        text-align: center !important;
+        font-size: 14pt !important;
+        font-weight: bold;
+        margin-top: 20px;
+        margin-bottom: 25px !important;
+        color: black !important;
+    }
+
+    #gorevlendirme-baslik {
+        display: block !important;
+        text-align: center !important;
+        font-size: 14pt !important;
+        font-weight: bold;
+        margin-top: 20px;
+        margin-bottom: 25px !important;
+        color: black !important;
+    }
+
+    .module {
+        display: none !important;
+    }
+
+    .module.active {
+        display: block !important;
+    }
+
+    .panel {
+        box-shadow: none;
+        border: none;
+    }
+
+    #nobet-rapor-alani {
+        display: block !important;
+    }
+
+    .table-container {
+        overflow: visible;
+        border: none;
+    }
 
     #ders-programi .kontrol-paneli,
     #ders-programi .program-ust-kontrol {
@@ -2344,15 +2323,4 @@ td[style*="background-color"] .input-wrapper {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
-}
-.clickable-ekders {
-    cursor: pointer;
-    text-decoration: underline;
-    text-decoration-style: dashed;
-    text-decoration-color: #0056b3;
-    color: #0056b3;
-}
-
-.clickable-ekders:hover {
-    background-color: #e6f7ff !important;
 }

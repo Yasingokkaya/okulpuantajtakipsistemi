@@ -352,8 +352,7 @@
                         <h3>Detaylı Ders Görevlendirme (Otomatik Atama)</h3>
                     </div>
                     <div class="panel-body">
-                        <div class="gorevlendirme-form-area no-print">
-                            <div class="gorevlendirme-layout" style="grid-template-columns: 1fr 1.5fr; gap: 30px;">
+                        <div class="gorevlendirme-form-area"> <div class="gorevlendirme-layout no-print" style="grid-template-columns: 1fr 1.5fr; gap: 30px;">
                                 <div class="gorev-panel">
                                     <h4>1. Görevlendirme Bilgileri</h4>
                                     <div class="form-group">
@@ -459,16 +458,31 @@
                             </div>
 
                             <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+                                <h3 id="gorevlendirme-baslik" style="margin: 0;">Görevlendirme Kayıtları</h3>
+                                <div class="no-print">
+                                    <button id="btn-gorev-yazdir" class="btn btn-header-add"
+                                        style="background-color: var(--info-color);">Yazdır</button>
+                                </div>
                             </div>
-                            <div class="table-container">
-                                <table class="gorevlendirme-table">
-                                    <thead>
-                                    </thead>
-                                    <tbody id="gorevlendirme-tbody">
-                                    </tbody>
-                                </table>
-                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="gorevlendirme-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tarih</th>
+                                        <th>Asıl Öğretmen</th>
+                                        <th>Neden</th>
+                                        <th>Durum</th>
+                                        <th>Toplam Saat</th>
+                                        <th>Ders Detayları (Görevli)</th>
+                                        <th>Açıklama</th>
+                                        <th class="no-print">İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gorevlendirme-tbody">
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -1008,11 +1022,7 @@
                             </div>
                             <ul id="izin-tipi-list" class="settings-list"></ul>
                         </div>
-
-
-
                         <div id="zaman-cizelgesi-tab" class="settings-tab-content">
-
                             <p>Ders programı modülü, buradaki ayarlara göre otomatik olarak şekillenecektir.</p>
                             <div class="form-grid">
                                 <div class="form-group"><label for="setting-dersBaslangic">Ders Başlama
@@ -1036,7 +1046,6 @@
                                 <button id="zaman-cizelgesi-kaydet-btn" class="btn btn-save">Çizelge Ayarlarını
                                     Kaydet</button>
                             </div>
-
                             <div style="margin-top: 30px; border-top: 1px solid #dee2e6; padding-top: 20px;">
                                 <h4>Özel Teneffüs Ayarları</h4>
                                 <p>Standart teneffüs süresi dışında, belirli derslerden sonra farklı sürede
@@ -1057,29 +1066,19 @@
                                 <ul id="ozel-teneffus-listesi" class="settings-list" style="margin-top: 15px;">
                                 </ul>
                             </div>
-
                             <div id="zaman-cizelgesi-goruntule"
                                 style="margin-top: 30px; border-top: 1px solid #dee2e6; padding-top: 20px;">
                             </div>
-
-
                             <div id="zaman-cizelgesi-goruntule"
                                 style="margin-top: 30px; border-top: 1px solid #dee2e6; padding-top: 20px;">
                             </div>
-
-
                         </div>
                     </div>
-
-
                     <div id="ders-brans-kurallari-tab" class="settings-tab-content">
                         <h3 style="margin-top: 15px;">Ders (Branş) Kuralları</h3>
                         <p>Derslerin haftalık saatlerini, yerleşim tercihlerini ve diğer derslerle ilişkilerini
                             buradan
                             yönetin.</p>
-
-
-
                         <div class="form-grid"
                             style="grid-template-columns: 1fr; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
                             <div class="form-group">
@@ -1087,7 +1086,6 @@
                                 <select id="kural-ders-sec"></select>
                             </div>
                         </div>
-
                         <div id="ders-kurali-detaylari">
                             <form>
                                 <div class="form-grid"
@@ -1110,11 +1108,9 @@
                                         <input type="number" id="kural-gunluk-max-saat" placeholder="Örn: 2">
                                     </div>
                                 </div>
-
                                 <a href="#" id="toggle-detayli-kurallar"
                                     style="display: block; margin: 10px 0; color: var(--theme-primary); text-decoration: none; font-weight: 600;">▶
                                     Detaylı Kuralları Göster/Gizle</a>
-
                                 <div id="detayli-kurallar-container"
                                     style="display: none; background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
                                     <div class="form-grid"
@@ -1148,14 +1144,12 @@
                                     </div>
                                 </div>
                             </form>
-
                             <div class="form-group" style="margin-top: 25px;">
                                 <button id="ders-kural-ekle-btn" class="btn btn-add"
                                     style="width:100%; padding: 12px;">Kural
                                     Ekle/Güncelle</button>
                             </div>
                         </div>
-
                         <div id="ders-kural-table-container" style="margin-top: 25px;">
                             <div id="ders-kural-filters" class="filter-container"
                                 style="grid-template-columns: repeat(3, 1fr); margin-bottom: 15px; display: none;">
@@ -1199,7 +1193,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
                 <div id="ogrenci-kurallari-tab" class="settings-tab-content">
                     <h3 style="margin-top: 15px;">Öğrenci ve Sınıf Odaklı Kurallar</h3>
@@ -1238,7 +1231,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="derslik-yonetimi-tab" class="settings-tab-content">
                     <h3 style="margin-top: 15px;">Derslik Yönetimi (Fiziksel Kısıtlar)</h3>
                     <p>Fen Lab, Spor Salonu gibi özel ve tek olan derslikleri tanımlayarak çakışmaları önleyin.
@@ -1256,7 +1248,6 @@
                     </div>
                     <ul id="derslik-listesi" class="settings-list"></ul>
                 </div>
-
                 <div id="genel-kurallar-tab" class="settings-tab-content">
                     <h3 style="margin-top: 15px;">Genel Kurallar (Tüm Okul İçin Geçerli)</h3>
                     <div class="form-group">
@@ -1278,7 +1269,6 @@
                         <ul id="genel-bloke-listesi" class="settings-list" style="max-height: 100px;"></ul>
                     </div>
                 </div>
-
                 <div id="seminer-donemi-tab" class="settings-tab-content">
                     <p>Belirli süreli personelin ek derslerinin farklı hesaplanacağı seminer, hizmet içi eğitim
                         gibi özel dönemleri buradan yönetebilirsiniz.</p>
@@ -1291,8 +1281,6 @@
                     </div>
                     <ul id="seminer-donemi-list" class="settings-list"></ul>
                 </div>
-
-
                 <div id="egitim-donemi-tab" class="settings-tab-content">
                     <p>Rehberlik ek dersi gibi hesaplamaların sadece okulun açık olduğu haftalarda yapılması için
                         eğitim-öğretim dönemlerini (örneğin Güz Dönemi, Bahar Dönemi) buradan yönetebilirsiniz.</p>
@@ -1305,7 +1293,6 @@
                     </div>
                     <ul id="egitim-donemi-list" class="settings-list"></ul>
                 </div>
-
                 <div id="ogretmen-kural-modal" class="modal">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -1323,7 +1310,6 @@
                                     görüntülemek ve düzenlemek için lütfen yukarıdaki listeden bir öğretmen
                                     seçin.</p>
                             </div>
-
                             <div id="ogretmen-kural-formu"
                                 style="border-top: 1px solid var(--border-color); padding-top: 20px; display:none;">
 
@@ -1337,7 +1323,6 @@
                                         kişisel programınıza göre şekillendirebilirsiniz.
                                     </p>
                                 </div>
-
                                 <div class="table-container" style="margin-bottom: 25px;">
                                     <table id="ogretmen-kural-tablosu" class="schedule-table"></table>
                                 </div>
@@ -1359,7 +1344,6 @@
                                             Boşluk</label><input type="number" id="ogretmen-max-bosluk"
                                             placeholder="Örn: 1 Saat"></div>
                                 </div>
-
                                 <div class="button-group" style="margin-top: 20px;">
                                     <button id="ogretmen-kural-kaydet-btn" class="btn btn-save"
                                         style="width: 100%;">Öğretmen
@@ -1369,9 +1353,7 @@
                         </div>
                     </div>
                 </div>
-
         </main>
-
         <div id="edit-gorevlendirme-modal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1381,7 +1363,6 @@
                 <div class="modal-body">
                     <form id="editGorevlendirmeForm">
                         <input type="hidden" id="edit-g-id">
-
                         <div class="form-grid" style="grid-template-columns: 1fr 2fr 1fr;">
                             <div class="form-group">
                                 <label for="edit-g-tarih">Tarih</label>
@@ -1427,7 +1408,6 @@
                 </div>
             </div>
         </div>
-
         <div id="edit-setting-modal" class="modal">
             <div class="modal-content" style="max-width: 500px;">
                 <div class="modal-header">
@@ -1450,9 +1430,6 @@
                 </div>
             </div>
         </div>
-
-
-
         <div id="add-staff-modal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1620,8 +1597,6 @@
                 </div>
             </div>
         </div>
-
-
         <div id="edit-password-modal" class="modal">
             <div class="modal-content" style="max-width: 500px;">
                 <div class="modal-header">
@@ -1646,9 +1621,6 @@
                 </div>
             </div>
         </div>
-
-
-
         <template id="personel-form-template">
             <div class="form-grid">
                 <div class="form-group">
@@ -1700,7 +1672,6 @@
                         saatlerini belirtin.</p>
                     <div
                         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px;">
-
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" id="pzts_calisiyor" name="kismi_gunler" value="Pazartesi"
@@ -1713,7 +1684,6 @@
                                 <span style="margin-left: 5px;">saat</span>
                             </div>
                         </div>
-
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" id="sali_calisiyor" name="kismi_gunler" value="Salı"
@@ -1726,7 +1696,6 @@
                                 <span style="margin-left: 5px;">saat</span>
                             </div>
                         </div>
-
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" id="crs_calisiyor" name="kismi_gunler" value="Çarşamba"
@@ -1739,7 +1708,6 @@
                                 <span style="margin-left: 5px;">saat</span>
                             </div>
                         </div>
-
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" id="prs_calisiyor" name="kismi_gunler" value="Perşembe"
@@ -1752,7 +1720,6 @@
                                 <span style="margin-left: 5px;">saat</span>
                             </div>
                         </div>
-
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" id="cuma_calisiyor" name="kismi_gunler" value="Cuma"
@@ -1765,7 +1732,6 @@
                                 <span style="margin-left: 5px;">saat</span>
                             </div>
                         </div>
-
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" id="cmrts_calisiyor" name="kismi_gunler" value="Cumartesi"
@@ -1778,7 +1744,6 @@
                                 <span style="margin-left: 5px;">saat</span>
                             </div>
                         </div>
-
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center;">
                                 <input type="checkbox" id="pazar_calisiyor" name="kismi_gunler" value="Pazar"
@@ -1852,8 +1817,7 @@
                 </div>
             </div>
         </template>
-
-<div id="ekders-detay-modal" class="modal">
+        <div id="ekders-detay-modal" class="modal">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
                     <h3 id="ekders-modal-title">Ek Ders Detayları</h3>
@@ -1888,8 +1852,6 @@
                 </div>
             </div>
         </div>
-
-
         <div id="personel-detay-modal" class="modal">
             <div class="modal-content" style="max-width: 1000px;">
                 <div class="modal-header">
@@ -1977,7 +1939,6 @@
                 </div>
             </div>
         </div>
-
         <div id="kopyala-program-modal" class="modal">
             <div class="modal-content" style="max-width: 450px;">
                 <div class="modal-header">
@@ -1996,8 +1957,6 @@
                 </div>
             </div>
         </div>
-
-
         <div id="matrix-modal" class="modal">
             <div class="modal-content" style="max-width: 95%; width: 95%;">
                 <div class="modal-header">
@@ -2008,10 +1967,6 @@
                 </div>
             </div>
         </div>
-
-          
-
-
         <script>
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
@@ -2023,8 +1978,6 @@
                 });
             }
         </script>
-
         <script type="module" src="app.js"></script>
 </body>
-
 </html>
