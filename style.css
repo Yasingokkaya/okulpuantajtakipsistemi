@@ -2161,7 +2161,8 @@ td[style*="background-color"] .input-wrapper {
     #logout-btn,
     #btn-nobet-yazdir,
     .form-container,
-    .no-print {
+    .no-print,
+    .delete-lesson-btn {
         display: none !important;
     }
 
