@@ -5493,14 +5493,7 @@ async function renderClassTimeSlotMatrix(containerId) {
                 if (dersData && dersData.dersAdi) {
 
                     const kisaAd = window.dersKisaltmaMap.get(dersData.dersAdi) || '???';
-                    let bgColor;
-                        if (currentView === 'sinif') {
-                            // Sınıf görünümünde, renk karttaki öğretmene göredir
-                            bgColor = teacherColorMap.get(dersData.ogretmen) || '#f0f0f0';
-                        } else {
-                            // Öğretmen görünümünde, renk o an bakılan öğretmene göredir (window.aktifGrup)
-                            bgColor = teacherColorMap.get(window.aktifGrup) || '#f0f0f0';
-                        }
+                    const bgColor = stringToColor(dersData.dersAdi) || '#f0f0f0';
                     const textColor = getContrastColor(bgColor);
                     const tooltip = `Ders: ${dersData.dersAdi}\nÖğretmen: ${dersData.ogretmen || 'Atanmamış'}`; // Tooltip bilgisi aynı
 
@@ -5597,11 +5590,12 @@ function renderSchedule() {
             if (dersData) {
                 let bgColor;
                         if (currentView === 'sinif') {
-                            // Sınıf görünümünde, renk karttaki öğretmene göredir
+                            // Sınıf görünümünde, renk karttaki ÖĞRETMENE göredir
                             bgColor = teacherColorMap.get(dersData.ogretmen) || '#f0f0f0';
                         } else {
-                            // Öğretmen görünümünde, renk o an bakılan öğretmene göredir (window.aktifGrup)
-                            bgColor = teacherColorMap.get(window.aktifGrup) || '#f0f0f0';
+                            // Öğretmen görünümünde, renk karttaki SINIFA göredir
+                            // (loadScheduleForTeacher fonksiyonu dersData.sinif bilgisini ekler)
+                            bgColor = stringToColor(dersData.sinif) || '#f0f0f0';
                         }
                 const textColor = getContrastColor(bgColor);
                 const tooltipText = `Öğretmen: ${dersData.ogretmen || 'Atanmamış'}`;
