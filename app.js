@@ -5493,7 +5493,14 @@ async function renderClassTimeSlotMatrix(containerId) {
                 if (dersData && dersData.dersAdi) {
 
                     const kisaAd = window.dersKisaltmaMap.get(dersData.dersAdi) || '???';
-                    const bgColor = teacherColorMap.get(dersData.ogretmen) || '#f0f0f0'; // Haritadan al, bulamazsan varsayılan renk
+                    let bgColor;
+                        if (currentView === 'sinif') {
+                            // Sınıf görünümünde, renk karttaki öğretmene göredir
+                            bgColor = teacherColorMap.get(dersData.ogretmen) || '#f0f0f0';
+                        } else {
+                            // Öğretmen görünümünde, renk o an bakılan öğretmene göredir (window.aktifGrup)
+                            bgColor = teacherColorMap.get(window.aktifGrup) || '#f0f0f0';
+                        }
                     const textColor = getContrastColor(bgColor);
                     const tooltip = `Ders: ${dersData.dersAdi}\nÖğretmen: ${dersData.ogretmen || 'Atanmamış'}`; // Tooltip bilgisi aynı
 
@@ -5588,7 +5595,14 @@ function renderSchedule() {
             const conflictClass = dersData && dersData.hasConflict ? 'has-conflict' : '';
             tableHTML += `<td data-gun="${gun}" data-saat="${slot.baslangic}" data-ders-no="${slot.dersNo}">`; // data-ders-no eklendi
             if (dersData) {
-                const bgColor = teacherColorMap.get(dersData.ogretmen) || '#f0f0f0'; // Haritadan al, bulamazsan varsayılan renk
+                let bgColor;
+                        if (currentView === 'sinif') {
+                            // Sınıf görünümünde, renk karttaki öğretmene göredir
+                            bgColor = teacherColorMap.get(dersData.ogretmen) || '#f0f0f0';
+                        } else {
+                            // Öğretmen görünümünde, renk o an bakılan öğretmene göredir (window.aktifGrup)
+                            bgColor = teacherColorMap.get(window.aktifGrup) || '#f0f0f0';
+                        }
                 const textColor = getContrastColor(bgColor);
                 const tooltipText = `Öğretmen: ${dersData.ogretmen || 'Atanmamış'}`;
                 const strongText = currentView === 'sinif' ? dersData.ogretmen : (dersData.sinif || ''); // Öğretmen görünümü için sınıf eklendi
