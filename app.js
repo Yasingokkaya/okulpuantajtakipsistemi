@@ -25,21 +25,21 @@ const auth = getAuth(app);
 window.auth = auth;
 
 const COLOR_PALETTE = [
-                '#FFADAD', // Açık Kırmızı
-                '#FFD6A5', // Açık Turuncu
-                '#FDFFB6', // Açık Sarı
-                '#CAFFBF', // Açık Yeşil (Lime)
-                '#9BF6FF', // Açık Mavi (Cyan)
-                '#A0C4FF', // Açık Gök Mavisi
-                '#BDB2FF', // Açık Mor (Lavanta)
-                '#FFC6FF', // Açık Pembe (Magenta)
-                '#FFB3BA', // Somon Rengi
-                '#99E2B4', // Nane Yeşili
-                '#FFD166', // Mandalina
-                '#A9DEF9', // Bebek Mavisi
-                '#E4C1F9', // Leylak
-                '#F3C5C5', // Gül Kurusu
-                '#C1E1C1'  // Fıstıki
+                'hsl(0, 100%, 84%)',   // Açık Kırmızı
+                'hsl(34, 100%, 82%)',  // Açık Turuncu
+                'hsl(62, 100%, 85%)',  // Açık Sarı
+                'hsl(100, 100%, 87%)', // Açık Yeşil (Lime)
+                'hsl(185, 100%, 80%)', // Açık Mavi (Cyan)
+                'hsl(217, 100%, 81%)', // Açık Gök Mavisi
+                'hsl(247, 100%, 85%)', // Açık Mor (Lavanta)
+                'hsl(300, 100%, 89%)', // Açık Pembe (Magenta)
+                'hsl(354, 100%, 85%)', // Somon Rengi
+                'hsl(140, 60%, 74%)',  // Nane Yeşili
+                'hsl(41, 100%, 70%)',  // Mandalina
+                'hsl(203, 89%, 82%)',  // Bebek Mavisi
+                'hsl(278, 80%, 87%)',  // Leylak
+                'hsl(0, 68%, 86%)',    // Gül Kurusu
+                'hsl(120, 42%, 82%)'   // Fıstıki
             ];
 
 
