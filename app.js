@@ -982,7 +982,16 @@ async function getPersonelPeriodsForMonth(year, month) {
 
                 if (isRelevant) {
                     const effectiveStartDate = (baslangicTarihi < ayIlkGunStr) ? ayIlkGunStr : baslangicTarihi;
-                    const effectiveEndDate = (bitisTarihi === null || bitisTarihi > aySonGunStr) ? aySonGunStr : bitisTarihi;
+                    const mainIstenAyrilis = (personelData.isten_ayrilis && personelData.isten_ayrilis !== '---' && personelData.isten_ayrilis !== '') ? personelData.isten_ayrilis : null;
+                    
+                    let combinedBitisTarihi = bitisTarihi;
+                    if (mainIstenAyrilis) {
+                        if (combinedBitisTarihi === null || mainIstenAyrilis < combinedBitisTarihi) {
+                            combinedBitisTarihi = mainIstenAyrilis;
+                        }
+                    }
+                    
+                    const effectiveEndDate = (combinedBitisTarihi === null || combinedBitisTarihi > aySonGunStr) ? aySonGunStr : combinedBitisTarihi;
 
                     personelPeriods.push({
                         ...personelData,
