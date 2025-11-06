@@ -31,7 +31,7 @@
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <div id="login-panel"
-    style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--light-gray-color);">
+        style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--light-gray-color);">
         <div
             style="width: 100%; max-width: 400px; padding: 40px; background: var(--white-color); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
             <h2 style="text-align: center; color: var(--theme-primary); margin-bottom: 30px;">Okul Puantaj Sistemi Giriş
@@ -352,7 +352,9 @@
                         <h3>Detaylı Ders Görevlendirme (Otomatik Atama)</h3>
                     </div>
                     <div class="panel-body">
-                        <div class="gorevlendirme-form-area"> <div class="gorevlendirme-layout no-print" style="grid-template-columns: 1fr 1.5fr; gap: 30px;">
+                        <div class="gorevlendirme-form-area">
+                            <div class="gorevlendirme-layout no-print"
+                                style="grid-template-columns: 1fr 1.5fr; gap: 30px;">
                                 <div class="gorev-panel">
                                     <h4>1. Görevlendirme Bilgileri</h4>
                                     <div class="form-group">
@@ -620,8 +622,7 @@
                                 </div>
                                 <div class="form-group" style="grid-column: 1 / -1;">
                                     <label for="izin-aciklama">Açıklama / Not</label>
-                                    <input type="text" id="izin-aciklama"
-                                        placeholder="İzinle ilgili kısa bir not...">
+                                    <input type="text" id="izin-aciklama" placeholder="İzinle ilgili kısa bir not...">
                                 </div>
                             </div>
                             <div class="izin-hesaplama-alani">
@@ -756,8 +757,7 @@
                                 <button id="btn-print">Yazdır</button>
                                 <button id="btn-pdf">PDF İndir</button>
                                 <button id="btn-excel">Excel İndir</button>
-                                <button id="btn-delete-puantaj"
-                                    style="background-color: var(--danger-color);">Puantajı
+                                <button id="btn-delete-puantaj" style="background-color: var(--danger-color);">Puantajı
                                     Sil</button>
                             </div>
                         </div>
@@ -1013,8 +1013,7 @@
                         </div>
 
                         <div id="izin-tipi-tab" class="settings-tab-content">
-                            <div class="add-setting-form"
-                                style="grid-template-columns: 2fr 1fr auto; display: grid;">
+                            <div class="add-setting-form" style="grid-template-columns: 2fr 1fr auto; display: grid;">
                                 <input type="text" id="add-izin-tipi-ad-input"
                                     placeholder="Yeni izin tipi adı (Örn: Yıllık İzin)">
                                 <input type="text" id="add-izin-tipi-kod-input" placeholder="Puantaj Kodu (Örn: I)">
@@ -1186,8 +1185,7 @@
                                     </thead>
                                     <tbody id="ders-kural-tbody">
                                     </tbody>
-                                    <tfoot id="ders-kural-tfoot"
-                                        style="font-weight: bold; background-color: #f8f9fa;">
+                                    <tfoot id="ders-kural-tfoot" style="font-weight: bold; background-color: #f8f9fa;">
                                     </tfoot>
                                 </table>
                             </div>
@@ -1201,8 +1199,7 @@
                         <p style="font-size: 0.9em; margin-top: 0;">Öğrencilerin bir günde göreceği zor ders
                             sayısını sınırlayın.</p>
                         <div class="add-setting-form" style="align-items: flex-end;">
-                            <select id="kural-zor-dersler-sec" multiple=""
-                                style="min-height: 100px; flex:3;"></select>
+                            <select id="kural-zor-dersler-sec" multiple="" style="min-height: 100px; flex:3;"></select>
                             <input type="number" id="kural-gunluk-max-zor-ders" placeholder="Max Sayı" style="flex:1;">
                             <button id="zor-ders-kural-kaydet-btn" class="btn btn-save" style="flex:1;">Kaydet</button>
                         </div>
@@ -1566,8 +1563,7 @@
                 <div class="modal-body">
                     <form id="edit-izin-form">
                         <input type="hidden" id="edit-izin-id">
-                        <div class="form-grid"
-                            style="grid-template-columns: 2fr 1.5fr 1fr 1fr; align-items: flex-end;">
+                        <div class="form-grid" style="grid-template-columns: 2fr 1.5fr 1fr 1fr; align-items: flex-end;">
                             <div class="form-group">
                                 <label for="edit-izin-personel">Personel</label>
                                 <select id="edit-izin-personel" disabled></select>
@@ -1586,8 +1582,7 @@
                             </div>
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label for="edit-izin-aciklama">Açıklama / Not</label>
-                                <input type="text" id="edit-izin-aciklama"
-                                    placeholder="İzinle ilgili kısa bir not...">
+                                <input type="text" id="edit-izin-aciklama" placeholder="İzinle ilgili kısa bir not...">
                             </div>
                         </div>
                         <div class="button-group" style="margin-top: 25px;">
@@ -1646,6 +1641,14 @@
                     <label for="gorevi_bransi">Görevi / Branşı:</label>
                     <select id="gorevi_bransi" name="gorevi_bransi" required>
                         <option value="" disabled selected>Önce Personel Nevisi seçin</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Kademe</label>
+                    <select id="kademe" name="kademe">
+                        <option value="İlkokul">İlkokul</option>
+                        <option value="Ortaokul">Ortaokul</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -1980,4 +1983,5 @@
         </script>
         <script type="module" src="app.js"></script>
 </body>
+
 </html>
