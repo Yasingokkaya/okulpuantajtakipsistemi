@@ -1214,9 +1214,14 @@ function downloadPdf() {
 }
 
 
+// app.js dosyanızdaki mevcut downloadExcel fonksiyonunun tamamını
+// (async function downloadExcel() { ... } bloğunu)
+// aşağıdaki kod ile DEĞİŞTİRİN.
+
 async function downloadExcel() {
     try {
         showToast('Excel dosyası hazırlanıyor, lütfen bekleyin...', 'info');
+        // Renk ve stil tanımlamaları (Mevcut kodunuzdaki gibi)
         const statusColors = {
             'N': '#E8F5E9', 'HT': '#FFEBCC', 'RT': '#D1EAFE', 'İ': '#E6EAFE',
             'R': '#FFEBEE', 'Üİ': '#EAECEE', 'S': '#FFF9C4', 'K': '#D7F9E9',
@@ -1226,14 +1231,16 @@ async function downloadExcel() {
             aylikToplam: '#FFECB3', ekDers: '#C8E6C9', nobet: '#FFE0B2',
             rehberlik: '#C5CAE9', fazlaMesai: '#FFCDD2', mesaiNedeni: '#D2B4DE',
             eksikGunKodu: '#AED6F1', gunToplam: '#E3F2FD', sgkPrim: '#E3F2FD',
-            sosyal: '#FFFFFF'
+            sosyal: '#FFFFFF' // Sosyal yardımlar için beyaz arka plan
         };
         const headerStyle = 'background-color:#343a40; color:white; font-weight:bold; text-align:center; vertical-align:middle; border:0.5pt solid #888888;';
         const cellStyle = (bgColor = '#FFFFFF') => `background-color:${bgColor}; text-align:center; vertical-align:middle; border:0.5pt solid #888888;`;
+
+        // Tarih ve başlık bilgileri (Mevcut kodunuzdaki gibi)
         const year = document.getElementById('input-year').value;
         const month = parseInt(document.getElementById('select-month').value);
         const monthName = document.getElementById('select-month').options[month].text;
-        const educationPeriods = await fetchEducationPeriods(); // Rehberlik hesaplaması için gerekli
+        const educationPeriods = await fetchEducationPeriods();
         const aktifPersonelList = await getPersonelPeriodsForMonth(year, month);
 
         let personelToExport = aktifPersonelList;
@@ -1255,6 +1262,7 @@ async function downloadExcel() {
         const gunBasliklari = ["N", "HT", "RT", "İ", "R", "Üİ", "S", "K", "RTÇ"];
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+        // Personel gruplama (Mevcut kodunuzdaki gibi)
         const grupluPersonel = {
             'Belirli Süreli': personelToExport.filter(p => p.sozlesme_turu === 'Belirli Süreli'),
             'Belirsiz Süreli': personelToExport.filter(p => p.sozlesme_turu === 'Belirsiz Süreli'),
@@ -1277,19 +1285,39 @@ async function downloadExcel() {
             personelGrubu.sort((a, b) => a.ad_soyad.localeCompare(b.ad_soyad, 'tr'));
 
             const saatConfig = saatBasliklariConfig[grupAdi];
-            const colspan = 3 + daysInMonth + saatConfig.headers.length + gunBasliklari.length + 4;
+            const colspan = 3 + daysInMonth + saatConfig.headers.length + gunBasliklari.length + 4; // 4 = Sgk(1) + Sosyal(3)
             excelHtml += `<tr><td colspan="${colspan}" style="${headerStyle} text-align:left; padding-left:10px; font-size:13pt;">${grupAdi} Puantaj Kayıtları</td></tr>`;
-            excelHtml += `<thead><tr><th rowspan="2" style="${headerStyle}">Personel</th><th rowspan="2" style="${headerStyle}">Unvan</th><th rowspan="2" style="${headerStyle}">İşe Giriş<br>İşten Çıkış</th><th colspan="${daysInMonth}" style="${headerStyle}">Aylık Puantaj Durumu</th><th colspan="${saatConfig.headers.length}" style="${headerStyle}">Aylık Saat Toplamları</th><th colspan="${gunBasliklari.length}" style="${headerStyle}">Aylık Gün Toplamları</th><th rowspan="2" style="${headerStyle}">Sgk&nbsp;Prim&nbsp;Günü</th><th colspan="3" style="${headerStyle}">Sosyal Yardımlar</th><th rowspan="2" style="${headerStyle}">İmza</th></tr><tr>`;
+
+            // DÜZELTİLMİŞ BAŞLIK BLOĞU
+            excelHtml += `<thead><tr>
+                            <th rowspan="2" style="${headerStyle}">Personel</th>
+                            <th rowspan="2" style="${headerStyle}">Unvan</th>
+                            <th rowspan="2" style="${headerStyle}">İşe Giriş<br>İşten Çıkış</th>
+                            <th colspan="${daysInMonth}" style="${headerStyle}">Aylık Puantaj Durumu</th>
+                            <th colspan="${saatConfig.headers.length}" style="${headerStyle}">Aylık Saat Toplamları</th>
+                            <th colspan="${gunBasliklari.length}" style="${headerStyle}">Aylık Gün Toplamları</th>
+                            <th rowspan="2" style="${headerStyle}">Sgk&nbsp;Prim&nbsp;Günü</th>
+                            <th colspan="3" style="${headerStyle}">Sosyal Yardımlar</th>
+                            <th rowspan="2" style="${headerStyle}">İmza</th>
+                          </tr><tr>`;
+
+            // Günler (1, 2, 3...)
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
                 excelHtml += `<th style="${headerStyle}">${day}<br>${gunler[date.getDay()]}</th>`;
             }
+            // Saat Toplamları Başlıkları (Aylık Toplam, Ek Ders...)
             saatConfig.headers.forEach(h => excelHtml += `<th style="${headerStyle}">${h.replace('\n', '<br>')}</th>`);
+            // Gün Toplamları Başlıkları (N, HT, R...)
             gunBasliklari.forEach(h => excelHtml += `<th style="${headerStyle}">${h}</th>`);
-            excelHtml += `<th style="${headerStyle}">Eş Durumu</th><th style="${headerStyle}">Çocuk 0-6</th><th style="${headerStyle}">Çocuk 6-18</th></tr></thead><tbody>`;
+            // Sosyal Yardımlar Alt Başlıkları
+            excelHtml += `<th style="${headerStyle}">Eş Durumu</th><th style="${headerStyle}">Çocuk 0-6</th><th style="${headerStyle}">Çocuk 6-18</th>`;
+            excelHtml += `</tr></thead><tbody>`;
+            // BAŞLIK BLOĞU SONU
 
             for (const personel of personelGrubu) {
                 const pData = puantajData[personel.uniquePeriodId] || { dailyData: {} };
+                // Tüm hesaplamalar (Mevcut kodunuzdaki gibi)
                 const monthlyHours = await calculateMonthlyHours(personel.uniquePeriodId);
                 const nobetSaat = nobetVerisi[personel.id] || 0;
                 const rehberlikSaat = calculateEffectiveRehberlikHours(personel.uniquePeriodId, year, month, puantajData, educationPeriods);
@@ -1309,9 +1337,23 @@ async function downloadExcel() {
                 else if (personel.es_durumu === 'çalışıyor') esDurumuText = 'Çalışıyor';
                 else if (personel.es_durumu === 'bekar') esDurumuText = 'Bekar';
 
+                // DÜZELTİLMİŞ EK DERS HESAPLAMA MANTIĞI
+                const toplamAylikSaat = monthlyHours.genelToplam;
+                let ekDersSaat = monthlyHours.ekDers;
+                const kademeDegeri = (personel.kademe || '').toString().trim();
+                const maasKarsiligi = parseInt(personel.maas_karsiligi) || 0;
+                
+                if (kademeDegeri === 'Ortaokul' && maasKarsiligi < 20) {
+                    ekDersSaat = 0;
+                }
+                // HESAPLAMA SONU
+
+                // Satır oluşturma (1. Satır: Statü Kodları)
                 let statusRowHtml = `<tr><td rowspan="2" style="${cellStyle()} text-align:left; padding-left:5px;">${personel.ad_soyad || ''}</td><td rowspan="2" style="${cellStyle()} text-align:left; padding-left:5px;">${personel.unvan || ''}</td><td rowspan="2" style="${cellStyle()}">${formatDateDDMMYYYY(personel.ise_giris)}<br>${ayrilisTarihiGoster}</td>`;
+                // Satır oluşturma (2. Satır: Saatler)
                 let hoursRowHtml = `<tr>`;
 
+                // Günlük Statü ve Saatler (Mevcut kodunuzdaki gibi)
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const dayData = pData.dailyData[dateString] || {};
@@ -1323,12 +1365,14 @@ async function downloadExcel() {
                     hoursRowHtml += `<td style="${cellStyle()}">${hourContent}</td>`;
                 }
 
+                // Aylık Saat Toplamları (Mevcut kodunuzdaki gibi, düzeltilmiş ekDersSaat ile)
                 if (grupAdi === 'Belirsiz Süreli') {
                     statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.aylikToplam)}">${monthlyHours.genelToplam}</td><td rowspan="2" style="${cellStyle(summaryColors.fazlaMesai)}">${fazlaMesaiSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.mesaiNedeni)}">${overtimeReasons[personel.uniquePeriodId] || ''}</td><td rowspan="2" style="${cellStyle(summaryColors.eksikGunKodu)}">${missingDayCodes[personel.uniquePeriodId] || ''}</td>`;
                 } else {
-                    statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.aylikToplam)}">${monthlyHours.genelToplam}</td><td rowspan="2" style="${cellStyle(summaryColors.ekDers)}">${monthlyHours.ekDers}</td><td rowspan="2" style="${cellStyle(summaryColors.nobet)}">${nobetSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.rehberlik)}">${rehberlikSaat}</td>`;
+                    statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.aylikToplam)}">${toplamAylikSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.ekDers)}">${ekDersSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.nobet)}">${nobetSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.rehberlik)}">${rehberlikSaat}</td>`;
                 }
 
+                // Aylık Gün Toplamları (Mevcut kodunuzdaki gibi)
                 gunBasliklari.forEach(h => {
                     let content = statusCounts[h] || 0;
                     if (h === 'N' && personel.sozlesme_turu === 'Kısmi Süreli') {
@@ -1337,57 +1381,38 @@ async function downloadExcel() {
                     statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.gunToplam)}">${content}</td>`;
                 });
 
-                // ...
-                const toplamAylikSaat = monthlyHours.genelToplam;
-                let ekDersSaat = monthlyHours.ekDers;
-                const kademeDegeri = (personel.kademe || '').toString().trim();
-                const maasKarsiligi = parseInt(personel.maas_karsiligi) || 0; // <-- YENİ DEĞİŞKEN
+                // --- DÜZELTME BAŞLANGICI ---
+                // EKSİK OLAN SÜTUNLAR BURAYA EKLENDİ
 
-                // --- BAŞLANGIÇ: DEBUG LOG ---
-                if (personel.ad_soyad === "Sinan Özçelik") {
-                    console.group(`[renderPuantajTable] ${personel.ad_soyad}`);
-                    console.log(`KURAL KONTROL EDİLİYOR...`);
-                    console.log(` - Kademe: '${kademeDegeri}'`);
-                    console.log(` - Maas Karsiligi (Haftalık): ${maasKarsiligi}`); // <-- YENİ LOG
-                    console.log(` - Toplam Saat (Aylık): ${toplamAylikSaat}`);
-                    console.log(` - Hesaplanan Ek Ders (Önce): ${ekDersSaat}`);
-                }
-                // --- SON: DEBUG LOG ---
+                // Sgk Prim Günü
+                statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.sgkPrim)}">${sgkPrimGunu}</td>`;
 
-                // KURAL GÜNCELLENDİ: Toplam saate değil, maaş karşılığına bak
-                if (kademeDegeri === 'Ortaokul' && maasKarsiligi < 20) {
-                    ekDersSaat = 0;
+                // Sosyal Yardımlar
+                statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${esDurumuText}</td>`;
+                statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${personel.cocuk_0_6 || 0}</td>`;
+                statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.sosyal)}">${personel.cocuk_6_ustu || 0}</td>`;
 
-                    // --- BAŞLANGIÇ: DEBUG LOG ---
-                    if (personel.ad_soyad === "Sinan Özçelik") {
-                        console.log(` - DURUM: Koşul sağlandı (Kademe: Ortaokul, Maaş Karşılığı: ${maasKarsiligi} < 20), ekDersSaat SIFIRLANDI.`);
-                        console.log(`>>> EKRANA YAZILAN: ${ekDersSaat}`);
-                        console.groupEnd();
-                    }
-                    // --- SON: DEBUG LOG ---
-                } else if (personel.ad_soyad === "Sinan Özçelik") {
-                    // --- BAŞLANGIÇ: DEBUG LOG ---
-                    console.log(` - DURUM: Koşul sağlanmadı, ekDersSaat DEĞİŞMEDİ.`);
-                    console.log(`>>> EKRANA YAZILAN: ${ekDersSaat}`);
-                    console.groupEnd();
-                    // --- SON: DEBUG LOG ---
-                }
+                // İmza
+                statusRowHtml += `<td rowspan="2" style="${cellStyle()}"></td>`;
 
-                statusRowHtml += `<td rowspan="2" style="${cellStyle(summaryColors.aylikToplam)}">${toplamAylikSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.ekDers)}">${ekDersSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.nobet)}">${nobetSaat}</td><td rowspan="2" style="${cellStyle(summaryColors.rehberlik)}">${rehberlikSaat}</td>`;
+                // --- DÜZELTME SONU ---
+
+                // Satırları kapat ve ana HTML'e ekle
                 hoursRowHtml += `</tr>`;
                 excelHtml += statusRowHtml + hoursRowHtml;
-            }
+            } // personel döngüsü sonu
             excelHtml += `</tbody>`;
-        }
+        } // grup döngüsü sonu
         excelHtml += '</table>';
 
+        // Lejant (Mevcut kodunuzdaki gibi)
         const statusDescriptions = {
             'N': 'Normal', 'HT': 'Hafta Sonu', 'RT': 'Resmi Tatil', 'İ': 'İzinli (Ücretli)',
             'R': 'Raporlu', 'Üİ': 'Ücretsiz İzin', 'S': 'Yıllık İzin', 'K': 'Yarım Gün Çalışma',
             'Y': 'Yarım Gün Çalışma (Kısmi)', 'E': 'Eksik Gün', 'RTÇ': 'Resmi Tatil Çalışması'
         };
 
-        excelHtml += '<br><br><table style="border-collapse:collapse;">'; // "Lejant" başlığı kaldırıldı
+        excelHtml += '<br><br><table style="border-collapse:collapse;">';
         for (const code in statusDescriptions) {
             if (statusColors[code]) {
                 excelHtml += `<tr><td style="${cellStyle(statusColors[code])}">${code}</td><td style="${cellStyle()} padding:4px 8px; text-align:left;">${statusDescriptions[code]}</td></tr>`;
@@ -1395,6 +1420,7 @@ async function downloadExcel() {
         }
         excelHtml += '</table>';
 
+        // Dosya oluşturma (Mevcut kodunuzdaki gibi)
         const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>${excelHtml}</body></html>`;
 
         const blob = new Blob(['\uFEFF', fullHtml], { type: 'application/vnd.ms-excel' });
