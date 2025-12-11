@@ -1,21 +1,20 @@
 {
-  "name": "Okul Puantaj Sistemi",
-  "short_name": "OPS",
-  "start_url": "index.html",
+  "name": "KoopSistem",
+  "short_name": "KoopSistem",
+  "start_url": "./panels/member.html",
   "display": "standalone",
-  "background_color": "#192a56",
-  "theme_color": "#192a56",
-  "description": "Okul için geliştirilmiş puantaj ve görevlendirme sistemi.",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
   "icons": [
     {
-      "src": "logo-192.png",
+      "src": "app-logo.jpg",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/jpeg"
     },
     {
-      "src": "logo-512.png",
+      "src": "app-logo.jpg",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/jpeg"
     }
   ]
 }

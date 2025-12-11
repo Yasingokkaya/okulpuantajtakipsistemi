@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Süt Toplama Rota</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/jpeg" href="app-logo.jpg">
+    <link rel="apple-touch-icon" href="app-logo.jpg">
+    <link rel="manifest" href="../manifest.json">
+    <style>
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', sans-serif; padding-bottom: 20px; }
+        
+        /* HEADER (Daha az yer kaplayan) */
+        .header-card {
+            background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%);
+            color: white; 
+            padding: 15px 15px 35px 15px; /* Alt boşluk input card için */
+            border-bottom-left-radius: 25px; 
+            border-bottom-right-radius: 25px;
+            box-shadow: 0 5px 15px rgba(14, 116, 144, 0.3);
+            position: relative;
+            margin-bottom: 0;
+        }
+
+        /* İSTATİSTİK KUTULARI (Daha kompakt) */
+        .stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+            margin-top: 15px;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px; padding: 5px;
+            text-align: center; backdrop-filter: blur(5px);
+        }
+        .stat-val { font-size: 1.1rem; font-weight: 800; line-height: 1.1; }
+        .stat-label { font-size: 0.65rem; opacity: 0.9; text-transform: uppercase; }
+
+        /* ÇIKIŞ BUTONU */
+        .logout-btn {
+            background: rgba(255,255,255,0.2); border: none; color: white;
+            width: 35px; height: 35px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        /* GİRİŞ KARTI (Yukarı bindirme ayarı) */
+        .input-card {
+            background: white; border-radius: 20px; padding: 20px 15px;
+            margin: -25px 10px 10px 10px; /* Kenar boşlukları azaltıldı */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08); position: relative;
+        }
+
+        /* FORM ELEMANLARI (Daha ince) */
+        .form-label { margin-bottom: 2px; font-size: 0.8rem; color: #64748b; font-weight: 600; }
+        
+        .form-select, .form-control {
+            border-radius: 10px; border: 1px solid #cbd5e1; 
+            padding: 8px 10px; font-size: 0.95rem; /* Yazı boyutu ideal */
+            height: auto;
+        }
+        .form-select:focus, .form-control:focus {
+            border-color: #0e7490; box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+        }
+
+        /* NUMPAD (Optimize edilmiş) */
+        .numpad-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+            margin-bottom: 15px; margin-top: 10px;
+        }
+        .numpad-grid button {
+            padding: 10px 0; /* Tuş yüksekliği azaltıldı */
+            font-size: 1.3rem; /* Rakamlar hala büyük */
+            border-radius: 8px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #334155; font-weight: 700;
+            box-shadow: 0 2px 0 #cbd5e1;
+        }
+        .numpad-grid button:active { transform: scale(0.96); background-color: #e2e8f0; }
+
+        /* BUTONLAR */
+        .btn-collect {
+            background: linear-gradient(45deg, #059669, #10b981);
+            color: white; font-weight: bold; font-size: 1rem;
+            padding: 12px; border-radius: 10px; width: 100%; border: none;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+        
+        /* LİSTE GÖRÜNÜMÜ */
+        .record-item { 
+            background: white; margin: 8px 10px; padding: 12px; 
+            border-radius: 12px; display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03); border-left: 4px solid;
+        }
+        
+        .icon-box {
+            width: 35px; height: 35px; border-radius: 8px; font-size: 1rem; margin-right: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sabah-bg { background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; }
+        .aksam-bg { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+        .border-sabah { border-color: #f59e0b; } 
+        .border-aksam { border-color: #3b82f6; }
+        
+        /* --- YENİ EKLENECEK BUTON STİLLERİ --- */
+        .action-btns {
+            display: flex;
+            gap: 8px; /* Butonlar arasına boşluk */
+        }
+
+        .action-btns button { 
+            width: 40px; height: 40px; /* Buton boyutu mobilde kolay kullanım için artırıldı */
+            border-radius: 10px;
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            transition: transform 0.1s;
+            cursor: pointer;
+        }
+        
+        .action-btns button:active { transform: scale(0.9); }
+
+        /* DÜZENLE BUTONU (MAVİ) */
+        .btn-edit-rec {
+            background-color: #e0f2fe; /* Açık Mavi Zemin */
+            color: #0369a1;            /* Koyu Mavi İkon */
+        }
+
+        /* SİL BUTONU (KIRMIZI) */
+        .btn-del-rec {
+            background-color: #fee2e2; /* Açık Kırmızı Zemin */
+            color: #dc2626;            /* Koyu Kırmızı İkon */
+        }
+        /* -------------------------------------- */
+    </style>
+       
+    
+</head>
+<body>
+
+<div class="header-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                <i class="fa-solid fa-truck-fast fa-lg"></i>
+            </div>
+            <div>
+                <h5 class="m-0 fw-bold">Süt Toplama</h5>
+                <small class="opacity-75" id="driverName">Yükleniyor...</small>
+            </div>
+        </div>
+        <button class="logout-btn" id="logoutBtn" onclick="cikisYap()">
+            <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-val text-warning" id="totalSabah">0</div>
+            <div class="stat-label">Sabah</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-val text-info" id="totalAksam">0</div>
+            <div class="stat-label">Akşam</div>
+        </div>
+        <div class="stat-box" style="background: white; color: #0e7490;">
+            <div class="stat-val" id="dailyTotal">0</div>
+            <div class="stat-label fw-bold">Toplam</div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-5">
+                <input type="date" class="form-control border-0 shadow-sm text-center fw-bold" 
+                       style="background: rgba(255,255,255,0.9); height: 45px; border-radius: 12px;" 
+                       id="islemTarihi">
+            </div>
+            <div class="col-7">
+                <div class="d-flex gap-2 bg-white p-1 rounded-4 shadow-sm">
+                    <button type="button" class="btn btn-sm flex-grow-1 fw-bold rounded-3" id="btnAksam"
+                            style="color: #64748b;" onclick="setPeriod('aksam')">
+                        <i class="fa-solid fa-moon"></i> Akşam
+                    </button>
+                    <button type="button" class="btn btn-sm flex-grow-1 fw-bold rounded-3 active-mode" id="btnSabah"
+                            style="background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa;" onclick="setPeriod('sabah')">
+                        <i class="fa-solid fa-sun"></i> Sabah
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="input-card">
+    <form id="collectionForm">
+        <div class="mb-2">
+            <label class="form-label">Rota / Köy Seç</label>
+            <select class="form-select" id="villageFilter">
+                <option value="all">Tüm Rotalar</option>
+            </select>
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">Sıradaki Üretici</label>
+            <select class="form-select fw-bold text-dark" id="memberSelect" required>
+                <option value="">Önce rota seçiniz...</option>
+            </select>
+        </div>
+        
+        <div class="mb-1">
+            <label class="form-label">Süt Miktarı (Lt)</label>
+            <input type="text" class="form-control fw-bold text-center bg-white fs-3 text-primary" id="literInput" placeholder="0" readonly style="height: 45px;">
+        </div>
+
+        <div class="numpad-grid">
+            <button type="button" onclick="addNum('1')">1</button>
+            <button type="button" onclick="addNum('2')">2</button>
+            <button type="button" onclick="addNum('3')">3</button>
+            
+            <button type="button" onclick="addNum('4')">4</button>
+            <button type="button" onclick="addNum('5')">5</button>
+            <button type="button" onclick="addNum('6')">6</button>
+            
+            <button type="button" onclick="addNum('7')">7</button>
+            <button type="button" onclick="addNum('8')">8</button>
+            <button type="button" onclick="addNum('9')">9</button>
+            
+            <button type="button" class="text-danger" onclick="delNum()"><i class="fa-solid fa-delete-left"></i></button>
+            <button type="button" onclick="addNum('0')">0</button>
+            <button type="button" class="fw-bold" onclick="addNum('.')">.</button>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-secondary fw-bold" style="width: 30%; border-radius:10px;" onclick="pasGec()">
+                PAS
+            </button>
+            <button type="submit" class="btn btn-collect flex-grow-1">
+                KAYDET
+            </button>
+        </div>
+    </form>
+</div>
+
+<h6 class="ms-3 text-secondary fw-bold small">BU TARİHTEKİ İŞLEMLER</h6>
+<div id="recordsList" class="pb-4"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script type="module">
+    import { auth, db, signOut, onAuthStateChanged, collection, addDoc, query, where, onSnapshot, getDoc, doc, deleteDoc, updateDoc, getDocs } from "../js/firebase-config.js";
+   let currentCoopId = null;
+    let currentDriverId = null;
+    let currentPeriod = "sabah";
+    let allMembersData = [];
+    let todayRecords = [];
+    let skippedMembers = []; 
+    let deviationLimit = 0; // YENİ: Hata almamak için bunu ekledik
+
+    // Sayfa açılınca bugünün tarihini seçili yap
+    document.getElementById('islemTarihi').valueAsDate = new Date();
+onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentDriverId = user.uid;
+            
+            // 1. Şoförün Bilgilerini Al (Hangi Kooperatif?)
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if(userDoc.exists()) {
+                currentCoopId = userDoc.data().coopId;
+                document.getElementById("driverName").innerText = userDoc.data().adSoyad || "Şoför";
+
+                // 2. Kooperatif Ayarlarını Al (Limit ve Rotalar)
+                const coopDoc = await getDoc(doc(db, "cooperatives", currentCoopId));
+                
+                if(coopDoc.exists()) {
+                    const data = coopDoc.data();
+                    
+                    // A) Sapma Limiti (Global değişkene ata)
+                    deviationLimit = Number(data.deviationLimit) || 0;
+
+                    // B) Rota Listesini Doldur
+                    const rotalar = data.villages || [];
+                    const rotaSelect = document.getElementById("villageFilter");
+                    
+                    // Kutuyu temizle ve tekrar doldur
+                    rotaSelect.innerHTML = '<option value="all">Tüm Rotalar</option>';
+                    
+                    // Alfabetik sırayla ekle
+                    rotalar.sort().forEach(r => {
+                        const opt = document.createElement("option");
+                        opt.value = r;
+                        opt.text = r;
+                        rotaSelect.appendChild(opt);
+                    });
+                }
+
+                // 3. Verileri Başlat
+                uyeleriHafizayaAl();
+                kayitlariDinle();
+            }
+        } else { 
+            window.location.href = "../index.html"; 
+        }
+    });
+
+    // TARİH DEĞİŞİNCE LİSTEYİ YENİLE
+    document.getElementById("islemTarihi").addEventListener("change", kayitlariDinle);
+
+    function uyeleriHafizayaAl() {
+        const q = query(collection(db, "members"), where("coopId", "==", currentCoopId));
+        onSnapshot(q, (snapshot) => {
+            allMembersData = [];
+            snapshot.forEach((doc) => {
+                let data = doc.data();
+                data.id = doc.id;
+                allMembersData.push(data);
+            });
+            dropdownDoldur("all");
+        });
+    }
+
+    document.getElementById("villageFilter").addEventListener("change", function() { dropdownDoldur(this.value); });
+
+    function dropdownDoldur(selectedVillage) {
+        const selectBox = document.getElementById("memberSelect");
+        selectBox.innerHTML = '<option value="">Sıradaki...</option>';
+
+        // 1. Köye göre filtrele
+        let filtered = (selectedVillage === "all") ? allMembersData : allMembersData.filter(m => m.koy === selectedVillage);
+
+        // 2. Süt verenleri çıkar
+        filtered = filtered.filter(uye => {
+            const zatenVerdi = todayRecords.some(rec => rec.memberId === uye.id && rec.period === currentPeriod);
+            return !zatenVerdi;
+        });
+
+        // 3. PAS GEÇİLENLERİ AYIKLA VE SONA EKLE
+        let normalList = filtered.filter(uye => !skippedMembers.includes(uye.id));
+        let skippedList = filtered.filter(uye => skippedMembers.includes(uye.id));
+
+        // Her iki listeyi de kendi içinde sıra numarasına göre diz
+        normalList.sort((a,b) => (Number(a.sira) || 999) - (Number(b.sira) || 999));
+        skippedList.sort((a,b) => (Number(a.sira) || 999) - (Number(b.sira) || 999));
+
+        // Birleştir (Normaller önce, Pas geçilenler sonra)
+        const finalSorted = [...normalList, ...skippedList];
+
+        if(finalSorted.length === 0) {
+             const option = document.createElement("option");
+             option.text = "--- Bu rotada işlem tamam ---";
+             selectBox.appendChild(option);
+        } else {
+            finalSorted.forEach(uye => {
+                const option = document.createElement("option");
+                option.value = uye.id;
+                // Eğer pas geçilmişse isminin başına (PAS) yazalım
+                const prefix = skippedMembers.includes(uye.id) ? '(SONA ATILDI) ' : `${uye.sira || '-'} - `;
+                option.text = `${prefix}${uye.ad} ${uye.soyad}`;
+                selectBox.appendChild(option);
+            });
+            // Otomatik 1. sıradakini seç
+            if(selectedVillage !== "all") selectBox.selectedIndex = 1;
+        }
+    }
+
+   window.setPeriod = function(p) {
+        currentPeriod = p;
+        
+        const btnS = document.getElementById("btnSabah");
+        const btnA = document.getElementById("btnAksam");
+        
+        // Ortak stil: Tüm butonlar görünür olmalı
+        const pasifStyle = "background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.1);";
+        
+        if(p === 'sabah') {
+            // Sabah Aktif (Parlak Turuncu)
+            btnS.style = "background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; font-weight: bold; opacity: 1;";
+            btnS.className = "btn btn-sm flex-grow-1 active";
+            
+            // Akşam Pasif (Sönük ama Görünür)
+            btnA.style = pasifStyle;
+            btnA.className = "btn btn-sm flex-grow-1";
+        } else {
+            // Akşam Aktif (Parlak Mavi)
+            btnA.style = "background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-weight: bold; opacity: 1;";
+            btnA.className = "btn btn-sm flex-grow-1 active";
+            
+            // Sabah Pasif (Sönük ama Görünür)
+            btnS.style = pasifStyle;
+            btnS.className = "btn btn-sm flex-grow-1";
+        }
+
+        // Listeyi periyoda göre yeniden hesapla
+        const seciliKoy = document.getElementById("villageFilter").value;
+        dropdownDoldur(seciliKoy);
+    }
+
+    // --- YENİ KLAVYE VE PAS GEÇ FONKSİYONLARI ---
+
+    window.addNum = function(num) {
+        const inp = document.getElementById("literInput");
+        // Çift nokta kontrolü (20.5.5 olmasın)
+        if(num === '.' && inp.value.includes('.')) return;
+        
+        // İlk karakter nokta ise başına 0 koy (0.5)
+        if(num === '.' && inp.value === "") { inp.value = "0."; return; }
+
+        if(inp.value === "0" && num !== '.') inp.value = "";
+        inp.value += num;
+    }
+
+    window.delNum = function() {
+        const inp = document.getElementById("literInput");
+        inp.value = inp.value.slice(0, -1);
+    }
+
+    window.pasGec = function() {
+        const selectBox = document.getElementById("memberSelect");
+        const currentId = selectBox.value;
+        
+        if(!currentId) return;
+
+        // ID'yi pas geçilenler listesine ekle
+        if(!skippedMembers.includes(currentId)) {
+            skippedMembers.push(currentId);
+        }
+
+        // Listeyi yenile (Bu kişi sona gidecek)
+        const seciliKoy = document.getElementById("villageFilter").value;
+        dropdownDoldur(seciliKoy);
+
+        // Bildirim ver
+        const Toast = Swal.mixin({toast: true, position: 'center', showConfirmButton: false, timer: 1000});
+        Toast.fire({ icon: 'info', title: 'Sona Atıldı' });
+    }
+
+    window.delNum = function() {
+        const inp = document.getElementById("literInput");
+        inp.value = inp.value.slice(0, -1); // Son karakteri sil
+    }
+
+    window.clearNum = function() {
+        document.getElementById("literInput").value = "";
+    }
+
+    // --- YENİ KAYIT İŞLEMİ (AKILLI KONTROL MEKANİZMALI) ---
+    document.getElementById("collectionForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const memSelect = document.getElementById("memberSelect");
+        const memId = memSelect.value;
+        // İsimden sıra numarasını temizleyip sadece ismi alalım (Opsiyonel temizlik)
+        let rawName = memSelect.options[memSelect.selectedIndex].text;
+        // Eğer "(SONA ATILDI)" veya "1 -" gibi ibareler varsa temiz kalsın istiyorsan buraya regex eklenebilir, şimdilik olduğu gibi alıyoruz.
+        const memName = rawName; 
+
+        const liters = Number(document.getElementById("literInput").value);
+        
+        // Tarih ve Saat Ayarları
+        const seciliTarihStr = document.getElementById("islemTarihi").value; 
+        const dateParts = seciliTarihStr.split("-");
+        const formattedDate = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`; // DD.MM.YYYY
+
+        const suAn = new Date();
+        const tamTarih = new Date(seciliTarihStr);
+        tamTarih.setHours(suAn.getHours(), suAn.getMinutes(), suAn.getSeconds());
+
+        if(!memId || liters <= 0) { 
+            Swal.fire({icon: 'warning', title: 'Eksik Bilgi', text: 'Lütfen kişi seçin ve miktar girin.'}); 
+            return; 
+        }
+
+        // --- SAPMA KONTROLÜ BAŞLIYOR ---
+        let kaydet = true;
+
+        if (deviationLimit > 0) {
+            // 1. Dünün Tarihini Bul
+            const d = new Date(seciliTarihStr);
+            d.setDate(d.getDate() - 1);
+            
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const dunFormatted = `${dd}.${mm}.${yyyy}`; // Dünün tarihi: 01.12.2025
+
+            // 2. Veritabanından Dünkü Kaydı Çek
+            const qCheck = query(
+                collection(db, "milk_records"),
+                where("coopId", "==", currentCoopId),
+                where("memberId", "==", memId),
+                where("period", "==", currentPeriod), // Aynı periyot (Sabahsa sabah)
+                where("dateString", "==", dunFormatted)
+            );
+
+            const querySnap = await getDocs(qCheck);
+            
+            if (!querySnap.empty) {
+                // Dün kayıt varmış, kontrol et
+                const eskiKayit = querySnap.docs[0].data();
+                const eskiLitre = Number(eskiKayit.liters);
+                
+                // Farkı Yüzde Olarak Hesapla
+                const fark = Math.abs(liters - eskiLitre);
+                const yuzde = (fark / eskiLitre) * 100;
+
+                if (yuzde > deviationLimit) {
+                    kaydet = false; // Şimdilik durdur, onay iste
+                    
+                    const confirmRes = await Swal.fire({
+                        title: 'ANORMAL GİRİŞ!',
+                        html: `
+                            <div class="text-start fs-6">
+                                <p><strong>Dün:</strong> ${eskiLitre} Lt</p>
+                                <p><strong>Bugün:</strong> ${liters} Lt</p>
+                                <p class="text-danger">Fark: %${yuzde.toFixed(0)}</p>
+                                <hr>
+                                Yine de kaydetmek istiyor musunuz?
+                            </div>
+                        `,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Evet, Kaydet',
+                        cancelButtonText: 'İptal'
+                    });
+
+                    if (confirmRes.isConfirmed) {
+                        kaydet = true; // Kullanıcı onayladı, devam et
+                    }
+                }
+            }
+        }
+        // --- KONTROL BİTTİ ---
+
+       if (kaydet) {
+            try {
+                // Şoför ismini ekrandan alıyoruz
+                const soforIsmi = document.getElementById("driverName").innerText || "Şoför"; 
+
+                await addDoc(collection(db, "milk_records"), {
+                    memberId: memId,
+                    memberName: memName,
+                    liters: liters,
+                    period: currentPeriod,
+                    date: tamTarih,
+                    dateString: formattedDate,
+                    driverId: currentDriverId,
+                    driverName: soforIsmi, // <--- YENİ EKLENEN SATIR
+                    coopId: currentCoopId
+                });
+                
+                // Başarılı
+                document.getElementById("literInput").value = "";
+                const Toast = Swal.mixin({toast: true, position: 'top', showConfirmButton: false, timer: 1000});
+                Toast.fire({ icon: 'success', title: 'Kaydedildi' });
+
+            } catch (error) { 
+                console.error(error);
+                Swal.fire("Hata", "Sistem hatası: " + error.message, "error"); 
+            }
+        }
+    });
+
+    function kayitlariDinle() {
+        const rawDate = document.getElementById("islemTarihi").value;
+        const parts = rawDate.split("-");
+        const targetDateStr = `${parts[2]}.${parts[1]}.${parts[0]}`;
+
+        const q = query(
+            collection(db, "milk_records"), 
+            where("coopId", "==", currentCoopId),
+            where("dateString", "==", targetDateStr)
+        );
+onSnapshot(q, (snapshot) => {
+            const listDiv = document.getElementById("recordsList");
+            listDiv.innerHTML = "";
+            
+            // Sayaçları Sıfırla
+            let totalGenel = 0;
+            let totalSabah = 0;
+            let totalAksam = 0;
+            
+            let records = [];
+            todayRecords = []; 
+
+            snapshot.forEach(doc => { 
+                let d = doc.data(); 
+                d.id = doc.id; 
+                records.push(d); 
+                
+                // İstatistikleri Hesapla
+                const miktar = Number(d.liters);
+                totalGenel += miktar;
+                
+                if(d.period === 'sabah') totalSabah += miktar;
+                else totalAksam += miktar;
+
+                todayRecords.push(d);
+            });
+
+            // Listeyi Yenile
+            const seciliKoy = document.getElementById("villageFilter").value;
+            dropdownDoldur(seciliKoy);
+
+            // EKRANDAKİ SAYAÇLARI GÜNCELLE (YENİ KISIM)
+            document.getElementById("dailyTotal").innerText = totalGenel;
+            document.getElementById("totalSabah").innerText = totalSabah;
+            document.getElementById("totalAksam").innerText = totalAksam;
+
+            // Listeyi Çiz
+            records.sort((a,b) => b.date.seconds - a.date.seconds);
+            if(records.length===0) listDiv.innerHTML='<div class="text-center text-muted mt-3">Kayıt yok.</div>';
+            else {
+                records.forEach(rec => {
+                    const isSabah = rec.period === 'sabah';
+                    const bgClass = isSabah ? 'sabah-bg' : 'aksam-bg';
+                    const iconClass = isSabah ? 'fa-regular fa-sun' : 'fa-regular fa-moon';
+                    const borderClass = isSabah ? 'border-sabah' : 'border-aksam';
+                    const time = new Date(rec.date.seconds * 1000).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+
+                    const item = `
+                        <div class="record-item ${borderClass}">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-box ${bgClass}"><i class="${iconClass}"></i></div>
+                                <div><div class="fw-bold text-dark fs-5">${rec.memberName}</div><small class="text-muted">${time}</small></div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold fs-4 text-dark mb-1">${rec.liters} Lt</div>
+                                <div class="action-btns d-flex justify-content-end">
+                                    <button class="btn-edit-rec" onclick="duzenle('${rec.id}', '${rec.liters}', '${rec.memberName}')"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn-del-rec" onclick="sil('${rec.id}')"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+                    listDiv.innerHTML += item;
+                });
+            }
+        });
+    }
+   // KAYIT DÜZENLEME (MİKTAR GÜNCELLEME)
+    window.duzenle = async function(id, mevcutLitre, isim) {
+        const { value: yeniLitre } = await Swal.fire({
+            title: 'Miktarı Düzenle',
+            text: isim,
+            input: 'number',
+            inputValue: mevcutLitre,
+            showCancelButton: true,
+            confirmButtonText: 'Güncelle',
+            confirmButtonColor: '#0284c7',
+            cancelButtonText: 'İptal',
+            inputAttributes: { step: '0.1', min: '0' }
+        });
+
+        if (yeniLitre && yeniLitre !== mevcutLitre) {
+            try {
+                const docRef = doc(db, "milk_records", id);
+                await updateDoc(docRef, { 
+                    liters: Number(yeniLitre) 
+                });
+                
+                // --- YENİ BİLDİRİM BURASI ---
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Güncellendi!',
+                    text: 'Süt miktarı başarıyla değiştirildi.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                
+            } catch (error) {
+                console.error(error);
+                Swal.fire("Hata", "Güncellenemedi", "error");
+            }
+        }
+    }
+
+    // MODERN SİLME ONAYI
+    window.sil = async function(id) {
+        const result = await Swal.fire({
+            title: 'Silmek istiyor musunuz?',
+            text: "Bu kayıt listeden kaldırılacak!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626', // Kırmızı renk
+            cancelButtonColor: '#64748b',  // Gri renk
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'Vazgeç',
+            iconColor: '#ef4444',
+            background: '#fff',
+            borderRadius: '15px'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await deleteDoc(doc(db, "milk_records", id));
+                
+                // Silindiğine dair ufak bildirim
+                const Toast = Swal.mixin({toast: true, position: 'top', showConfirmButton: false, timer: 1000});
+                Toast.fire({ icon: 'success', title: 'Silindi' });
+            } catch (error) {
+                Swal.fire("Hata", "Silinemedi", "error");
+            }
+        }
+    }
+    window.cikisYap = async function() {
+        const res = await Swal.fire({
+            title: 'Çıkış Yap',
+            text: 'Oturumu kapatmak istiyor musunuz?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Çık',
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'Hayır'
+        });
+        
+        if(res.isConfirmed) {
+            await signOut(auth);
+            window.location.href = "../index.html";
+        }
+    }
+</script>
+</body>
+</html>
