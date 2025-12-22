@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoopSistemi - Güvenli Giriş</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="icon" type="image/jpeg" href="app-logo.jpg">
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        body, html { 
+            height: 100%; 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+
+        /* ARKA PLAN AYARLARI */
+        .bg-container {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bg-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 50, 20, 0.75); 
+            z-index: 1;
+        }
+
+        /* GİRİŞ KARTI TASARIMI */
+        .login-card {
+            position: relative;
+            z-index: 2;
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 20px;
+            /* Padding ayarlandı: Üstten ve alttan eşit boşluk */
+            padding: 40px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: center;
+            margin: 20px;
+        }
+
+        /* --- LOGO ALANI (KARTIN İÇİNE ALINDI) --- */
+        .brand-logo {
+            width: 100%; 
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px; /* Logo ile başlık arası boşluk */
+        }
+
+        .custom-logo-img {
+            /* Logo boyutu */
+            max-width: 180px;  /* Genişlik sınırı */
+            height: auto;      /* Orantılı yükseklik */
+            object-fit: contain;
+        }
+        /* ---------------------------------------- */
+
+        /* INPUT ALANLARI */
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-label { font-weight: 700; font-size: 0.85rem; color: #6c757d; margin-bottom: 5px; display: block; }
+        .input-group-text { background-color: #f8f9fa; border-right: none; color: #6c757d; border-color: #ced4da; }
+        .form-control { background-color: #eff6ff; border-left: none; padding: 12px; font-weight: 600; border-color: #ced4da; color: #212529; }
+        .form-control:focus { box-shadow: none; background-color: white; border-color: #198754; }
+        .input-group:focus-within .input-group-text { background-color: white; border-color: #198754; color: #198754; }
+
+        /* BUTON */
+        .btn-login {
+            background-color: #198754;
+            color: white; font-weight: 700; padding: 14px; border-radius: 10px; width: 100%; border: none;
+            transition: all 0.3s; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 10px; font-size: 16px;
+        }
+        .btn-login:hover { background-color: #146c43; transform: translateY(-2px); }
+
+       /* YENİ STİL */
+.back-link { 
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    color: rgba(255,255,255,0.8); 
+    text-decoration: none; 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    padding: 8px 15px;
+    border-radius: 50px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s; 
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.back-link:hover { 
+    color: white; 
+    background: rgba(255,255,255,0.2);
+    transform: translateX(-5px);
+}
+        .loading-spinner { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="bg-container">
+    <div class="bg-overlay"></div>
+    
+    <div class="login-card">
+        
+        <div class="brand-logo">
+    <img src="koop_logo_v2.png" alt="KoopSistem Logo" class="custom-logo-img">
+</div>
+
+        
+        <p class="text-muted small mb-4">Üretici & Yönetim Giriş Paneli</p>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label">Telefon veya E-Posta</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" id="loginPhone" class="form-control" placeholder="532..." required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Şifre</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="loginPass" class="form-control" placeholder="••••••" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-login" id="loginBtn">
+                <span class="btn-text">GİRİŞ YAP</span>
+                <div class="spinner-border spinner-border-sm loading-spinner" role="status"></div>
+            </button>
+           <div class="text-center mt-3">
+    <a href="javascript:void(0)" onclick="sifreSifirlamaIstegi()" class="text-decoration-none text-secondary small fw-bold">
+        <i class="fa-solid fa-key me-1"></i>Şifre Talep Et / Sıfırla
+    </a>
+</div>
+</div>
+        </form>
+        <a href="https://www.koopsistem.com" class="back-link">
+    <i class="fa-solid fa-arrow-left me-1"></i> Ana Sayfaya Dön
+</a>
+    </div>
+</div>
+<div class="modal fade" id="forgotPassModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-primary">Şifre Kurtarma</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info small border-0">
+                    <i class="fa-solid fa-shield-halved me-2"></i>
+                    Güvenliğiniz için; sisteme kayıtlı <b>Telefon Numaranızı</b> ve <b>Gizli E-Posta Adresinizi</b> doğrulamanız gerekmektedir.
+                </div>
+                
+                <div class="form-floating mb-3">
+                    <input type="tel" class="form-control bg-light border-0" id="resetPhone" placeholder="Tel">
+                    <label>Telefon Numaranız</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control bg-light border-0" id="resetEmail" placeholder="Email">
+                    <label>Kayıtlı Gizli E-Posta Adresiniz</label>
+                </div>
+
+                <button class="btn btn-dark w-100 py-3 rounded-3" onclick="sifreSifirlamaMailiGonder()">
+                    <i class="fa-regular fa-paper-plane me-2"></i> Sıfırlama Bağlantısı Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="module">
+    // --- 1. TÜM ARAÇLARI TEK SEFERDE İÇERİ ALIYORUZ ---
+    import { 
+        auth, db, signInWithEmailAndPassword, doc, getDoc, addDoc, collection,
+        onAuthStateChanged, query, where, getDocs, setDoc, createUserWithEmailAndPassword 
+    } from "../js/firebase-config.js";
+
+    // --- 2. OTURUM DURUMU KONTROLÜ (onAuthStateChanged hatası burada çözüldü) ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                // Kullanıcı ID'si üzerinden Firestore'dan verileri çek
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                
+                if (userDoc.exists()) {
+                    const d = userDoc.data();
+                    const userRole = (d.rol || d.role || '').toLowerCase();
+                    
+                    // Rolüne göre otomatik yönlendir
+                    if (userRole === 'admin' || userRole === 'yonetici' || userRole === 'superadmin') {
+                        window.location.href = "panels/admin.html";
+                    } else if (userRole === 'sofor' || userRole === 'driver') {
+                        window.location.href = "panels/driver.html";
+                    } else if (userRole === 'musavir') { 
+                        window.location.href = "panels/musavir-giris.html"; 
+                    } else {
+                        window.location.href = "panels/member.html";
+                    }
+                }
+            } catch (e) {
+                console.error("Yönlendirme hatası:", e);
+            }
+        }
+    });
+
+    // --- 3. GİRİŞ FORMU İŞLEMLERİ ---
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let girisInput = document.getElementById('loginPhone').value.trim().replace(/\s/g, ''); 
+            const password = document.getElementById('loginPass').value;
+            
+            const btn = document.getElementById('loginBtn');
+            const spinner = document.querySelector('.loading-spinner');
+            const btnText = document.querySelector('.btn-text');
+
+            if(password.length < 6) {
+                Swal.fire({ icon: 'warning', title: 'Uyarı', text: 'Şifreniz en az 6 karakter olmalıdır.' });
+                return;
+            }
+
+            btn.disabled = true;
+            if(spinner) spinner.style.display = 'inline-block';
+            if(btnText) btnText.style.display = 'none';
+
+            try {
+                let email = girisInput;
+                if (!girisInput.includes('@')) {
+                    if(girisInput.startsWith('0')) girisInput = girisInput.substring(1);
+                    email = `${girisInput}@koop.com`;
+                }
+
+                // Giriş yapmayı dene
+                await signInWithEmailAndPassword(auth, email, password);
+
+            // giris.html içindeki catch bloğunu böyle güncelleyin:
+} catch (error) {
+    console.error("Talep hatası detayı:", error.code, error.message);
+    if (error.code === 'permission-denied') {
+        Swal.fire("Sistem Engeli", "Güvenlik kuralları nedeniyle sorgulama yapılamadı. Lütfen admin ile görüşün.", "error");
+    } else {
+        Swal.fire("Hata", "İşlem şu an gerçekleştirilemiyor.", "error");
+    }
+}
+        });
+    }
+
+    // --- 4. ŞİFRE TALEP ETME (ReferenceError hatası window. ile çözüldü) ---
+    window.sifreSifirlamaIstegi = async function() {
+        const { value: girisNo } = await Swal.fire({
+            title: 'Şifre Yenileme',
+            text: 'Lütfen kayıtlı Telefon/TC numaranızı giriniz:',
+            input: 'text',
+            showCancelButton: true,
+            confirmButtonText: 'Sorgula',
+            confirmButtonColor: '#198754'
+        });
+
+        if (!girisNo) return;
+
+        try {
+            Swal.showLoading();
+            
+            // Kullanıcıyı Firestore'da ara
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("userId", "==", girisNo.trim()));
+            const querySnapshot = await getDocs(q);
+
+            let targetId, userData;
+
+            if (querySnapshot.empty) {
+                // Alternatif: Doküman ID'si girilen numara mı?
+                const directDoc = await getDoc(doc(db, "users", girisNo.trim()));
+                if (!directDoc.exists()) {
+                    Swal.fire("Bulunamadı", "Sistemde bu numara ile kayıtlı kullanıcı yok.", "error");
+                    return;
+                }
+                targetId = directDoc.id;
+                userData = directDoc.data();
+            } else {
+                targetId = querySnapshot.docs[0].id;
+                userData = querySnapshot.docs[0].data();
+            }
+
+            // Yeni şifreyi sor
+            const { value: yeniSifre } = await Swal.fire({
+                title: `Sn. ${userData.adSoyad}`,
+                text: 'Yeni şifrenizi belirleyin:',
+                input: 'text',
+                showCancelButton: true,
+                confirmButtonText: 'Admin Paneline Gönder',
+                confirmButtonColor: '#f97316'
+            });
+
+            if (yeniSifre) {
+                await addDoc(collection(db, "password_requests"), {
+                    userId: targetId,
+                    adSoyad: userData.adSoyad || 'İsimsiz',
+                    yeniSifre: yeniSifre,
+                    tarih: new Date(),
+                    durum: 'bekliyor'
+                });
+                Swal.fire("Başarılı", "Talebiniz yöneticiye iletildi.", "success");
+            }
+        } catch (error) {
+            console.error("Talep hatası:", error);
+            Swal.fire("Hata", "İşlem şu an gerçekleştirilemiyor.", "error");
+        }
+    };
+</script>
