@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okul Puantaj Sistemi</title>
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#192a56" />
+    <link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet">
+    </link>
+    <script src="https://cdn.jsdelivr.net/npm/slim-select@latest/dist/slimselect.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="spinner-overlay" id="global-spinner">
+        <div class="spinner"></div>
+    </div>
+    <header class="mobile-header">
+        <button id="hamburger-btn">☰</button>
+        <img src="logo.png" alt="Okul Logosu" class="mobile-logo">
+        <span class="mobile-title">Okul Puantaj Sistemi</span>
+    </header>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+   <div id="login-panel" class="login-wrapper">
+    <div class="login-card">
+        <h2 class="login-title">Okul Puantaj Sistemi</h2>
+        <p style="text-align: center; color: #7f8c8d; margin-bottom: 25px; font-size: 0.95rem;">Yönetici Paneli Girişi</p>
+
+        <div class="form-group">
+            <label for="login-email" style="font-weight: 600; color: #2c3e50;">E-posta Adresi</label>
+            <input type="email" id="login-email" placeholder="ornek@okul.com" style="background-color: #f8f9fa;">
+        </div>
+
+        <div class="form-group">
+            <label for="login-password" style="font-weight: 600; color: #2c3e50;">Şifre</label>
+            <input type="password" id="login-password" placeholder="••••••" style="background-color: #f8f9fa;">
+        </div>
+
+        <p id="login-error" style="color: #dc3545; background-color: #ffebee; padding: 10px; border-radius: 5px; text-align: center; display: none; font-size: 0.9rem; margin-bottom: 15px; border: 1px solid #ffcdd2;"></p>
+
+        <button id="login-btn" class="btn btn-save" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            Giriş Yap
+        </button>
+
+        <div style="margin-top: 25px; text-align: center; font-size: 12px; color: #bdc3c7;">
+            &copy; 2026 Okul Yönetim Sistemi
+        </div>
+    </div>
+</div>
+
+
+    <div id="toast-container"></div>
+    <div class="app-container" style="display: none;">
+
+
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="logo.png" alt="Okul Puantaj Sistemi Logosu">
+                <div id="school-selector-container" style="width: 100%; padding: 10px 0; display: none;">
+                    <label for="school-selector" style="font-size: 0.8em; color: #bdc3c7;">Okul Değiştir</label>
+                    <select id="school-selector">
+                        <option>Yükleniyor...</option>
+                    </select>
+                </div>
+            </div>
+
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a class="nav-link active" data-target="dashboard">🏠 <span>Ana Sayfa</span></a></li>
+                    <li class="menu-item-group">
+                        <a class="accordion-trigger nav-link">👥 <span>Personel Yönetimi</span></a>
+                        <ul class="sub-menu">
+                            <li><a id="open-add-staff-modal"><span>Yeni Personel Ekle</span></a></li>
+                            <li><a class="nav-link" data-target="staff-list"><span>Personel Listesi</span></a></li>
+                        </ul>
+                    </li>
+                    <li><a class="nav-link" data-target="ders-programi">📅 <span>Ders Programı</span></a></li>
+                    <li><a class="nav-link" data-target="gorevlendirme">📝 <span>Görevlendirmeler</span></a></li>
+                    <li><a class="nav-link" data-target="nobet-takip">🛡️ <span>Nöbet Takip</span></a></li>
+                    <li><a class="nav-link" data-target="izin-takip">✈️ <span>İzin Takip</span></a></li>
+                    <li><a class="nav-link" data-target="puantaj">📊 <span>Puantaj Cetveli</span></a></li>
+                    <li id="super-admin-link" style="display: none;"><a class="nav-link"
+                            data-target="super-admin-panel">🔑 <span>Süper Admin</span></a></li>
+                    <li><a class="nav-link" data-target="settings">⚙️ <span>Ayarlar</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div id="user-email-display"
+                    style="padding: 0 20px 10px; font-size: 0.8em; color: #bdc3c7; text-align: center; word-break: break-all;">
+                </div>
+                <a id="logout-btn" style="cursor: pointer;">🚪 <span>Çıkış Yap</span></a>
+            </div>
+        </aside>
+
+
+        <main class="main-content">
+            <div id="dashboard" class="module active">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background-color: #e6f7ff; color: #0056b3;">👥</div>
+                        <div class="card-content">
+                            <div class="card-title">Aktif Personel</div>
+                            <div class="card-value" id="db-aktif-personel">Yükleniyor...</div>
+                            <div class="card-description">Sistemde kayıtlı toplam personel</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background-color: #fffbe6; color: #f39c12;">🛡️</div>
+                        <div class="card-content">
+                            <div class="card-title">Bugün Nöbetçi Olanlar</div>
+                            <div class="card-list" id="db-gunun-nobetcileri-list">Yükleniyor...</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background-color: #e6f7e9; color: #28a745;">✈️</div>
+                        <div class="card-content">
+                            <div class="card-title">Bugün İzinli Olanlar</div>
+                            <div class="card-list" id="db-bugun-izinliler-list">Yükleniyor...</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background-color: #feefe8; color: #dc3545;">📝</div>
+                        <div class="card-content">
+                            <div class="card-title">Bugünkü Görevlendirmeler</div>
+                            <div class="card-list" id="db-bugun-gorevli-list">Yükleniyor...</div>
+                        </div>
+                    </div>
+                </div>
+                <h3
+                    style="margin-top: 35px; color: var(--dark-text-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">
+                    Aylık Özet
+                </h3>
+                <div id="dashboard-month-filter"
+                    style="display: flex; gap: 10px; align-items: center; margin-top: 15px; margin-bottom: 20px;">
+                    <label for="dashboard-select-month" style="font-weight: 600; color: #555;">Dönem:</label>
+                    <select id="dashboard-select-month"
+                        style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da; width: 150px;"></select>
+                    <input type="number" id="dashboard-input-year" min="2020" max="2050"
+                        style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da; width: 100px;">
+                </div>
+
+                <div class="dashboard-grid" style="margin-top: 20px;">
+
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background-color: #eefbec; color: #34a853;">➕</div>
+                        <div class="card-content">
+                            <div class="card-title">Bu Ayki Toplam Ek Ders</div>
+                            <div class="card-value" id="db-aylik-ekders">...</div>
+                            <div class="card-description">Tüm personel için</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background-color: #e9f2ff; color: #4285f4;">🛡️</div>
+                        <div class="card-content">
+                            <div class="card-title">Bu Ayki Toplam Nöbet</div>
+                            <div class="card-value" id="db-aylik-nobet">...</div>
+                            <div class="card-description">Ek ders karşılığı</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background-color: #fdf3e7; color: #fbbc05;">🧭</div>
+                        <div class="card-content">
+                            <div class="card-title">Bu Ayki Toplam Rehberlik</div>
+                            <div class="card-value" id="db-aylik-rehberlik">...</div>
+                            <div class="card-description">Ek ders karşılığı</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon" style="background-color: #feebee; color: #ea4335;">🩺</div>
+                        <div class="card-content">
+                            <div class="card-title">Bu Ay Raporlu Olanlar</div>
+                            <div class="card-list" id="db-aylik-raporlular-list">Yükleniyor...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel" style="margin-top: 25px;">
+                    <div class="panel-header">
+                        <h3>Hızlı İşlemler</h3>
+                    </div>
+                    <div class="panel-body quick-actions">
+                        <a class="quick-action-btn nav-link" data-target="staff-list">👥 Personel Listesi</a>
+                        <a class="quick-action-btn nav-link" data-target="gorevlendirme">📝 Yeni Görevlendirme</a>
+                        <a class="quick-action-btn nav-link" data-target="izin-takip">✈️ Yeni İzin Girişi</a>
+                        <a class="quick-action-btn nav-link" data-target="puantaj">📊 Puantaj Cetveli</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="staff-list" class="module">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Personel Listesi</h3>
+                        <button id="add-staff-from-list-btn" class="btn-header-add">Yeni Personel Ekle</button>
+                    </div>
+                    <div class="panel-body">
+
+                        <div class="filter-container">
+                            <div class="form-group">
+                                <label for="search-personel-input">Personel Adına Göre Ara</label>
+                                <input type="text" id="search-personel-input" placeholder="İsim yazarak arayın...">
+                            </div>
+                            <div class="form-group">
+                                <label for="filter-nevi-select">Personel Nevine Göre Filtrele</label>
+                                <select id="filter-nevi-select">
+                                    <option value="">Tüm Neviler</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="filter-gorev-select">Göreve Göre Filtrele</label>
+                                <select id="filter-gorev-select">
+                                    <option value="">Tüm Görevler</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="align-self: flex-end;">
+                                <button id="clear-personel-filters-btn" class="btn"
+                                    style="width:100%; background-color:#6c757d;">Filtreleri Temizle</button>
+                            </div>
+                        </div>
+                        <div id="personel-table-area">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div id="ders-programi" class="module">
+                <div class="program-layout">
+
+                    <div class="kontrol-paneli">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3>Kontrol Paneli</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div class="kontrol-paneli-bolumu">
+                                    <h4>Manuel Giriş / Hızlı Ekle</h4>
+                                    <div class="form-group">
+                                        <label>Gün</label>
+                                        <select id="gun">
+                                            <option value="Pazartesi">Pazartesi</option>
+                                            <option value="Salı">Salı</option>
+                                            <option value="Çarşamba">Çarşamba</option>
+                                            <option value="Perşembe">Perşembe</option>
+                                            <option value="Cuma">Cuma</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Ders Saati</label>
+                                        <select id="saat"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Öğretmen</label>
+                                        <select id="ogretmen">
+                                            <option value="">Öğretmen Seçin...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Ders (Branş)</label>
+                                        <select id="dersAdi">
+                                            <option value="">Ders Seçin...</option>
+                                        </select>
+                                    </div>
+                                    <button id="ekleBtn" class="btn"
+                                        style="background-color: var(--theme-primary); width: 100%; padding: 10px;">Ekle</button>
+                                </div>
+
+                                <div class="kontrol-paneli-bolumu">
+                                    <h4>Yerleştirme Havuzu</h4>
+                                    <p class="havuz-aciklama">Kalan dersleri buradan programa sürükleyip bırakın.</p>
+                                    <div id="yerlestirme-havuzu-container" class="havuz-container">
+                                    </div>
+                                </div>
+
+                                <div class="kontrol-paneli-bolumu">
+                                    <h4>Versiyon Yönetimi</h4>
+                                    <p id="aktif-versiyon-bilgisi"
+                                        style="font-weight: bold; color: var(--theme-primary); background-color: #eef1f3; padding: 8px; border-radius: 4px;">
+                                    </p>
+                                    <p class="havuz-aciklama">Geçmiş bir versiyonu yüklemek için listeden seçin.</p>
+                                    <ul id="versiyon-listesi" class="settings-list"
+                                        style="max-height: 150px; margin-top: 10px;"></ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="program-alani">
+                        <div class="panel">
+                            <div class="panel-header" style="flex-wrap: wrap; gap: 15px;">
+                                <h3>Gelişmiş Ders Programı Planlayıcı</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div class="program-ust-kontrol">
+                                    <div class="form-group">
+                                        <label>Görünüm</label>
+                                        <div class="view-toggle">
+                                            <button id="sinif-gorunum-btn" class="btn active">Sınıf Görünümü</button>
+                                            <button id="ogretmen-gorunum-btn" class="btn">Öğretmen Görünümü</button>
+                                            <button id="matris-ogretmen-gorunum-btn" class="btn">Matris
+                                                (Öğretmen/Sınıf)</button>
+                                            <button id="matris-sinif-gorunum-btn" class="btn">Matris
+                                                (Sınıf/Ders)</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="flex-grow: 1;">
+                                        <label id="grup-gorunum-label">Görüntülenecek Grup (Sınıf)</label>
+                                        <select id="grup-secim-dropdown" class="form-control"
+                                            style="padding: 10px; font-size: 15px;"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Programın Geçerlilik Başlangıç Tarihi</label>
+                                        <input type="date" id="etkinTarihInput">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>İşlemler</label>
+                                        <div class="program-actions">
+                                            <button id="programi-kaydet-btn" class="btn"
+                                                style="background-color: var(--theme-accent);">Kaydet</button>
+                                            <button id="programi-yayinla-btn" class="btn"
+                                                style="background-color: var(--success-color);">Yayınla</button>
+                                            <button id="btn-otomatik-doldur" class="btn btn-add">Otomatik
+                                                Doldur</button>
+                                            <button id="programi-yazdir-btn" class="btn"
+                                                style="background-color: var(--info-color);">Yazdır</button>
+                                            <button id="programi-duzenle-btn" class="btn"
+                                                style="background-color: var(--info-color);">Düzenle</button>
+                                            <button id="programi-kopyala-btn" class="btn"
+                                                style="background-color: #6c757d;">Kopyala</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="schedule-display-area" style="margin-top: 20px;">
+                                    <h2 id="schedule-print-title"></h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div id="gorevlendirme" class="module">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Detaylı Ders Görevlendirme (Otomatik Atama)</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="gorevlendirme-form-area">
+                            <div class="gorevlendirme-layout no-print"
+                                style="grid-template-columns: 1fr 1.5fr; gap: 30px;">
+                                <div class="gorev-panel">
+                                    <h4>1. Görevlendirme Bilgileri</h4>
+                                    <div class="form-group">
+                                        <label for="g-tarih">Görevlendirme Tarihi</label>
+                                        <input type="date" id="g-tarih">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="g-asil-ogretmen">Asıl Öğretmen (İzinli/Raporlu)</label>
+                                        <select id="g-asil-ogretmen">
+                                            <option value="">Öğretmen Seçiniz...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="g-neden">Görevlendirme Nedeni</label>
+                                        <select id="g-neden">
+                                            <option value="">Neden Seçiniz...</option>
+                                            <option value="Raporlu">Raporlu</option>
+                                            <option value="İzinli (Ücretli)">İzinli (Ücretli)</option>
+                                            <option value="İzinli (Ücretsiz)">İzinli (Ücretsiz)</option>
+                                            <option value="Seminer/Kurs">Seminer/Kurs</option>
+                                            <option value="Görevli İzinli">Görevli İzinli</option>
+                                            <option value="Diğer">Diğer</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="g-aciklama">Genel Açıklama (Opsiyonel)</label>
+                                        <input type="text" id="g-aciklama" placeholder="Gerekliyse ek bilgi...">
+                                    </div>
+                                </div>
+
+                                <div class="gorev-panel">
+                                    <h4>2. Görevlendirme Yapılacak Dersleri Seçin</h4>
+                                    <div id="asil-ogretmen-dersleri-container"
+                                        style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa; min-height: 250px;">
+                                        <p style="color: #666; text-align: center; margin-top: 50px;">
+                                            Lütfen tarih ve asıl öğretmen seçimi yapın.
+                                            <br>Öğretmenin o güne ait ders programı burada listelenecektir.
+                                        </p>
+                                    </div>
+                                    <div class="button-group"
+                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+
+                                        <button id="g-manuel-ata-btn" class="btn"
+                                            style="background-color: var(--info-color); padding: 12px;">
+                                            1. Manuel Seçim Modunu Aç
+                                        </button>
+
+                                        <button id="g-kaydet-btn" class="btn btn-save"
+                                            style="width: 100%; padding: 12px;">
+                                            2. En Uygunu Otomatik Ata
+                                        </button>
+
+                                        <button id="g-manuel-kaydet-btn" class="btn btn-add"
+                                            style="width: 100%; padding: 12px; grid-column: 1 / -1; display: none;">
+                                            Seçilenleri Manuel Kaydet
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="filter-container no-print" id="gorevlendirme-filters"
+                                style="margin-top: 30px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: flex-end;">
+                                <div class="form-group">
+                                    <label for="filter-g-baslangic">Başlangıç Tarihi</label>
+                                    <input type="date" id="filter-g-baslangic">
+                                </div>
+                                <div class="form-group">
+                                    <label for="filter-g-bitis">Bitiş Tarihi</label>
+                                    <input type="date" id="filter-g-bitis">
+                                </div>
+                                <div class="form-group">
+                                    <label for="filter-g-asil">Asıl Öğretmen</label>
+                                    <select id="filter-g-asil">
+                                        <option value="">Tümü</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="filter-g-gorevli">Görev Alan Öğretmen</label>
+                                    <select id="filter-g-gorevli">
+                                        <option value="">Tümü</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="filter-g-neden">Görev Nedeni</label>
+                                    <select id="filter-g-neden">
+                                        <option value="">Tümü</option>
+                                        <option value="Raporlu">Raporlu</option>
+                                        <option value="İzinli (Ücretli)">İzinli (Ücretli)</option>
+                                        <option value="İzinli (Ücretsiz)">İzinli (Ücretsiz)</option>
+                                        <option value="Seminer/Kurs">Seminer/Kurs</option>
+                                        <option value="Görevli İzinli">Görevli İzinli</option>
+                                        <option value="Diğer">Diğer</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <button id="apply-gorevlendirme-filter-btn" class="btn"
+                                        style="background-color:var(--theme-primary); width: 100%;">Filtrele</button>
+                                </div>
+                                <div class="form-group">
+                                    <button id="clear-gorevlendirme-filter-btn" class="btn"
+                                        style="background-color:#6c757d; width: 100%;">Temizle</button>
+                                </div>
+                            </div>
+
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+                                <h3 id="gorevlendirme-baslik" style="margin: 0;">Görevlendirme Kayıtları</h3>
+                                <div class="no-print">
+                                    <button id="btn-gorev-yazdir" class="btn btn-header-add"
+                                        style="background-color: var(--info-color);">Yazdır</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="gorevlendirme-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tarih</th>
+                                        <th>Asıl Öğretmen</th>
+                                        <th>Neden</th>
+                                        <th>Durum</th>
+                                        <th>Toplam Saat</th>
+                                        <th>Ders Detayları (Görevli)</th>
+                                        <th>Açıklama</th>
+                                        <th class="no-print">İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gorevlendirme-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="nobet-takip" class="module">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Nöbet Takip ve Raporlama</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-container"
+                            style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 25px; border-radius: 8px; margin-bottom: 30px;">
+                            <h3 style="margin-top:0; border-bottom: 2px solid #e9ecef; padding-bottom: 10px;">Yeni
+                                Nöbet
+                                Girişi</h3>
+                            <div class="form-grid"
+                                style="grid-template-columns: 1fr 2fr 2fr 120px; align-items: flex-end;">
+                                <div class="form-group"><label for="nobet-tarih">Tarih</label><input type="date"
+                                        id="nobet-tarih"></div>
+                                <div class="form-group"><label for="nobet-personel">Nöbetçi Personel</label><select
+                                        id="nobet-personel">
+                                        <option value="">Personel Seçiniz...</option>
+                                    </select></div>
+                                <div class="form-group"><label for="nobet-yeri">Nöbet Yeri</label><select
+                                        id="nobet-yeri">
+                                        <option value="">Nöbet Yeri Seçiniz...</option>
+                                    </select></div>
+                                <button id="nobet-ekle-btn" class="btn"
+                                    style="background-color: #0056b3; height: 46px;">Nöbet
+                                    Ekle</button>
+                            </div>
+                        </div>
+
+                        <div class="form-container"
+                            style="background-color: #eef1f3; border: 1px solid #d8dde2; padding: 25px; border-radius: 8px; margin-bottom: 30px;">
+                            <h3 style="margin-top:0; border-bottom: 2px solid #ced4da; padding-bottom: 10px;">Aylık
+                                Nöbet Çizelgesini Kopyala</h3>
+                            <div class="form-grid"
+                                style="grid-template-columns: 1fr 1fr 1fr 1fr 150px; align-items: flex-end; gap: 15px;">
+                                <div class="form-group">
+                                    <label for="copy-source-month">Kaynak Ay</label>
+                                    <select id="copy-source-month"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="copy-source-year">Kaynak Yıl</label>
+                                    <input type="number" id="copy-source-year" min="2020" max="2050"
+                                        style="padding: 12px;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="copy-dest-month">Hedef Ay</label>
+                                    <select id="copy-dest-month"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="copy-dest-year">Hedef Yıl</label>
+                                    <input type="number" id="copy-dest-year" min="2020" max="2050"
+                                        style="padding: 12px;">
+                                </div>
+                                <button id="copy-schedule-btn" class="btn"
+                                    style="background-color: var(--theme-accent); height: 46px;">Çizelgeyi
+                                    Kopyala</button>
+                            </div>
+                        </div>
+                        <div id="nobet-rapor-alani">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <h3 style="margin-top: 40px; margin-bottom: 10px;">Aylık Nöbet Raporu</h3>
+                                <div class="no-print" style="display: flex; gap: 10px;">
+                                    <button id="btn-nobet-toplu-sil" class="btn btn-header-add"
+                                        style="background-color: var(--danger-color);">Seçilenleri Sil</button>
+                                    <button id="btn-nobet-yazdir" class="btn btn-header-add"
+                                        style="background-color: var(--info-color);">Yazdır</button>
+                                </div>
+                            </div>
+                            <div class="controls"
+                                style="display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                                <div class="controls-left" style="display: flex; align-items: center; gap: 10px;">
+                                    <select id="rapor-ay-sec"></select>
+                                    <input type="number" id="rapor-yil-gir" min="2020" max="2050">
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="gorevlendirme-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Gün</th>
+                                            <th>Nöbetçi Personel</th>
+                                            <th>Nöbet Yeri</th>
+                                            <th class="no-print">İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="nobet-rapor-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div id="izin-takip" class="module">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>İzin Takip ve Yönetim Modülü</h3>
+                        <button id="open-toplu-izin-modal-btn" class="btn-header-add"
+                            style="background-color: var(--success-color);">Toplu İzin Girişi</button>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="form-container"
+                            style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 25px; border-radius: 8px; margin-bottom: 40px;">
+                            <h3 style="margin-top:0; border-bottom: 2px solid #e9ecef; padding-bottom: 10px;">Yeni
+                                İzin
+                                Girişi</h3>
+                            <div class="form-grid"
+                                style="grid-template-columns: 2fr 1.5fr 1fr 1fr; align-items: flex-end;">
+                                <div class="form-group">
+                                    <label for="izin-personel">Personel</label>
+                                    <select id="izin-personel">
+                                        <option value="">Personel Seçiniz...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="izin-tipi">İzin Tipi</label>
+                                    <select id="izin-tipi">
+                                        <option value="">İzin Tipi Seçiniz...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="izin-baslangic">Başlangıç Tarihi</label>
+                                    <input type="date" id="izin-baslangic">
+                                </div>
+                                <div class="form-group">
+                                    <label for="izin-bitis">Bitiş Tarihi</label>
+                                    <input type="date" id="izin-bitis">
+                                </div>
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="izin-aciklama">Açıklama / Not</label>
+                                    <input type="text" id="izin-aciklama" placeholder="İzinle ilgili kısa bir not...">
+                                </div>
+                            </div>
+                            <div class="izin-hesaplama-alani">
+                                <div id="personel-izin-hakki">
+                                </div>
+                                <div id="izin-hesaplama-sonucu">
+                                </div>
+                            </div>
+
+                            <div class="button-group">
+                                <button id="izin-kaydet-btn" class="btn btn-save">İzin Kaydını Oluştur</button>
+                            </div>
+                        </div>
+                        <h3>Kayıtlı İzinler</h3>
+                        <div class="table-container">
+                            <table class="gorevlendirme-table">
+                                <thead>
+                                    <tr>
+                                        <th>Personel Adı</th>
+                                        <th>İzin Tipi</th>
+                                        <th>Başlangıç</th>
+                                        <th>Bitiş</th>
+                                        <th>Süre (Gün)</th>
+                                        <th>Açıklama</th>
+                                        <th style="width: 200px;">İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="izin-kayitlari-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="puantaj" class="module">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Puantaj Cetveli</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="controls puantaj">
+
+                            <div class="controls-left">
+                                <select id="select-month"></select>
+                                <input type="number" id="input-year" min="2020" max="2050">
+
+                                <button id="btn-show-puantaj"
+                                    style="background-color: #0d6efd; color: white; padding: 10px 15px; font-size: 14px; font-weight: 500; border-radius: 6px; border: 1px solid transparent; cursor: pointer;">
+                                    Puantajı Göster
+                                </button>
+
+                                <button id="btn-generate"
+                                    style="background-color: #ffc107; color: #000; padding: 10px 15px; font-size: 14px; font-weight: 500; border-radius: 6px; border: 1px solid transparent; cursor: pointer;">
+                                    Yeni Puantaj Oluştur
+                                </button>
+                                <button id="btn-generate-individual"
+                                    style="background-color: #17a2b8; color: white; padding: 10px 15px; font-size: 14px; font-weight: 500; border-radius: 6px; border: 1px solid transparent; cursor: pointer;">
+                                    Seçili Personeli Hesapla
+                                </button>
+                            </div>
+
+                            <div class="personel-filter-container"
+                                style="display: flex; align-items: center; gap: 10px; border-left: 2px solid #ced4da; padding-left: 15px; margin-left: 5px; margin-top: 20px;">
+                                <select id="personel-filter-select"
+                                    style="padding: 9px; border-radius: 6px; border: 1px solid #ced4da; min-width: 200px;"></select>
+                                <button id="btn-filter-personel" class="btn"
+                                    style="background-color: #17a2b8;">Filtrele</button>
+                                <button id="btn-clear-filter" class="btn"
+                                    style="background-color: #6c757d;">Temizle</button>
+                            </div>
+
+                            <div style="grid-column: 1 / -1; margin-top: 15px;">
+                                <button id="toggle-bulk-update-btn" class="btn"
+                                    style="background-color: #6c757d; width: 100%;">Gelişmiş Toplu Güncelleme
+                                    Panelini
+                                    Göster/Gizle</button>
+                            </div>
+
+                            <div id="advanced-bulk-update-container" class="bulk-update-container"
+                                style="display: none; grid-template-columns: 1fr; gap: 20px;">
+                                <h4 style="margin: 0 0 5px 0; color: var(--theme-primary);">Gelişmiş Toplu
+                                    Güncelleme
+                                </h4>
+
+                                <div
+                                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                    <div class="form-group">
+                                        <label for="bulk-update-days-multi"
+                                            style="font-size: 13px; font-weight: 500;">Uygulanacak Günler (Çoklu
+                                            Seçim)</label>
+                                        <select id="bulk-update-days-multi" multiple></select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="bulk-update-personnel-multi"
+                                            style="font-size: 13px; font-weight: 500;">Uygulanacak Personeller
+                                            (Çoklu
+                                            Seçim)</label>
+                                        <select id="bulk-update-personnel-multi" multiple></select>
+                                    </div>
+                                </div>
+
+                                <div
+                                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: flex-end;">
+                                    <div class="form-group">
+                                        <label for="bulk-update-status-new"
+                                            style="font-size: 13px; font-weight: 500;">Yeni
+                                            Durum Kodu</label>
+                                        <select id="bulk-update-status-new" class="form-control"
+                                            style="padding: 8px;"></select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="bulk-update-hours-new"
+                                            style="font-size: 13px; font-weight: 500;">Yeni Ders
+                                            Saati</label>
+                                        <input type="number" id="bulk-update-hours-new" min="0" max="12"
+                                            class="form-control" placeholder="Örn: 7.5" style="padding: 8px;">
+                                    </div>
+
+                                    <button id="btn-advanced-bulk-update" class="btn"
+                                        style="background-color: #6f42c1; color: white; height: 42px;">Değişiklikleri
+                                        Uygula</button>
+                                </div>
+                            </div>
+
+
+                            <div class="controls-right export-buttons">
+                                <button id="btn-save-puantaj" style="background-color: #28a745;">Kaydet</button>
+                                <button id="btn-lock-puantaj" style="background-color: #fd7e14;">Puantajı
+                                    Kilitle</button>
+                                <button id="btn-print">Yazdır</button>
+                                <button id="btn-pdf">PDF İndir</button>
+                                <button id="btn-excel">Excel İndir</button>
+                                <button id="btn-delete-puantaj" style="background-color: var(--danger-color);">Puantajı
+                                    Sil</button>
+                            </div>
+                        </div>
+                        <div id="puantaj-table-container" class="table-container"></div>
+                        <div id="puantaj-legend" class="puantaj-legend"></div>
+                        <div id="bottom-section" class="bottom-section">
+                            <div class="summary-totals">
+                                <h3>Aylık Genel Toplamlar</h3>
+                                <div class="total-line"><span class="label">Ek Ders Saati Toplamı:</span><span
+                                        id="total-ekders" class="value">0</span></div>
+                                <div class="total-line"><span class="label">Nöbet Toplamı:</span><span id="total-nobet"
+                                        class="value">0</span></div>
+                                <div class="total-line"><span class="label">Rehberlik Toplamı:</span><span
+                                        id="total-rehberlik" class="value">0</span></div>
+                            </div>
+                            <div class="approval-section">
+                                <h3>Onay</h3>
+                                <div class="name">Adı Soyadı</div>
+                                <div>Okul Müdürü</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="super-admin-panel" class="module">
+                <div class="panel" style="margin-bottom: 25px;">
+                    <div class="panel-header">
+                        <h3>Yeni Okul Ekle</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form id="newSchoolForm">
+                            <div class="form-group">
+                                <label for="newSchoolName">Yeni Okulun Adı</label>
+                                <input type="text" id="newSchoolName" placeholder="Örn: Özel İsabet İlkokulu" required>
+                            </div>
+                            <div class="button-group" style="margin-top: 25px;">
+                                <button type="submit" class="btn btn-save">Yeni Okulu Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Süper Admin Paneli - Yeni Okul Yöneticisi Ekle</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form id="newUserForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="newUserEmail">Yönetici E-posta Adresi</label>
+                                    <input type="email" id="newUserEmail" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newUserPassword">Geçici Şifre</label>
+                                    <input type="password" id="newUserPassword" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="schoolSelect">Kullanıcının Atanacağı Okul</label>
+                                    <select id="schoolSelect" required>
+                                        <option value="">Okullar yükleniyor...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="button-group" style="margin-top: 25px;">
+                                <button type="submit" class="btn btn-save">Yeni Yönetici Oluştur</button>
+                            </div>
+                        </form>
+                        <div id="newUserStatus" style="margin-top: 20px; font-weight: bold;"></div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: 25px;">
+                    <div class="panel-header">
+                        <h3>Tüm Okullar ve Yöneticileri</h3>
+                    </div>
+                    <div class="panel-body" id="all-admins-list-container">
+                    </div>
+                </div>
+            </div>
+            <div id="settings" class="module">
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <button id="settings-back-btn" class="btn header-back-btn hidden">⬅️ Geri</button>
+
+                        <h3 id="settings-panel-title">Uygulama Ayarları</h3>
+                    </div>
+                    <div class="panel-body">
+
+                        <div id="settings-grid">
+                            <div class="settings-card" data-tab="nevi">
+                                <span class="icon"><i class="bi bi-people-fill"></i></span>
+                                <span class="title">Personel Nevileri</span>
+                            </div>
+                            <div class="settings-card" data-tab="gorev">
+                                <span class="icon"><i class="bi bi-tag-fill"></i></span>
+                                <span class="title">Görevler/Branşlar</span>
+                            </div>
+                            <div class="settings-card" data-tab="izin-tipi">
+                                <span class="icon"><i class="bi bi-airplane-fill"></i></span>
+                                <span class="title">İzin Tipleri</span>
+                            </div>
+                            <div class="settings-card" data-tab="nobet-yeri">
+                                <span class="icon"><i class="bi bi-shield-fill-check"></i></span>
+                                <span class="title">Nöbet Yerleri</span>
+                            </div>
+                            <div class="settings-card" data-tab="ders">
+                                <span class="icon"><i class="bi bi-book-half"></i></span>
+                                <span class="title">Dersler</span>
+                            </div>
+                            <div class="settings-card" data-tab="sinif">
+                                <span class="icon"><i class="bi bi-building-fill"></i></span>
+                                <span class="title">Sınıflar</span>
+                            </div>
+                            <div class="settings-card" data-tab="zaman-cizelgesi">
+                                <span class="icon"><i class="bi bi-alarm-fill"></i></span>
+                                <span class="title">Zaman Çizelgesi</span>
+                            </div>
+                            <div class="settings-card" data-tab="ogretmen-kural">
+                                <span class="icon"><i class="bi bi-person-video3"></i></span>
+                                <span class="title">Öğretmen Kuralları</span>
+                            </div>
+                            <div class="settings-card" data-tab="programlama-kurallari">
+                                <span class="icon"><i class="bi bi-sliders" style="color: #6c757d;"></i></span>
+                                <span class="title">Programlama Kuralları</span>
+                            </div>
+                            <div class="settings-card" data-tab="ders-brans-kurallari">
+                                <span class="icon"><i class="bi bi-puzzle-fill"></i></span>
+                                <span class="title">Ders (Branş) Kuralları</span>
+                            </div>
+                            <div class="settings-card" data-tab="ogrenci-kurallari">
+                                <span class="icon"><i class="bi bi-mortarboard-fill"></i></span>
+                                <span class="title">Öğrenci Odaklı Kurallar</span>
+                            </div>
+                            <div class="settings-card" data-tab="derslik-yonetimi">
+                                <span class="icon"><i class="bi bi-bank"></i></span>
+                                <span class="title">Derslik Yönetimi</span>
+                            </div>
+                            <div class="settings-card" data-tab="genel-kurallar">
+                                <span class="icon"><i class="bi bi-globe"></i></span>
+                                <span class="title">Genel Kurallar</span>
+                            </div>
+                            <div class="settings-card" data-tab="egitim-donemi">
+                                <span class="icon"><i class="bi bi-calendar-range-fill"
+                                        style="color: #20c997;"></i></span>
+                                <span class="title">Eğitim-Öğretim Dönemleri</span>
+                            </div>
+                            <div class="settings-card" data-tab="seminer-donemi">
+                                <span class="icon"><i class="bi bi-calendar-week-fill"></i></span>
+                                <span class="title">Seminer Dönemleri</span>
+                            </div>
+                        </div>
+
+                        <div id="programlama-kurallari-tab" class="settings-tab-content">
+                            <h3 style="margin-top: 15px;">Genel Programlama Kuralları</h3>
+                            <p>Burada seçilen kurallar, "Otomatik Doldur" özelliği kullanıldığında tüm program için
+                                geçerli olacaktır.</p>
+
+                            <div class="kural-listesi"
+                                style="display: flex; flex-direction: column; gap: 20px; margin-top: 25px;">
+
+                                <div class="kural-item"
+                                    style="display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                    <input type="checkbox" id="kural-aktif-max-gunluk-ders" style="width: auto;">
+                                    <label for="kural-aktif-max-gunluk-ders" style="margin: 0; flex-grow: 1;">Bir
+                                        ders,
+                                        bir günde en fazla</label>
+                                    <input type="number" id="kural-deger-max-gunluk-ders" min="1" max="8" value="2"
+                                        style="width: 70px;">
+                                    <label for="kural-deger-max-gunluk-ders" style="margin: 0;">saat
+                                        olabilir.</label>
+                                </div>
+
+                                <div class="kural-item"
+                                    style="display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                    <input type="checkbox" id="kural-aktif-max-blok-ders" style="width: auto;">
+                                    <label for="kural-aktif-max-blok-ders" style="margin: 0; flex-grow: 1;">Bir
+                                        ders,
+                                        arka arkaya en fazla</label>
+                                    <input type="number" id="kural-deger-max-blok-ders" min="1" max="4" value="2"
+                                        style="width: 70px;">
+                                    <label for="kural-deger-max-blok-ders" style="margin: 0;">saat (blok)
+                                        olabilir.</label>
+                                </div>
+
+                                <div class="kural-item"
+                                    style="display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                    <input type="checkbox" id="kural-aktif-bosluk-birakma" style="width: auto;">
+                                    <label for="kural-aktif-bosluk-birakma" style="margin: 0;">Öğretmenlerin
+                                        programında
+                                        günün başında veya sonunda boşluk bırakılmasın (dersler bitişik
+                                        olsun).</label>
+                                </div>
+
+                            </div>
+
+                            <div class="button-group" style="margin-top: 30px;">
+                                <button id="programlama-kurallari-kaydet-btn" class="btn btn-save">Tüm Kuralları
+                                    Kaydet</button>
+                            </div>
+                        </div>
+
+                        <div id="nevi-tab" class="settings-tab-content">
+                            <div class="add-setting-form">
+                                <input type="text" id="add-nevi-input" placeholder="Yeni personel nevi adı...">
+                                <button id="add-nevi-btn" class="btn">Ekle</button>
+                            </div>
+                            <ul id="nevi-list" class="settings-list"></ul>
+                        </div>
+
+                        <div id="gorev-tab" class="settings-tab-content">
+                            <div class="add-setting-form">
+                                <select id="gorev-nevi-select">
+                                    <option value="">Önce Personel Nevi Seçin</option>
+                                </select>
+                                <input type="text" id="add-gorev-input" placeholder="Yeni görev/branş adı...">
+                                <button id="add-gorev-btn" class="btn">Ekle</button>
+                            </div>
+                            <ul id="gorev-list" class="settings-list"></ul>
+                        </div>
+
+                        <div id="ders-tab" class="settings-tab-content">
+                            <div class="add-setting-form"
+                                style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px;">
+                                <input type="text" id="add-ders-input"
+                                    placeholder="Yeni dersin tam adı (Örn: Matematik)">
+                                <input type="text" id="add-ders-kisaltma-input" placeholder="Kısaltma (Örn: MTM)"
+                                    maxlength="3" style="text-transform: uppercase;">
+                                <button id="add-ders-btn" class="btn">Ekle</button>
+                            </div>
+                            <ul id="ders-list" class="settings-list"></ul>
+                        </div>
+
+                        <div id="sinif-tab" class="settings-tab-content">
+                            <div class="add-setting-form">
+                                <input type="text" id="add-sinif-input" placeholder="Yeni sınıf adı...">
+                                <button id="add-sinif-btn" class="btn">Ekle</button>
+                            </div>
+                            <ul id="sinif-list" class="settings-list"></ul>
+                        </div>
+
+
+
+                        <div id="nobet-yeri-tab" class="settings-tab-content">
+                            <div class="add-setting-form">
+                                <input type="text" id="add-nobet-yeri-input" placeholder="Yeni nöbet yeri adı...">
+                                <button id="add-nobet-yeri-btn" class="btn">Ekle</button>
+                            </div>
+                            <ul id="nobet-yeri-list" class="settings-list"></ul>
+                        </div>
+
+                        <div id="izin-tipi-tab" class="settings-tab-content">
+                            <div class="add-setting-form" style="grid-template-columns: 2fr 1fr auto; display: grid;">
+                                <input type="text" id="add-izin-tipi-ad-input"
+                                    placeholder="Yeni izin tipi adı (Örn: Yıllık İzin)">
+                                <input type="text" id="add-izin-tipi-kod-input" placeholder="Puantaj Kodu (Örn: I)">
+                                <button id="add-izin-tipi-btn" class="btn">Ekle</button>
+                            </div>
+                            <ul id="izin-tipi-list" class="settings-list"></ul>
+                        </div>
+                        <div id="zaman-cizelgesi-tab" class="settings-tab-content">
+                            <p>Ders programı modülü, buradaki ayarlara göre otomatik olarak şekillenecektir.</p>
+                            <div class="form-grid">
+                                <div class="form-group"><label for="setting-dersBaslangic">Ders Başlama
+                                        Saati</label><input type="time" id="setting-dersBaslangic"></div>
+                                <div class="form-group"><label for="setting-toplamDers">Günlük Toplam Ders
+                                        Sayısı</label><input type="number" id="setting-toplamDers" min="1"></div>
+                                <div class="form-group"><label for="setting-dersSuresi">Ders Süresi
+                                        (Dakika)</label><input type="number" id="setting-dersSuresi" min="1"></div>
+                                <div class="form-group"><label for="setting-teneffusSuresi">Teneffüs Süresi
+                                        (Dakika)</label><input type="number" id="setting-teneffusSuresi" min="0">
+                                </div>
+                                <div class="form-group"><label for="setting-ogleArasiDersNo">Öğle Arası Kaçıncı
+                                        Dersten
+                                        Sonra?</label><input type="number" id="setting-ogleArasiDersNo" min="0">
+                                </div>
+                                <div class="form-group"><label for="setting-ogleArasiSuresi">Öğle Arası Süresi
+                                        (Dakika)</label><input type="number" id="setting-ogleArasiSuresi" min="0">
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button id="zaman-cizelgesi-kaydet-btn" class="btn btn-save">Çizelge Ayarlarını
+                                    Kaydet</button>
+                            </div>
+                            <div style="margin-top: 30px; border-top: 1px solid #dee2e6; padding-top: 20px;">
+                                <h4>Özel Teneffüs Ayarları</h4>
+                                <p>Standart teneffüs süresi dışında, belirli derslerden sonra farklı sürede
+                                    teneffüsler
+                                    tanımlayabilirsiniz. (Örn: 6. dersten sonra 15 dakika ikindi arası)</p>
+                                <div class="add-setting-form" style="align-items: flex-end;">
+                                    <div class="form-group" style="flex: 2;">
+                                        <label for="ozel-teneffus-ders-no">Kaçıncı Dersten Sonra?</label>
+                                        <input type="number" id="ozel-teneffus-ders-no" min="1" placeholder="Örn: 6">
+                                    </div>
+                                    <div class="form-group" style="flex: 2;">
+                                        <label for="ozel-teneffus-suresi">Teneffüs Süresi (Dakika)</label>
+                                        <input type="number" id="ozel-teneffus-suresi" min="0" placeholder="Örn: 15">
+                                    </div>
+                                    <button id="add-ozel-teneffus-btn" class="btn" style="flex: 1;">Özel Teneffüs
+                                        Ekle</button>
+                                </div>
+                                <ul id="ozel-teneffus-listesi" class="settings-list" style="margin-top: 15px;">
+                                </ul>
+                            </div>
+                            <div id="zaman-cizelgesi-goruntule"
+                                style="margin-top: 30px; border-top: 1px solid #dee2e6; padding-top: 20px;">
+                            </div>
+                            <div id="zaman-cizelgesi-goruntule"
+                                style="margin-top: 30px; border-top: 1px solid #dee2e6; padding-top: 20px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ders-brans-kurallari-tab" class="settings-tab-content">
+                        <h3 style="margin-top: 15px;">Ders (Branş) Kuralları</h3>
+                        <p>Derslerin haftalık saatlerini, yerleşim tercihlerini ve diğer derslerle ilişkilerini
+                            buradan
+                            yönetin.</p>
+                        <div class="form-grid"
+                            style="grid-template-columns: 1fr; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label>Lütfen Kural Eklenecek Dersi Seçerek Başlayın</label>
+                                <select id="kural-ders-sec"></select>
+                            </div>
+                        </div>
+                        <div id="ders-kurali-detaylari">
+                            <form>
+                                <div class="form-grid"
+                                    style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: flex-start;">
+                                    <input type="hidden" id="editing-ders-kurali-id" value="">
+                                    <div class="form-group">
+                                        <label>Sınıf Seviyesi</label>
+                                        <select id="kural-seviye-sec" multiple style="min-height: 105px;"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Atanacak Öğretmen (İsteğe Bağlı)</label>
+                                        <select id="kural-ogretmen-ata-sec"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Haftalık Ders Saati</label>
+                                        <input type="number" id="kural-haftalik-saat" placeholder="Örn: 6">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Günlük Max Saat</label>
+                                        <input type="number" id="kural-gunluk-max-saat" placeholder="Örn: 2">
+                                    </div>
+                                </div>
+                                <a href="#" id="toggle-detayli-kurallar"
+                                    style="display: block; margin: 10px 0; color: var(--theme-primary); text-decoration: none; font-weight: 600;">▶
+                                    Detaylı Kuralları Göster/Gizle</a>
+                                <div id="detayli-kurallar-container"
+                                    style="display: none; background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 10px;">
+                                    <div class="form-grid"
+                                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                                        <div class="form-group">
+                                            <label>Blok Ders</label>
+                                            <select id="kural-blok-ders">
+                                                <option value="hayir">Hayır</option>
+                                                <option value="evet">Evet</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Gereken Derslik Tipi</label>
+                                            <select id="kural-derslik-tipi"></select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Yerleşim Tercihi</label>
+                                            <select id="kural-yerlesim-tercihi">
+                                                <option value="farketmez">Fark Etmez</option>
+                                                <option value="sabah">Sadece Sabah</option>
+                                                <option value="ogle">Sadece Öğleden Sonra</option>
+                                                <option value="ilk_ders_olmasin">İlk Ders Olmasın</option>
+                                                <option value="son_ders_olmasin">Son Ders Olmasin</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 15px;">
+                                        <label>Birlikte Gitmemesi Gereken Dersler (Art arda gelmesin)</label>
+                                        <select id="kural-yasakli-dersler-sec" multiple
+                                            style="min-height: 100px;"></select>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="form-group" style="margin-top: 25px;">
+                                <button id="ders-kural-ekle-btn" class="btn btn-add"
+                                    style="width:100%; padding: 12px;">Kural
+                                    Ekle/Güncelle</button>
+                            </div>
+                        </div>
+                        <div id="ders-kural-table-container" style="margin-top: 25px;">
+                            <div id="ders-kural-filters" class="filter-container"
+                                style="grid-template-columns: repeat(3, 1fr); margin-bottom: 15px; display: none;">
+                                <div class="form-group">
+                                    <label>Derse Göre Filtrele</label>
+                                    <select id="kural-filter-ders-select">
+                                        <option value="">Tüm Dersler</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Sınıfa Göre Filtrele</label>
+                                    <select id="kural-table-filter-sinif-select">
+                                        <option value="">Tüm Sınıflar</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Öğretmene Göre Filtrele</label>
+                                    <select id="kural-filter-ogretmen-select">
+                                        <option value="">Tüm Öğretmenler</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="staff-table" style="font-size: 0.9em;">
+                                    <thead>
+                                        <tr>
+                                            <th>Ders (Branş)</th>
+                                            <th>Sınıf</th>
+                                            <th>Atanan Öğretmen</th>
+                                            <th style="width: 120px;">Haftalık Saat</th>
+                                            <th style="width: 120px;">Günlük Max Saat</th>
+                                            <th style="width: 180px;">İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ders-kural-tbody">
+                                    </tbody>
+                                    <tfoot id="ders-kural-tfoot" style="font-weight: bold; background-color: #f8f9fa;">
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="ogrenci-kurallari-tab" class="settings-tab-content">
+                    <h3 style="margin-top: 15px;">Öğrenci ve Sınıf Odaklı Kurallar</h3>
+                    <div id="zor-ders-form-container">
+                        <label>Zorlayıcı Derslerin Dağılımı</label>
+                        <p style="font-size: 0.9em; margin-top: 0;">Öğrencilerin bir günde göreceği zor ders
+                            sayısını sınırlayın.</p>
+                        <div class="add-setting-form" style="align-items: flex-end;">
+                            <select id="kural-zor-dersler-sec" multiple="" style="min-height: 100px; flex:3;"></select>
+                            <input type="number" id="kural-gunluk-max-zor-ders" placeholder="Max Sayı" style="flex:1;">
+                            <button id="zor-ders-kural-kaydet-btn" class="btn btn-save" style="flex:1;">Kaydet</button>
+                        </div>
+                    </div>
+                    <div id="zor-ders-kural-gosterge"
+                        style="display: none; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; justify-content: space-between; align-items: center;">
+                        <div>
+                            <label
+                                style="font-weight: bold; color: var(--theme-primary); display: block; margin-bottom: 10px;">Tanımlanmış
+                                Kural</label>
+                            <div style="display: flex; align-items: baseline; gap: 25px;">
+                                <div>
+                                    <p style="margin:0 0 5px 0;"><strong>Zorlayıcı olarak seçilen
+                                            dersler:</strong></p>
+                                    <ul id="zor-dersler-gosterge-listesi"
+                                        style="margin: 0; padding-left: 20px; list-style-type: square;"></ul>
+                                </div>
+                                <p><strong>Bir günde en fazla <span id="max-zor-ders-gosterge"
+                                            style="font-weight: bold; font-size: 1.2em;"></span> zor ders
+                                        olabilir.</strong></p>
+                            </div>
+                        </div>
+                        <div class="button-group" style="text-align: right; flex-shrink: 0; padding-left: 20px;">
+                            <button id="zor-kural-duzenle-btn" class="btn btn-edit">Kuralı Düzenle</button>
+                            <button id="zor-kural-sil-btn" class="btn btn-delete">Kuralı Sil</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="derslik-yonetimi-tab" class="settings-tab-content">
+                    <h3 style="margin-top: 15px;">Derslik Yönetimi (Fiziksel Kısıtlar)</h3>
+                    <p>Fen Lab, Spor Salonu gibi özel ve tek olan derslikleri tanımlayarak çakışmaları önleyin.
+                    </p>
+                    <div class="add-setting-form" style="align-items: flex-end;">
+                        <input type="text" id="derslik-adi-input" placeholder="Örn: Fen Laboratuvarı" style="flex:2;">
+                        <select id="derslik-tipi-select" style="flex:1;">
+                            <option value="Standart">Standart</option>
+                            <option value="Laboratuvar">Laboratuvar</option>
+                            <option value="Spor Salonu">Spor Salonu</option>
+                            <option value="Atölye">Atölye</option>
+                        </select>
+                        <button id="derslik-ekle-btn" class="btn btn-add" style="flex:1;">Yeni Derslik
+                            Ekle</button>
+                    </div>
+                    <ul id="derslik-listesi" class="settings-list"></ul>
+                </div>
+                <div id="genel-kurallar-tab" class="settings-tab-content">
+                    <h3 style="margin-top: 15px;">Genel Kurallar (Tüm Okul İçin Geçerli)</h3>
+                    <div class="form-group">
+                        <label>Genel Bloke Zamanlar (Tören, Etkinlik vb.)</label>
+                        <p style="font-size: 0.9em; margin-top: 0;">Burada seçilen zaman dilimlerine hiçbir
+                            sınıfa ders atanmaz.</p>
+                        <div class="add-setting-form">
+                            <select id="genel-bloke-gun" style="flex:2;">
+                                <option>Pazartesi</option>
+                                <option>Salı</option>
+                                <option>Çarşamba</option>
+                                <option>Perşembe</option>
+                                <option>Cuma</option>
+                            </select>
+                            <select id="genel-bloke-saat" style="flex:1;"></select>
+                            <button id="genel-bloke-ekle-btn" class="btn btn-add" style="flex:1;">Bloke
+                                Et</button>
+                        </div>
+                        <ul id="genel-bloke-listesi" class="settings-list" style="max-height: 100px;"></ul>
+                    </div>
+                </div>
+                <div id="seminer-donemi-tab" class="settings-tab-content">
+                    <p>Belirli süreli personelin ek derslerinin farklı hesaplanacağı seminer, hizmet içi eğitim
+                        gibi özel dönemleri buradan yönetebilirsiniz.</p>
+                    <div class="add-setting-form" style="grid-template-columns: 2fr 1fr 1fr auto; display: grid;">
+                        <input type="text" id="add-seminer-donemi-ad-input"
+                            placeholder="Dönem Adı (Örn: Eylül Semineri)">
+                        <input type="date" id="add-seminer-donemi-baslangic-input">
+                        <input type="date" id="add-seminer-donemi-bitis-input">
+                        <button id="add-seminer-donemi-btn" class="btn">Ekle</button>
+                    </div>
+                    <ul id="seminer-donemi-list" class="settings-list"></ul>
+                </div>
+                <div id="egitim-donemi-tab" class="settings-tab-content">
+                    <p>Rehberlik ek dersi gibi hesaplamaların sadece okulun açık olduğu haftalarda yapılması için
+                        eğitim-öğretim dönemlerini (örneğin Güz Dönemi, Bahar Dönemi) buradan yönetebilirsiniz.</p>
+                    <div class="add-setting-form" style="grid-template-columns: 2fr 1fr 1fr auto; display: grid;">
+                        <input type="text" id="add-egitim-donemi-ad-input"
+                            placeholder="Dönem Adı (Örn: 2025-2026 Eğitim Yılı)">
+                        <input type="date" id="add-egitim-donemi-baslangic-input">
+                        <input type="date" id="add-egitim-donemi-bitis-input">
+                        <button id="add-egitim-donemi-btn" class="btn">Ekle</button>
+                    </div>
+                    <ul id="egitim-donemi-list" class="settings-list"></ul>
+                </div>
+                <div id="ogretmen-kural-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Öğretmen Kurallarını Düzenle</h3>
+                            <button class="close-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="kural-ogretmen-sec">Ayarları Düzenlenecek Öğretmen</label>
+                                <select id="kural-ogretmen-sec"></select>
+                            </div>
+                            <div id="ogretmen-kural-bilgi"
+                                style="background-color:#f8f9fa; border:1px solid #dee2e6; padding:15px 20px; border-radius:8px; margin-top: 20px; text-align: center;">
+                                <p style="margin:0; font-size:1em; color:var(--dark-text-color);">Kurallarını
+                                    görüntülemek ve düzenlemek için lütfen yukarıdaki listeden bir öğretmen
+                                    seçin.</p>
+                            </div>
+                            <div id="ogretmen-kural-formu"
+                                style="border-top: 1px solid var(--border-color); padding-top: 20px; display:none;">
+
+                                <div
+                                    style="background-color:#f8f9fa; border:1px solid #dee2e6; padding:15px 20px; border-radius:8px; margin-bottom: 25px; font-size: 0.9em; line-height: 1.6;">
+                                    <h4 style="margin-top:0; color:var(--dark-text-color);">Kişisel Zaman
+                                        Planlaması
+                                        (Bloke ve Tercih Edilmeyen Günler)</h4>
+                                    <p style="margin-bottom:0;">Hücrelere tıklayarak algoritmanın ders atama
+                                        davranışını
+                                        kişisel programınıza göre şekillendirebilirsiniz.
+                                    </p>
+                                </div>
+                                <div class="table-container" style="margin-bottom: 25px;">
+                                    <table id="ogretmen-kural-tablosu" class="schedule-table"></table>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group"><label for="ogretmen-max-gunluk-ders">Maksimum
+                                            Günlük Ders
+                                            Saati</label><input type="number" id="ogretmen-max-gunluk-ders"
+                                            placeholder="Örn: 8"></div>
+                                    <div class="form-group"><label for="ogretmen-max-ardisik-ders">Maksimum
+                                            Ardışık Ders
+                                            Saati</label><input type="number" id="ogretmen-max-ardisik-ders"
+                                            placeholder="Örn: 3"></div>
+                                    <div class="form-group"><label for="ogretmen-gunluk-denge">Günlük Ders Yükü
+                                            Dengesi
+                                            (Max Fark)</label><input type="number" id="ogretmen-gunluk-denge"
+                                            placeholder="Örn: 2 Saat"></div>
+                                    <div class="form-group"><label for="ogretmen-max-bosluk">Gündeki Maksimum
+                                            Boşluk</label><input type="number" id="ogretmen-max-bosluk"
+                                            placeholder="Örn: 1 Saat"></div>
+                                </div>
+                                <div class="button-group" style="margin-top: 20px;">
+                                    <button id="ogretmen-kural-kaydet-btn" class="btn btn-save"
+                                        style="width: 100%;">Öğretmen
+                                        Kurallarını Kaydet</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </main>
+        <div id="edit-gorevlendirme-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Detaylı Ders Görevlendirme Düzenle</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editGorevlendirmeForm">
+                        <input type="hidden" id="edit-g-id">
+                        <div class="form-grid" style="grid-template-columns: 1fr 2fr 1fr;">
+                            <div class="form-group">
+                                <label for="edit-g-tarih">Tarih</label>
+                                <input type="date" id="edit-g-tarih" disabled
+                                    style="background: #eee; cursor: not-allowed;">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-g-asil-ogretmen">Asıl Öğretmen</label>
+                                <select id="edit-g-asil-ogretmen" disabled
+                                    style="background: #eee; cursor: not-allowed;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-g-neden">Görev Nedeni</label>
+                                <select id="edit-g-neden">
+                                    <option value="">Neden Seçiniz...</option>
+                                    <option value="Raporlu">Raporlu</option>
+                                    <option value="İzinli (Ücretli)">İzinli (Ücretli)</option>
+                                    <option value="İzinli (Ücretsiz)">İzinli (Ücretsiz)</option>
+                                    <option value="Seminer/Kurs">Seminer/Kurs</option>
+                                    <option value="Görevli İzinli">Görevli İzinli</option>
+                                    <option value="Diğer">Diğer</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-g-aciklama">Genel Açıklama</label>
+                            <input type="text" id="edit-g-aciklama">
+                        </div>
+
+                        <h4
+                            style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px; margin-bottom: 10px;">
+                            Atanan Ders Detayları
+                        </h4>
+                        <div id="edit-g-ders-listesi-container"
+                            style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                            <p>Ders detayları yükleniyor...</p>
+                        </div>
+
+                        <div class="button-group" style="margin-top:20px;">
+                            <button type="submit" class="btn btn-save">Değişiklikleri Kaydet</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="edit-setting-modal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 id="edit-setting-modal-title">Ayar Adını Düzenle</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit-setting-input">Ad</label>
+                        <input type="text" id="edit-setting-input">
+                    </div>
+                    <div class="form-group" id="edit-kisaltma-group" style="display: none;">
+                        <label for="edit-setting-kisaltma-input">Kısaltma (3 Harf)</label>
+                        <input type="text" id="edit-setting-kisaltma-input" maxlength="3"
+                            style="text-transform: uppercase;">
+                    </div>
+                    <div class="button-group">
+                        <button id="edit-setting-save-btn" class="btn btn-save">Değişiklikleri Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="add-staff-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modal-title">Yeni Personel Ekle</h3><button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="personelForm"></form>
+                </div>
+            </div>
+        </div>
+        <div id="edit-modal-overlay" class="modal-overlay">
+            <div class="modal-content">
+                <h3 id="p-modal-title">Puantaj Günü Düzenle</h3>
+                <div class="form-group"><label for="modal-status">Durum</label><select id="modal-status"></select></div>
+                <div class="form-group"><label for="modal-hours">Çalışılan Ders Saati</label><input type="number"
+                        id="modal-hours" min="0" max="12"></div>
+                <div class="form-group"><label for="modal-notes">Açıklama</label><input type="text" id="modal-notes"
+                        placeholder="Opsiyonel not..."></div>
+                <div class="modal-buttons"><button id="modal-cancel" class="btn">İptal</button><button id="modal-save"
+                        class="btn">Kaydet</button></div>
+            </div>
+        </div>
+        <div id="edit-nobet-modal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3>Nöbet Kaydını Düzenle</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-nobet-form">
+                        <input type="hidden" id="edit-nobet-id">
+                        <div class="form-grid" style="grid-template-columns: 1fr 2fr 2fr; align-items: flex-end;">
+                            <div class="form-group">
+                                <label for="edit-nobet-tarih">Tarih</label>
+                                <input type="date" id="edit-nobet-tarih">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-nobet-personel">Nöbetçi Personel</label>
+                                <select id="edit-nobet-personel"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-nobet-yeri">Nöbet Yeri</label>
+                                <select id="edit-nobet-yeri"></select>
+                            </div>
+                        </div>
+                        <div class="button-group" style="margin-top: 20px;">
+                            <button type="submit" class="btn btn-save">Değişiklikleri Kaydet</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="toplu-izin-modal" class="modal">
+            <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h3>Toplu İzin Girişi</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p
+                        style="margin-top: 0; margin-bottom: 20px; background-color: #eef1f3; padding: 10px; border-radius: 5px; border: 1px solid #dee2e6;">
+                        Bu ekranı kullanarak seçili personellere aynı anda, belirtilen tarihler arasında izin
+                        atayabilirsiniz. Bu işlem, her bir personel için ayrı bir izin kaydı oluşturacaktır.
+                    </p>
+                    <div class="form-grid"
+                        style="grid-template-columns: 1fr 1fr 2fr; margin-bottom: 20px; align-items: flex-end;">
+                        <div class="form-group">
+                            <label for="toplu-izin-baslangic">Başlangıç Tarihi</label>
+                            <input type="date" id="toplu-izin-baslangic">
+                        </div>
+                        <div class="form-group">
+                            <label for="toplu-izin-bitis">Bitiş Tarihi</label>
+                            <input type="date" id="toplu-izin-bitis">
+                        </div>
+                        <div class="form-group">
+                            <label for="toplu-izin-tipi">İzin Tipi</label>
+                            <select id="toplu-izin-tipi">
+                                <option value="">İzin Tipi Seçiniz...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="margin-bottom: 10px;">İzin Atanacak Personeller</label>
+                        <div id="toplu-personel-listesi"
+                            style="height: 300px; overflow-y: auto; border: 1px solid var(--border-color); padding: 15px; border-radius: 6px; background: #fdfdfd; display: flex; flex-direction: column; gap: 8px;">
+                            <p>Personel listesi yükleniyor...</p>
+                        </div>
+                    </div>
+                    <div class="button-group" style="margin-top: 25px;">
+                        <button id="toplu-izin-kaydet-btn" class="btn btn-save">Seçili Personellere İzin Ata</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="dilekce-date-modal" class="modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h3>Dilekçe Tarihini Belirtin</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Lütfen dilekçenin üzerinde görünecek resmi tarihi seçiniz.</p>
+                    <div class="form-group">
+                        <label for="dilekce-tarih-input">Dilekçe Tarihi</label>
+                        <input type="date" id="dilekce-tarih-input">
+                    </div>
+                    <div class="button-group">
+                        <button id="generate-dilekce-with-date-btn" class="btn btn-save">Dilekçeyi Oluştur</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="confirmation-modal" class="modal">
+            <div class="modal-content" style="max-width: 500px; text-align: center;">
+                <div class="modal-header">
+                    <h3 id="confirmation-modal-title">İşlemi Onayla</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmation-modal-message" style="font-size: 1.1em; line-height: 1.5;"></p>
+                    <div class="confirmation-buttons" style="margin-top: 25px;">
+                        <button id="confirm-cancel-btn" class="btn" style="background-color: #6c757d;">İptal</button>
+                        <button id="confirm-action-btn" class="btn btn-confirm">Onayla</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="edit-izin-modal" class="modal">
+            <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h3>İzin Kaydını Düzenle</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-izin-form">
+                        <input type="hidden" id="edit-izin-id">
+                        <div class="form-grid" style="grid-template-columns: 2fr 1.5fr 1fr 1fr; align-items: flex-end;">
+                            <div class="form-group">
+                                <label for="edit-izin-personel">Personel</label>
+                                <select id="edit-izin-personel" disabled></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-izin-tipi">İzin Tipi</label>
+                                <select id="edit-izin-tipi"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-izin-baslangic">Başlangıç Tarihi</label>
+                                <input type="date" id="edit-izin-baslangic">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-izin-bitis">Bitiş Tarihi</label>
+                                <input type="date" id="edit-izin-bitis">
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="edit-izin-aciklama">Açıklama / Not</label>
+                                <input type="text" id="edit-izin-aciklama" placeholder="İzinle ilgili kısa bir not...">
+                            </div>
+                        </div>
+                        <div class="button-group" style="margin-top: 25px;">
+                            <button type="submit" class="btn btn-save">Değişiklikleri Kaydet</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="edit-password-modal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 id="edit-password-modal-title">Şifreyi Değiştir</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-password-form">
+                        <input type="hidden" id="edit-password-uid">
+                        <div class="form-group">
+                            <label for="new-password">Yeni Şifre (En az 6 karakter)</label>
+                            <input type="password" id="new-password" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Yeni Şifre (Tekrar)</label>
+                            <input type="password" id="confirm-password" required minlength="6">
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-save">Şifreyi Güncelle</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <template id="personel-form-template">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="ad_soyad">Adı Soyadı:</label>
+                    <input type="text" id="ad_soyad" name="ad_soyad" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="tc_kimlik_no">T.C. Kimlik No:</label>
+                    <input type="text" id="tc_kimlik_no" name="tc_kimlik_no">
+                </div>
+                <div class="form-group">
+                    <label for="sgk_no">SGK No:</label>
+                    <input type="text" id="sgk_no" name="sgk_no">
+                </div>
+                <div class="form-group">
+                    <label for="personel_nevisi">Personel Nevisi:</label>
+                    <select id="personel_nevisi" name="personel_nevisi" required>
+                        <option value="" disabled selected>Seçim yapınız...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="gorevi_bransi">Görevi / Branşı:</label>
+                    <select id="gorevi_bransi" name="gorevi_bransi" required>
+                        <option value="" disabled selected>Önce Personel Nevisi seçin</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Kademe</label>
+                    <select id="kademe" name="kademe">
+                        <option value="İlkokul">İlkokul</option>
+                        <option value="Ortaokul">Ortaokul</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sozlesme_turu">Sözleşme Türü:</label>
+                    <select id="sozlesme_turu" name="sozlesme_turu">
+                        <option value="Belirsiz Süreli">Belirsiz Süreli Sözleşme</option>
+                        <option value="Belirli Süreli">Belirli Süreli Sözleşme</option>
+                        <option value="Kısmi Süreli">Kısmi Süreli Sözleşme</option>
+                    </select>
+                </div>
+                <div class="form-group" id="degisiklik_tarihi_div"
+                    style="display: none; background-color: #fffbe6; padding: 10px; border-radius: 6px; border: 1px solid #ffe58f;">
+                    <label for="degisiklik_tarihi" style="color: #8a6d3b; font-weight: bold;">Sözleşme Değişiklik
+                        Tarihi:</label>
+                    <p style="font-size: 0.85em; margin: 0 0 8px 0; color: #8a6d3b;">Lütfen bu yeni sözleşme türünün
+                        geçerli olacağı başlangıç tarihini seçin.</p>
+                    <input type="date" id="degisiklik_tarihi" name="degisiklik_tarihi">
+                </div>
+                <div class="form-group full-width" id="kismi_zamanli_div"
+                    style="display: none; background-color: #f0f3f5; padding: 15px; border-radius: 6px;">
+                    <label style="font-weight: bold; color: var(--theme-primary); margin-bottom: 5px;">Kısmi Zamanlı
+                        Çalışma Saatleri</label>
+                    <p style="font-size: 0.9em; margin-top: 0;">Lütfen personelin haftalık çalışma günlerini ve günlük
+                        saatlerini belirtin.</p>
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px;">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" id="pzts_calisiyor" name="kismi_gunler" value="Pazartesi"
+                                    style="width: auto; margin-right: 8px;">
+                                <label for="pzts_calisiyor" style="margin: 0; font-weight: normal;">Pazartesi</label>
+                            </div>
+                            <div>
+                                <input type="number" id="pzts_saat" name="pzts_saat" min="0" max="12"
+                                    style="width: 60px; padding: 8px;">
+                                <span style="margin-left: 5px;">saat</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" id="sali_calisiyor" name="kismi_gunler" value="Salı"
+                                    style="width: auto; margin-right: 8px;">
+                                <label for="sali_calisiyor" style="margin: 0; font-weight: normal;">Salı</label>
+                            </div>
+                            <div>
+                                <input type="number" id="sali_saat" name="sali_saat" min="0" max="12"
+                                    style="width: 60px; padding: 8px;">
+                                <span style="margin-left: 5px;">saat</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" id="crs_calisiyor" name="kismi_gunler" value="Çarşamba"
+                                    style="width: auto; margin-right: 8px;">
+                                <label for="crs_calisiyor" style="margin: 0; font-weight: normal;">Çarşamba</label>
+                            </div>
+                            <div>
+                                <input type="number" id="crs_saat" name="crs_saat" min="0" max="12"
+                                    style="width: 60px; padding: 8px;">
+                                <span style="margin-left: 5px;">saat</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" id="prs_calisiyor" name="kismi_gunler" value="Perşembe"
+                                    style="width: auto; margin-right: 8px;">
+                                <label for="prs_calisiyor" style="margin: 0; font-weight: normal;">Perşembe</label>
+                            </div>
+                            <div>
+                                <input type="number" id="prs_saat" name="prs_saat" min="0" max="12"
+                                    style="width: 60px; padding: 8px;">
+                                <span style="margin-left: 5px;">saat</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" id="cuma_calisiyor" name="kismi_gunler" value="Cuma"
+                                    style="width: auto; margin-right: 8px;">
+                                <label for="cuma_calisiyor" style="margin: 0; font-weight: normal;">Cuma</label>
+                            </div>
+                            <div>
+                                <input type="number" id="cuma_saat" name="cuma_saat" min="0" max="12"
+                                    style="width: 60px; padding: 8px;">
+                                <span style="margin-left: 5px;">saat</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" id="cmrts_calisiyor" name="kismi_gunler" value="Cumartesi"
+                                    style="width: auto; margin-right: 8px;">
+                                <label for="cmrts_calisiyor" style="margin: 0; font-weight: normal;">Cumartesi</label>
+                            </div>
+                            <div>
+                                <input type="number" id="cmrts_saat" name="cmrts_saat" min="0" max="12"
+                                    style="width: 60px; padding: 8px;">
+                                <span style="margin-left: 5px;">saat</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="checkbox" id="pazar_calisiyor" name="kismi_gunler" value="Pazar"
+                                    style="width: auto; margin-right: 8px;">
+                                <label for="pazar_calisiyor" style="margin: 0; font-weight: normal;">Pazar</label>
+                            </div>
+                            <div>
+                                <input type="number" id="pazar_saat" name="pazar_saat" min="0" max="12"
+                                    style="width: 60px; padding: 8px;">
+                                <span style="margin-left: 5px;">saat</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Cinsiyet:</label>
+                    <div class="radio-group">
+                        <div><input type="radio" id="cinsiyet_kadin" name="cinsiyet" value="kadin" checked><label
+                                for="cinsiyet_kadin">Kadın</label></div>
+                        <div><input type="radio" id="cinsiyet_erkek" name="cinsiyet" value="erkek"><label
+                                for="cinsiyet_erkek">Erkek</label></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Eş Durumu:</label>
+                    <div class="radio-group">
+                        <div><input type="radio" id="es_calismiyor" name="es_durumu" value="çalışmıyor" checked><label
+                                for="es_calismiyor">Çalışmıyor</label></div>
+                        <div><input type="radio" id="es_calisiyor" name="es_durumu" value="çalışıyor"><label
+                                for="es_calisiyor">Çalışıyor</label></div>
+                        <div><input type="radio" id="es_bekar" name="es_durumu" value="bekar"><label
+                                for="es_bekar">Bekar</label></div>
+                    </div>
+                </div>
+                <div class="form-group" id="rehberlik_gorevi_div">
+                    <label>Rehberlik Görevi Var Mı?:</label>
+                    <div class="radio-group">
+                        <div><input type="radio" id="rehberlik_yok" name="rehberlik_gorevi" value="hayir" checked><label
+                                for="rehberlik_yok">Hayır</label></div>
+                        <div><input type="radio" id="rehberlik_var" name="rehberlik_gorevi" value="evet"><label
+                                for="rehberlik_var">Evet (Haftalık 2 Saat)</label></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cocuk_0_6">Çocuk Sayısı (0-6 Yaş):</label>
+                    <input type="number" id="cocuk_0_6" name="cocuk_0_6" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="cocuk_6_ustu">Çocuk Sayısı (6-18 Yaş):</label>
+                    <input type="number" id="cocuk_6_ustu" name="cocuk_6_ustu" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="ise_giris">İşe Giriş Tarihi:</label>
+                    <input type="date" id="ise_giris" name="ise_giris" required>
+                </div>
+                <div class="form-group">
+                    <label for="isten_ayrilis">İşten Ayrılış Tarihi:</label>
+                    <input type="date" id="isten_ayrilis" name="isten_ayrilis">
+                </div>
+                <div class="form-group" id="maas_karsiligi_div">
+                    <label for="maas_karsiligi">Maaş Karşılığı Ders Saati:</label>
+                    <input type="number" id="maas_karsiligi" name="maas_karsiligi" min="0" value="20">
+                </div>
+                <div class="form-group full-width">
+                    <label for="aciklama">Açıklama:</label>
+                    <textarea id="aciklama" name="aciklama" rows="3"></textarea>
+                </div>
+                <div class="form-group full-width button-group">
+                    <button type="submit" class="btn btn-save">Personeli Kaydet</button>
+                </div>
+            </div>
+        </template>
+        <div id="ekders-detay-modal" class="modal">
+            <div class="modal-content" style="max-width: 550px;">
+                <div class="modal-header">
+                    <h3 id="ekders-modal-title">Ek Ders Detayları</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="margin-bottom: 15px;">
+                        <span style="display: block; font-size: 1.1em;">Personel: <strong
+                                id="ekders-personel-adi">...</strong></span>
+                        <span style="display: block; color: #555;">Dönem: <strong id="ekders-donem">...</strong></span>
+                    </div>
+                    <table class="staff-table">
+                        <thead>
+                            <tr>
+                                <th>Ek Ders Kalemi</th>
+                                <th>Saat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ekders-detay-tbody">
+                            <tr>
+                                <td>Hesaplanıyor...</td>
+                                <td>...</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="background-color: #f8f9fa;">
+                                <td style="text-align: right; font-weight: bold;">TOPLAM EK DERS</td>
+                                <td style="font-weight: bold; font-size: 1.2em;" id="ekders-toplam">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="personel-detay-modal" class="modal">
+            <div class="modal-content" style="max-width: 1000px;">
+                <div class="modal-header">
+                    <h3 id="personel-detay-modal-title">Personel Profili</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-tabs" id="personel-detay-tabs">
+                        <button class="settings-tab-button active" data-tab="detay-tab-bilgiler">Kişisel
+                            Bilgiler</button>
+                        <button class="settings-tab-button" data-tab="detay-tab-izinler">İzin Geçmişi</button>
+                        <button class="settings-tab-button" data-tab="detay-tab-nobetler">Nöbet Geçmişi</button>
+                        <button class="settings-tab-button" data-tab="detay-tab-hizmet">Hizmet Geçmişi</button>
+                        <button class="settings-tab-button" data-tab="detay-tab-belgeler">Belgeler</button>
+                    </div>
+
+                    <div id="detay-tab-bilgiler" class="settings-tab-content active">
+                        <div id="personel-bilgileri-container" style="padding: 20px;">
+                            <p>Personel bilgileri yükleniyor...</p>
+                        </div>
+                    </div>
+
+                    <div id="detay-tab-izinler" class="settings-tab-content">
+                        <div id="personel-izin-gecmisi-container" class="table-container"
+                            style="margin-top: 20px; max-height: 450px; overflow-y: auto;">
+                            <p style="padding: 20px;">İzin geçmişi yükleniyor...</p>
+                        </div>
+                    </div>
+
+                    <div id="detay-tab-nobetler" class="settings-tab-content">
+                        <div id="personel-nobet-gecmisi-container" class="table-container"
+                            style="margin-top: 20px; max-height: 450px; overflow-y: auto;">
+                            <p style="padding: 20px;">Nöbet geçmişi yükleniyor...</p>
+                        </div>
+                    </div>
+
+                    <div id="detay-tab-hizmet" class="settings-tab-content">
+                    </div>
+
+                    <div id="detay-tab-belgeler" class="settings-tab-content">
+                        <p style="padding: 20px; text-align: center; color: #777;">Bu özellik yakında eklenecektir.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="save-schedule-modal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>Programı Kaydet</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Bu ders programı versiyonu için bir isim belirleyin. Örn: "Final Programı", "Taslak V2"</p>
+                    <div class="form-group">
+                        <label for="schedule-name-input">Program Adı</label>
+                        <input type="text" id="schedule-name-input" placeholder="Program Adı">
+                    </div>
+                    <div class="form-group">
+                        <label>Geçerlilik Tarihi</label>
+                        <input type="text" id="schedule-date-display" disabled style="font-weight: bold;">
+                    </div>
+                    <div class="button-group">
+                        <button id="save-schedule-with-name-btn" class="btn btn-save">İsim Ver ve Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="progress-modal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 id="progress-modal-title">Otomatik Programlama Sürüyor...</h3>
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                    <p>Lütfen bekleyin, en uygun ders programı oluşturuluyor.</p>
+                    <progress id="scheduler-progress-bar" value="0" max="100"
+                        style="width: 100%; height: 25px;"></progress>
+                    <p style="font-weight: bold; font-size: 1.2em;"><span id="progress-percentage">0</span>%</p>
+                    <div id="progress-status-text"
+                        style="margin-top: 15px; min-height: 20px; font-style: italic; color: #555;">
+                        İşlem başlatılıyor...
+                    </div>
+                    <div id="progress-suggestion-text"
+                        style="margin-top: 10px; min-height: 60px; padding: 10px; background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; color: #8a6d3b; font-weight: 500; display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="kopyala-program-modal" class="modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h3>Programı Kopyala</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Mevcut ders programı, seçeceğiniz yeni tarih için bir kopya olarak oluşturulacaktır.</p>
+                    <div class="form-group">
+                        <label for="kopya-tarih-input">Yeni Geçerlilik Tarihi</label>
+                        <input type="date" id="kopya-tarih-input">
+                    </div>
+                    <div class="button-group">
+                        <button id="kaydet-kopya-btn" class="btn btn-save">Kopyayı Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="matrix-modal" class="modal">
+            <div class="modal-content" style="max-width: 95%; width: 95%;">
+                <div class="modal-header">
+                    <h3 id="matrix-modal-title">Matris Görünümü</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body" id="matrix-modal-body" style="padding: 15px;">
+                </div>
+            </div>
+        </div>
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('service-worker.js').then(registration => {
+
+                    }, err => {
+
+                    });
+                });
+            }
+        </script>
+        <script type="module" src="app.js"></script>
+</body>
+
+</html>
